@@ -16,13 +16,6 @@ const navLinks = [
   { href: "/#testimonials", label: "آراء الطلاب" },
 ];
 
-const trustCards = [
-  ["25,000+ سؤال", "تدريب منظم على الكمي واللفظي داخل بنوك واضحة وسريعة الوصول."],
-  ["120+ اختبار", "اختبارات محاكية تقيس مستواك قبل يوم الاختبار بأسلوب قريب من الواقع."],
-  ["16,000+ طالب", "منصة عربية مرتبة تساعدك تلتزم بالخطة وتراجع بدون تشتيت."],
-  ["خطة ذكية يومية", "تعرف اليوم ماذا تبدأ به، ومتى تراجع، ومتى تنتقل للاختبار."],
-];
-
 const whyBenefits = [
   {
     title: "أسئلة متنوعة واختبارات محاكية لزيادة تحضيرك",
@@ -117,28 +110,6 @@ export default function HomePage() {
             <Reveal delay={0.05}>
               <HeroShowcase />
             </Reveal>
-          </div>
-        </section>
-
-        <section className="relative z-20 -mt-16 pb-10 pt-0 md:-mt-20">
-          <div className="mx-auto grid w-[min(calc(100%-2rem),1240px)] gap-5 md:grid-cols-2 xl:grid-cols-4">
-            {trustCards.map(([value, label], index) => (
-              <Reveal key={value} delay={index * 0.03}>
-                <Card className="overflow-hidden rounded-[2.4rem] border border-white/90 bg-white shadow-[0_24px_60px_rgba(17,24,39,0.08)]">
-                  <CardContent className="relative min-h-[238px] p-0 text-center">
-                    <div className="absolute inset-x-0 top-0 h-28 bg-[linear-gradient(180deg,rgba(18,59,122,0.34),rgba(18,59,122,0.08),rgba(255,255,255,0))]" />
-                    <div className="relative flex min-h-[238px] flex-col items-center justify-center px-8 py-8">
-                      <div className="display-font text-4xl font-black leading-tight text-[#123B7A] md:text-5xl">
-                        {value}
-                      </div>
-                      <div className="mt-4 max-w-[250px] text-lg leading-9 text-slate-600">
-                        {label}
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </Reveal>
-            ))}
           </div>
         </section>
 
