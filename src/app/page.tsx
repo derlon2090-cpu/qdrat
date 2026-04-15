@@ -5,6 +5,7 @@ import { HeroShowcase } from "@/components/hero-showcase";
 import { Reveal } from "@/components/reveal";
 import { SectionTitle } from "@/components/section-title";
 import { SiteHeader } from "@/components/site-header";
+import { SiteFooter } from "@/components/site-footer";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
@@ -33,6 +34,25 @@ const whyCards = [
   ["توصيات يومية", "المنصة تقول لك ماذا تبدأ به اليوم."],
 ];
 
+const quickBenefits = [
+  {
+    title: "أسئلة متنوعة واختبارات محاكية تزيد تحضيرك",
+    text: "بنك كمي ولفظي واسع، واختبارات تشبه الواقع حتى تصبح الممارسة أقرب ليوم الاختبار.",
+  },
+  {
+    title: "خطة يومية تناسب مستواك بالضبط",
+    text: "المنصة ترتب لك ما تبدأ به اليوم ومتى تراجع ومتى تنتقل للاختبار التالي.",
+  },
+  {
+    title: "مراجعة سهلة لكل الأخطاء والأسئلة المهمة",
+    text: "أي سؤال حفظته أو أخطأت فيه يرجع لك في مسار مراجعة واضح ومريح.",
+  },
+  {
+    title: "نماذج اختبار جاهزة للتدريب",
+    text: "ابدأ بسرعة من نماذج كاملة أو مصغرة بدل إضاعة الوقت في الإعداد اليدوي.",
+  },
+];
+
 const steps = [
   ["01", "اختبر مستواك", "ابدأ بتشخيص سريع يحدد أين تقف بدل التخمين."],
   ["02", "خذ خطة يومية ذكية", "اعرف ماذا تذاكر اليوم وماذا تراجع غدًا."],
@@ -43,6 +63,18 @@ const testimonials = [
   ["رهف الشمري", "طالبة قدرات", "+18 درجة", "خلال 6 أسابيع", "الخطة كانت واضحة جدًا، وكل يوم أعرف ماذا أبدأ به بدل التشتت."],
   ["عبدالله القحطاني", "طالب ثالث ثانوي", "ثقة أعلى", "قبل الاختبار النهائي", "لوحة الطالب أوضحت لي أخطائي المتكررة وجعلت المراجعة أذكى."],
   ["لمى الحربي", "مستخدمة مستمرة", "+11 درجة", "مع مراجعة يومية", "واجهة مريحة جدًا، والتقارير فرقت معي بين ضعف الفهم وضعف السرعة."],
+  ["ريم", "طالبة ثانوي", "أسئلة متنوعة", "سهولة استخدام", "التطبيق مرتب ومريح وساعدني كثيرًا في تنظيم مذاكرة القدرات."],
+  ["بتال", "طالب قدرات", "خطة حسب المستوى", "تنظيم واضح", "أكثر شيء فادني أن الخطة كانت تناسب مستواي بدل الجداول العامة."],
+  ["Qquag", "مستخدم مستمر", "سهل وممتع", "تحسن تدريجي", "التجربة بسيطة وواضحة وتخليك تكمل بدون ما تضيع بين الأقسام."],
+];
+
+const testimonialColors = [
+  "bg-[linear-gradient(135deg,#C99200,#B68200)]",
+  "bg-[linear-gradient(135deg,#123B7A,#1F5CA8)]",
+  "bg-[linear-gradient(135deg,#5AAE22,#67BE21)]",
+  "bg-[linear-gradient(135deg,#B61B74,#C72A84)]",
+  "bg-[linear-gradient(135deg,#FF5A5F,#FF6368)]",
+  "bg-[linear-gradient(135deg,#6C32D8,#8442FF)]",
 ];
 
 const heroMetrics = ["25,000+ سؤال", "120+ اختبار", "16,000+ طالب", "خطة ذكية يومية"];
@@ -125,6 +157,52 @@ export default function HomePage() {
                 </Card>
               </Reveal>
             ))}
+          </div>
+        </section>
+
+        <section className="section-shell pt-6">
+          <div className="mx-auto grid w-[min(calc(100%-2rem),1180px)] gap-8 lg:grid-cols-[1.08fr,0.92fr]">
+            <Reveal>
+              <div className="space-y-8">
+                {quickBenefits.map((item, index) => (
+                  <div key={item.title} className="rounded-[2rem] border border-white/80 bg-white/95 p-6 shadow-soft">
+                    <div className="flex items-start gap-4">
+                      <div className={`mt-1 flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl text-lg font-bold text-white ${testimonialColors[index]}`}>
+                        {index + 1}
+                      </div>
+                      <div>
+                        <h3 className="display-font text-2xl font-bold text-slate-950">{item.title}</h3>
+                        <p className="mt-3 text-base leading-8 text-slate-600">{item.text}</p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </Reveal>
+
+            <Reveal delay={0.05}>
+              <Card className="overflow-hidden rounded-[2.4rem] border-white/80 bg-white/95">
+                <CardContent className="p-8">
+                  <div className="rounded-[2rem] bg-[linear-gradient(180deg,#fff3cf,#ffd86d)] p-6">
+                    <div className="relative mx-auto flex h-[350px] w-[250px] items-end justify-center rounded-[8rem] border-[6px] border-[#123B7A] bg-[linear-gradient(180deg,#ffe08a,#ffd05a)]">
+                      <div className="absolute -right-10 top-8 rounded-[1.2rem] bg-[#2A7DD6] px-4 py-3 text-sm font-bold leading-7 text-white shadow-soft">
+                        تبغى أقولك<br />
+                        ليش معيار؟
+                      </div>
+                      <div className="absolute bottom-0 h-[290px] w-[120px] rounded-t-[60px] bg-[#F2F4F7]" />
+                      <div className="absolute bottom-[182px] h-[56px] w-[56px] rounded-full bg-[#E8BE98]" />
+                      <div className="absolute bottom-[194px] h-[30px] w-[84px] rounded-full bg-[#9A3740]" />
+                      <div className="absolute bottom-[104px] left-[36px] h-[24px] w-[52px] rotate-[18deg] rounded-full bg-[#F2F4F7]" />
+                      <div className="absolute bottom-[104px] right-[36px] h-[24px] w-[52px] -rotate-[18deg] rounded-full bg-[#F2F4F7]" />
+                    </div>
+                  </div>
+
+                  <div className="mt-6 rounded-[1.8rem] bg-[#0f8a58] px-5 py-4 text-center text-lg font-bold text-white">
+                    نجاحك بين يديك.. ابدأ من أي مكان وفي أي وقت
+                  </div>
+                </CardContent>
+              </Card>
+            </Reveal>
           </div>
         </section>
 
@@ -300,8 +378,31 @@ export default function HomePage() {
 
         <section className="section-shell" id="testimonials">
           <div className="mx-auto w-[min(calc(100%-2rem),1180px)]">
-            <Reveal><SectionTitle badge="آراء الطلاب" title="3 شهادات واضحة تكفي لبناء الثقة من غير إطالة" text="النتيجة، المدة، والانطباع عن الخطة تظهر مباشرة مثل أقوى صفحات المنصات التعليمية." /></Reveal>
-            <div className="mt-10 grid gap-5 lg:grid-cols-3">{testimonials.map(([name, role, result, meta, quote], index) => <Reveal key={name} delay={index * 0.05}><Card className="h-full rounded-[2.2rem] border-white/80 bg-white/92"><CardContent className="p-6"><div className="flex items-start justify-between gap-4"><div><div className="display-font font-bold text-slate-950">{name}</div><div className="text-sm text-slate-500">{role}</div></div><div className="flex items-center gap-1 text-amber-500">{Array.from({ length: 5 }).map((_, starIndex) => <Star key={starIndex} className="h-4 w-4 fill-current" />)}</div></div><blockquote className="mt-5 text-base leading-9 text-slate-900">{quote}</blockquote><div className="mt-6 flex flex-wrap gap-2"><span className="mini-pill bg-[#123B7A]/5 text-[#123B7A]">{result}</span><span className="mini-pill bg-amber-50 text-amber-700">{meta}</span></div></CardContent></Card></Reveal>)}</div>
+            <Reveal><SectionTitle badge="آراء الطلاب" title="آراء مرتبة وواضحة تعكس سهولة الاستخدام وقوة الخطة" text="صممناها بأسلوب أقرب للمرجع: بطاقات كثيرة نسبيًا، رأس لوني واضح، واقتباس مباشر ونتيجة مفهومة." /></Reveal>
+            <div className="mt-10 grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+              {testimonials.map(([name, role, result, meta, quote], index) => (
+                <Reveal key={`${name}-${index}`} delay={index * 0.04}>
+                  <Card className="h-full overflow-hidden rounded-[2.2rem] border-white/80 bg-white/95 shadow-soft">
+                    <div className={`mx-5 mt-5 rounded-[1.2rem] px-5 py-4 text-center text-2xl font-black text-white shadow-soft ${testimonialColors[index % testimonialColors.length]}`}>
+                      {result}
+                    </div>
+                    <CardContent className="p-6">
+                      <div className="flex items-start justify-between gap-4">
+                        <div>
+                          <div className="display-font font-bold text-slate-950">{name}</div>
+                          <div className="text-sm text-slate-500">{role}</div>
+                        </div>
+                        <div className="flex items-center gap-1 text-amber-500">
+                          {Array.from({ length: 5 }).map((_, starIndex) => <Star key={starIndex} className="h-4 w-4 fill-current" />)}
+                        </div>
+                      </div>
+                      <blockquote className="mt-5 text-base leading-9 text-slate-900">{quote}</blockquote>
+                      <div className="mt-6 text-sm font-semibold text-[#123B7A]">{meta}</div>
+                    </CardContent>
+                  </Card>
+                </Reveal>
+              ))}
+            </div>
           </div>
         </section>
 
@@ -325,6 +426,8 @@ export default function HomePage() {
             </Reveal>
           </div>
         </section>
+
+        <SiteFooter />
       </main>
     </div>
   );
