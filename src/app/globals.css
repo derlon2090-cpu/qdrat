@@ -35,6 +35,7 @@
     @apply min-w-80 bg-[image:var(--bg-page)] text-slate-900 antialiased;
     --bg-page: radial-gradient(circle_at_top_right,rgba(201,161,91,.14),transparent_18%),radial-gradient(circle_at_18%_8%,rgba(18,59,122,.08),transparent_20%),linear-gradient(180deg,#f8f7f4_0%,#fbfaf8_42%,#f3f4f7_100%);
     font-family: var(--font-body), sans-serif;
+    line-height: 1.9;
   }
 }
 

@@ -19,20 +19,20 @@ const navLinks = [
 
 const whyBenefits = [
   {
-    title: "أسئلة متنوعة واختبارات محاكية لزيادة تحضيرك",
-    text: "هنا تلقى أكبر تنوع من أسئلة الكمي واللفظي، وتقدر تسوي اختبارات سريعة أو كاملة تعزز فهمك.",
+    title: "بنوك واضحة للكمي واللفظي",
+    text: "تصل للقسم المناسب بسرعة بدون دوران طويل بين التصنيفات.",
   },
   {
-    title: "خطة مذاكرة تناسب مستواك بالضبط",
-    text: "الخطة اليومية والأسبوعية تتغير حسب مستواك ونتيجتك، بدل جدول ثابت لا يناسب الجميع.",
+    title: "خطة تتغير مع مستواك",
+    text: "جلسات اليوم والأسبوع تتبدل حسب نتيجتك بدل جدول ثابت للجميع.",
   },
   {
-    title: "مراجعة مرتبة لكل ما حفظته أو أخطأت فيه",
-    text: "أي سؤال يحتاج مراجعة يرجع لك في مسار واضح، حتى توصل له بسهولة بدون ضياع بين الأقسام.",
+    title: "مراجعة مرتبة بلا تشتيت",
+    text: "المحفوظ والخاطئ والضعيف يرجع لك في مسار واحد وواضح.",
   },
   {
-    title: "نماذج جاهزة للتدريب قبل يوم الاختبار",
-    text: "ابدأ من نماذج كاملة أو مصغرة بسرعة، ثم انتقل للبنوك التفصيلية عندما تحتاج تدريبًا أعمق.",
+    title: "اختبارات قريبة من الواقع",
+    text: "نماذج سريعة أو كاملة تساعدك تقيس مستواك قبل يوم الاختبار.",
   },
 ];
 
@@ -78,8 +78,7 @@ export default function HomePage() {
                 بخطة يومية واختبارات تحاكي الواقع
               </h1>
               <p className="mt-5 max-w-2xl text-lg leading-9 text-white/82">
-                منصة عربية حديثة تساعدك تعرف مستواك، تمشي بخطة واضحة، وتتدرج في الكمي واللفظي حتى يوم
-                الاختبار بدون تشتيت.
+                تعرف مستواك، تبدأ بخطة واضحة، وتتحرك في الكمي واللفظي بدون تشتيت أو لف طويل.
               </p>
               <div className="mt-8 flex flex-wrap gap-3">
                 <Link href="#cta">
@@ -119,8 +118,8 @@ export default function HomePage() {
             <Reveal>
               <SectionTitle
                 badge="لماذا معيار"
-                title="كل ما تحتاجه للتحضير يظهر لك بشكل أوضح وأخف"
-                text="رتبنا البداية بحيث تعرف الفكرة بسرعة: مزايا واضحة، واجهة أهدأ، ثم تنتقل للتفاصيل عند الحاجة."
+                title="واجهة أخف، قرار أسرع، وتركيز أعلى على المنتج"
+                text="اختصرنا الكلام وخلّينا الفكرة الأساسية تظهر بسرعة: ماذا تذاكر، أين تبحث، ومتى تبدأ."
               />
             </Reveal>
             <div className="mt-10 grid gap-8 lg:grid-cols-[1.05fr,0.95fr] lg:items-start">
@@ -161,7 +160,7 @@ export default function HomePage() {
                     </div>
 
                     <div className="mt-6 rounded-[1.8rem] bg-[linear-gradient(145deg,#123B7A,#1C4F96)] px-5 py-5 text-center text-lg font-bold leading-8 text-white">
-                      بداية أوضح، وترتيب أخف، ثم انتقال مباشر إلى البنوك أو التشخيص بدون ازدحام.
+                      ترتيب أوضح من البداية، ثم انتقال مباشر إلى البنوك أو التشخيص.
                     </div>
                   </CardContent>
                 </Card>
@@ -176,10 +175,9 @@ export default function HomePage() {
               <Card className="rounded-[2.2rem] border border-[#E8D8B3] bg-[linear-gradient(180deg,#fffdfa,#f7f1e5)] shadow-soft">
                 <CardContent className="p-7">
                   <span className="mini-pill bg-[#123B7A]/5 text-[#123B7A]">التشخيص السريع</span>
-                  <h2 className="section-title max-w-2xl text-right">ابدأ بتشخيص يحدد المسار قبل أي خطة</h2>
+                  <h2 className="section-title max-w-2xl text-right">اختبر مستواك قبل أن تبدأ الخطة</h2>
                   <p className="section-copy max-w-2xl text-right">
-                    بدل البدء العشوائي، خذ اختبارًا تشخيصيًا قصيرًا يبين لك أين تبدأ في الكمي واللفظي
-                    ويغذي الخطة الذكية مباشرة.
+                    اختبار قصير يحدد نقطة البداية في الكمي واللفظي، ثم يرتب لك أولويات التدريب مباشرة.
                   </p>
                   <div className="mt-6 flex flex-wrap gap-3">
                     <Link href="/exam">
@@ -217,8 +215,8 @@ export default function HomePage() {
             <Reveal>
               <SectionTitle
                 badge="آراء الطلاب"
-                title="آراء مرتبة وواضحة تعكس سهولة الاستخدام وقوة الخطة"
-                text="أبقيناها مختصرة وواضحة حتى تعطي الثقة بدون إطالة، وبألوان متناسقة مع هوية معيار الجديدة."
+                title="آراء مختصرة تعكس وضوح التجربة وقوة الخطة"
+                text="ثقة أعلى، تنظيم أوضح، وتجربة أسهل من أول استخدام."
               />
             </Reveal>
             <div className="mt-10">
@@ -257,9 +255,6 @@ export default function HomePage() {
                         </span>
                       </div>
                       <blockquote className="mt-5 text-base leading-9 text-slate-900">{quote}</blockquote>
-                      <div className="mt-6 border-t border-slate-100 pt-4 text-sm font-semibold text-[#123B7A]">
-                        {meta}
-                      </div>
                     </CardContent>
                   </Card>
                 </Reveal>

@@ -6,7 +6,7 @@ import { SiteHeader } from "@/components/site-header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { bankCollections, banks } from "@/data/miyaar";
+import { bankCollections, banks, questionSearchItems } from "@/data/miyaar";
 
 const navLinks = [
   { href: "/", label: "الرئيسية" },
@@ -26,17 +26,13 @@ export default function BanksPage() {
           <Reveal>
             <div className="surface-card p-7">
               <Badge>صفحة بنوك الأسئلة</Badge>
-              <h1 className="page-heading mt-5">
-                ابحث عن البنك المناسب بسرعة وابدأ التدريب فورًا
-              </h1>
+              <h1 className="page-heading mt-5">ابحث عن السؤال أولًا، ثم انتقل للبنك المناسب</h1>
               <p className="section-copy max-w-2xl">
-                تصميم واضح يبرز الأنواع الأساسية: لفظي، قطع، تناظر لفظي، إكمال
-                الجمل، الخطأ السياقي، والمفردة الشاذة، مع بحث وفلترة سهلة لا تشعر
-                المستخدم بأي ازدحام.
+                خففنا هذه الصفحة بصريًا: بحث مباشر داخل نص السؤال، ثم بنوك مرتبة عندما تحتاج تدريبًا أوسع.
               </p>
               <div className="mt-7 flex flex-wrap gap-3">
                 <Link href="/exam">
-                  <Button>ابدأ اختبارًا مخصصًا</Button>
+                  <Button>ابدأ التشخيص</Button>
                 </Link>
                 <Link href="/">
                   <Button variant="outline">العودة للرئيسية</Button>
@@ -47,15 +43,13 @@ export default function BanksPage() {
 
           <Reveal delay={0.05}>
             <div className="surface-dark p-7">
-              <p className="text-sm text-white/70">نظرة سريعة</p>
-              <h2 className="display-font mt-3 text-3xl font-bold">
-                واجهة مرتبة للبنوك والتصنيفات الدقيقة
-              </h2>
+              <p className="text-sm text-white/70">الأولوية الآن</p>
+              <h2 className="display-font mt-3 text-3xl font-bold">نتيجة سريعة ثم قرار أوضح</h2>
               <div className="mt-6 grid gap-3 sm:grid-cols-3">
                 {[
-                  { value: "18", label: "تصنيفًا فرعيًا" },
-                  { value: "6", label: "أنواع رئيسية" },
-                  { value: "مرن", label: "بحث + فلترة" },
+                  { value: "بحث", label: "داخل نص السؤال" },
+                  { value: "فلاتر", label: "قسم + صعوبة + مهارة" },
+                  { value: "فتح", label: "السؤال مباشرة" },
                 ].map((item) => (
                   <div key={item.label} className="rounded-[1.5rem] border border-white/10 bg-white/5 p-4">
                     <div className="display-font text-2xl font-bold">{item.value}</div>
@@ -69,16 +63,14 @@ export default function BanksPage() {
 
         <div className="mx-auto mt-10 grid w-[min(calc(100%-2rem),1180px)] gap-8 lg:grid-cols-[1.18fr,0.82fr]">
           <Reveal>
-            <BankExplorer items={banks} />
+            <BankExplorer items={banks} questions={questionSearchItems} />
           </Reveal>
 
           <div className="space-y-5">
             <Reveal delay={0.04}>
               <div className="surface-dark p-6">
                 <p className="text-sm text-white/70">بنية التجربة</p>
-                <h3 className="display-font mt-3 text-2xl font-bold">
-                  مجموعات جاهزة وتخصيص مرن
-                </h3>
+                <h3 className="display-font mt-3 text-2xl font-bold">تدريب واسع بدون ازدحام بصري</h3>
                 <div className="mt-5 grid gap-4">
                   {bankCollections.map((group) => (
                     <div
@@ -105,11 +97,11 @@ export default function BanksPage() {
             <Reveal delay={0.08}>
               <Card>
                 <CardContent className="p-6">
-                  <p className="text-sm font-semibold text-slate-500">اقتراح تصميمي</p>
+                  <p className="text-sm font-semibold text-slate-500">ترتيب الصفحة</p>
                   <ul className="mt-4 space-y-3 text-sm leading-8 text-slate-600">
-                    <li>إظهار الأكثر استخدامًا أولًا ثم التصنيفات الدقيقة.</li>
-                    <li>إبراز عدد الأسئلة مع المهارة بدل عرض الاسم وحده.</li>
-                    <li>إتاحة اختبار مخصص من أي بنك بزر واحد واضح.</li>
+                    <li>ابدأ ببحث السؤال عندما تعرف ما تريد.</li>
+                    <li>استخدم البنوك عندما تحتاج تدريبًا أوسع حسب المهارة.</li>
+                    <li>ارجع للتشخيص إذا احتجت نقطة بداية أوضح.</li>
                   </ul>
                 </CardContent>
               </Card>
