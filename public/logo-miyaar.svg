@@ -1,0 +1,12 @@
+<svg width="512" height="512" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="miyaarLogoGradient" x1="12%" y1="10%" x2="86%" y2="86%">
+      <stop offset="0%" stop-color="#7C72FF"/>
+      <stop offset="48%" stop-color="#1E2A55"/>
+      <stop offset="100%" stop-color="#D2A85A"/>
+    </linearGradient>
+  </defs>
+  <rect x="4" y="4" width="56" height="56" rx="18" fill="url(#miyaarLogoGradient)"/>
+  <path d="M17 44V18M17 18H45M45 18V47M29 47H45" stroke="white" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="36.5" cy="27.5" r="8" stroke="#F3D48F" stroke-width="3.5"/>
+</svg>
