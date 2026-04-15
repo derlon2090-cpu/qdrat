@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowLeft, CheckCircle2, PlayCircle, Star } from "lucide-react";
+import { ArrowLeft, CheckCircle2, PlayCircle, Sparkles, Star } from "lucide-react";
 
 import { HeroShowcase } from "@/components/hero-showcase";
 import { Reveal } from "@/components/reveal";
@@ -32,6 +32,12 @@ const bankHighlights = [
 ];
 
 const mostTrained = ["التناظر اللفظي", "إكمال الجمل", "الخطأ السياقي", "القطع القصيرة"];
+
+const whyReasons = [
+  "منصة واضحة ومختصرة تختصر عليك طريق القدرات بدل التنقل بين مصادر كثيرة.",
+  "قاعدة أسئلة كبيرة تتحرك مع التدريب وتخدم الكمي واللفظي داخل نفس التجربة.",
+  "خطة ذكية ومراجعة مرتبة تجعلك تعرف القرار التالي بدون تشتت.",
+];
 
 const diagnosticPoints = [
   "يعطيك نقطة بداية واضحة بدل المذاكرة العشوائية.",
@@ -89,6 +95,12 @@ const testimonialColors = [
   "bg-[linear-gradient(135deg,#123B7A,#1E56A0)]",
   "bg-[linear-gradient(135deg,#C99A43,#B78122)]",
   "bg-[linear-gradient(135deg,#1C3767,#315DA6)]",
+];
+
+const testimonialAvatars = [
+  "from-[#123B7A] to-[#2D67B4]",
+  "from-[#C99A43] to-[#D9B26A]",
+  "from-[#26497F] to-[#16315E]",
 ];
 
 const heroMetrics = ["25,000+ سؤال", "120+ اختبار", "16,000+ طالب", "خطة ذكية يومية"];
@@ -203,9 +215,26 @@ export default function HomePage() {
 
             <div className="space-y-5">
               <Reveal delay={0.05}>
+                <Card className="rounded-[2.1rem] border border-[#E8D8B3] bg-[linear-gradient(180deg,#fffdfa,#f8f3ea)] shadow-soft">
+                  <CardContent className="p-6">
+                    <div className="grid gap-4">
+                      {whyReasons.map((item, index) => (
+                        <div key={item} className="flex items-center gap-4 rounded-[1.6rem] border border-[#EADFC8] bg-white/90 px-5 py-4">
+                          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[linear-gradient(145deg,rgba(18,59,122,0.10),rgba(201,161,91,0.24))] text-[#C99A43]">
+                            <Sparkles className="h-5 w-5" />
+                          </div>
+                          <p className="text-base leading-8 text-slate-800">{item}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              </Reveal>
+
+              <Reveal delay={0.08}>
                 <div className="surface-dark p-6">
                   <p className="text-sm text-white/70">الأسئلة الأكثر تدريبًا</p>
-                  <div className="mt-5 grid gap-3">
+                  <div className="mt-5 grid gap-3 sm:grid-cols-2">
                     {mostTrained.map((item) => (
                       <div key={item} className="rounded-[1.4rem] border border-white/10 bg-white/6 p-4">
                         <div className="display-font text-lg font-bold text-white">{item}</div>
@@ -214,26 +243,6 @@ export default function HomePage() {
                     ))}
                   </div>
                 </div>
-              </Reveal>
-
-              <Reveal delay={0.08}>
-                <Card className="rounded-[2rem] border-white/80 bg-white/94 shadow-soft">
-                  <CardContent className="p-6">
-                    <p className="text-sm font-semibold text-slate-500">لماذا هذا أفضل للصفحة الرئيسية؟</p>
-                    <div className="mt-4 space-y-3 text-sm leading-8 text-slate-600">
-                      {[
-                        "يوصل الفكرة بسرعة بدل فتح البحث والفلترة مبكرًا داخل الصفحة الرئيسية.",
-                        "يترك صفحة البنوك المتخصصة للبحث العميق والتدريب التفصيلي.",
-                        "يحافظ على سرعة الإقناع في الأعلى قبل الدخول إلى التفاصيل.",
-                      ].map((item) => (
-                        <div key={item} className="flex gap-2">
-                          <CheckCircle2 className="mt-1 h-4 w-4 shrink-0 text-[#C99A43]" />
-                          {item}
-                        </div>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
               </Reveal>
             </div>
           </div>
@@ -390,16 +399,19 @@ export default function HomePage() {
                 text="عرض بصري سريع يوصلك للفكرة بسرعة: التشخيص، الرئيسية، البنوك، ولوحة الطالب."
               />
             </Reveal>
-            <div className="mt-10 grid gap-5 md:grid-cols-2 xl:grid-cols-4">
+            <div className="mt-10 flex snap-x gap-5 overflow-x-auto pb-3">
               {interfaces.map((item, index) => (
-                <Reveal key={item.title} delay={index * 0.04}>
+                <Reveal key={item.title} delay={index * 0.04} className="min-w-[285px] max-w-[285px] flex-none snap-start md:min-w-[300px] md:max-w-[300px]">
                   <Card className="h-full overflow-hidden rounded-[2.2rem] border-white/80 bg-white/94 shadow-soft">
                     <div className="border-b border-slate-200/80 bg-[linear-gradient(145deg,rgba(18,59,122,0.08),rgba(201,161,91,0.16))] p-5">
-                      <div className="rounded-[1.6rem] border border-white/80 bg-white/90 p-4">
-                        <div className="h-8 rounded-2xl bg-[linear-gradient(135deg,#123B7A,#C9A15B)]" />
+                      <div className="rounded-[1.7rem] border border-white/80 bg-white/90 p-4 shadow-soft">
+                        <div className="flex items-center justify-between">
+                          <div className="h-8 w-28 rounded-2xl bg-[linear-gradient(135deg,#123B7A,#C9A15B)]" />
+                          <div className="h-3 w-12 rounded-full bg-slate-200" />
+                        </div>
                         <div className="mt-3 grid gap-2">
-                          <div className="h-14 rounded-[1rem] bg-slate-100" />
-                          <div className="grid gap-2">
+                          <div className="h-28 rounded-[1.1rem] bg-[linear-gradient(180deg,#eef3fb,#f7efe1)]" />
+                          <div className="grid gap-2 sm:grid-cols-2">
                             <div className="h-12 rounded-[1rem] bg-slate-100" />
                             <div className="h-12 rounded-[1rem] bg-slate-100" />
                           </div>
@@ -427,6 +439,14 @@ export default function HomePage() {
                 </Reveal>
               ))}
             </div>
+            <div className="mt-5 flex items-center justify-center gap-2">
+              {interfaces.map((item, index) => (
+                <span
+                  key={item.title}
+                  className={`h-2.5 rounded-full ${index === 0 ? "w-8 bg-[#123B7A]" : "w-2.5 bg-slate-300"}`}
+                />
+              ))}
+            </div>
           </div>
         </section>
 
@@ -439,7 +459,13 @@ export default function HomePage() {
                 text="أبقيناها مختصرة وواضحة حتى تعطي الثقة بدون إطالة، وبألوان متناسقة مع هوية معيار الجديدة."
               />
             </Reveal>
-            <div className="mt-10 grid gap-5 md:grid-cols-3">
+            <div className="mt-10">
+              <div className="mb-6 flex justify-center">
+                <span className="mini-pill border-[#CFE3D2] bg-[#F3F9F4] px-5 py-2 text-[#2C8B50]">
+                  أكثر من 16,000 مستخدم
+                </span>
+              </div>
+              <div className="grid gap-5 md:grid-cols-3">
               {testimonials.map(([name, role, result, meta, quote], index) => (
                 <Reveal key={`${name}-${index}`} delay={index * 0.04}>
                   <Card className="h-full overflow-hidden rounded-[2.2rem] border-white/80 bg-white/95 shadow-soft">
@@ -454,18 +480,29 @@ export default function HomePage() {
                           <div className="display-font font-bold text-slate-950">{name}</div>
                           <div className="text-sm text-slate-500">{role}</div>
                         </div>
+                        <div className={`flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br text-sm font-black text-white ${testimonialAvatars[index % testimonialAvatars.length]}`}>
+                          {name.slice(0, 1)}
+                        </div>
+                      </div>
+                      <div className="mt-4 flex items-center justify-between gap-4">
                         <div className="flex items-center gap-1 text-amber-500">
                           {Array.from({ length: 5 }).map((_, starIndex) => (
                             <Star key={starIndex} className="h-4 w-4 fill-current" />
                           ))}
                         </div>
+                        <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">
+                          {meta}
+                        </span>
                       </div>
                       <blockquote className="mt-5 text-base leading-9 text-slate-900">{quote}</blockquote>
-                      <div className="mt-6 text-sm font-semibold text-[#123B7A]">{meta}</div>
+                      <div className="mt-6 border-t border-slate-100 pt-4 text-sm font-semibold text-[#123B7A]">
+                        {meta}
+                      </div>
                     </CardContent>
                   </Card>
                 </Reveal>
               ))}
+              </div>
             </div>
           </div>
         </section>

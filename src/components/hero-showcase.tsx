@@ -3,10 +3,9 @@ import { BarChart3, CheckCircle2, GraduationCap } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 
 const floatingCards = [
-  { label: "25,000+ سؤال", className: "right-6 top-6" },
+  { label: "25,000+ سؤال", className: "right-8 top-8" },
   { label: "120+ اختبار", className: "left-8 top-20" },
-  { label: "خطة ذكية", className: "right-10 bottom-8" },
-  { label: "تقدم أسبوعي", className: "-left-1 bottom-24" },
+  { label: "خطة ذكية", className: "right-10 bottom-10" },
 ];
 
 export function HeroShowcase() {
@@ -62,7 +61,7 @@ export function HeroShowcase() {
       ))}
 
       <div className="relative mx-auto flex h-[540px] w-full items-end justify-center">
-        <div className="absolute left-10 top-10 h-[380px] w-[430px] rounded-[1.8rem] border-[8px] border-[#D3A14B] bg-[linear-gradient(180deg,#14325f,#123b7a)] shadow-[0_30px_70px_rgba(0,0,0,0.22)]">
+        <div className="absolute left-10 top-12 h-[372px] w-[430px] rounded-[1.8rem] border-[8px] border-[#D3A14B] bg-[linear-gradient(180deg,#14325f,#123b7a)] shadow-[0_30px_70px_rgba(0,0,0,0.22)]">
           <div className="absolute inset-0 rounded-[1.2rem] bg-[radial-gradient(circle_at_20%_20%,rgba(255,255,255,0.08),transparent_20%),radial-gradient(circle_at_80%_24%,rgba(201,161,91,0.12),transparent_18%),linear-gradient(180deg,rgba(255,255,255,0.02),rgba(0,0,0,0.12))]" />
           <div className="relative z-10 p-7 text-white">
             <div className="flex items-center gap-2 text-white/85">
@@ -91,20 +90,7 @@ export function HeroShowcase() {
           <div className="absolute bottom-3 right-8 h-2 w-20 rounded-full bg-white/80" />
         </div>
 
-        <div className="absolute bottom-0 left-16 h-[295px] w-[138px]">
-          <div className="absolute bottom-[168px] left-[32px] h-[44px] w-[44px] rounded-full bg-[#EBC3A4]" />
-          <div className="absolute bottom-[182px] left-[20px] h-[28px] w-[66px] rounded-full bg-[#23242A]" />
-          <div className="absolute bottom-[130px] left-[14px] h-[90px] w-[84px] rounded-t-[42px] rounded-b-[24px] bg-[#E9EBF1]" />
-          <div className="absolute bottom-0 left-26 h-[142px] w-[22px] rounded-full bg-[#2E3038]" />
-          <div className="absolute bottom-0 left-[58px] h-[142px] w-[24px] rounded-full bg-[#2E3038]" />
-          <div className="absolute bottom-[104px] left-0 h-[20px] w-[46px] rotate-[18deg] rounded-full bg-[#E9EBF1]" />
-          <div className="absolute bottom-[104px] right-0 h-[20px] w-[46px] -rotate-[16deg] rounded-full bg-[#E9EBF1]" />
-          <div className="absolute bottom-[160px] left-[14px] h-[82px] w-[86px] rounded-t-[56px] rounded-b-[20px] bg-[#23242A]" />
-          <div className="absolute bottom-[166px] left-[30px] h-[12px] w-[12px] rounded-full bg-[#1D1F26]" />
-          <div className="absolute bottom-[166px] left-[60px] h-[12px] w-[12px] rounded-full bg-[#1D1F26]" />
-        </div>
-
-        <div className="absolute bottom-0 left-[176px] h-[360px] w-[176px]">
+        <div className="absolute bottom-0 left-[126px] h-[360px] w-[176px]">
           <div className="absolute bottom-[230px] left-[60px] h-[52px] w-[52px] rounded-full bg-[#E6BA95]" />
           <div className="absolute bottom-[236px] left-[48px] h-[30px] w-[76px] rounded-full bg-[#8F2E32]" />
           <div className="absolute bottom-[220px] left-[32px] h-[24px] w-[112px] rounded-t-full bg-[#8F2E32]" />
@@ -117,7 +103,7 @@ export function HeroShowcase() {
           <div className="absolute bottom-[190px] left-[78px] h-[20px] w-[16px] rounded-b-full bg-[#693326]" />
         </div>
 
-        <div className="absolute right-4 bottom-6 w-[270px] rounded-[2rem] border border-white/25 bg-white/94 p-4 shadow-[0_24px_50px_rgba(0,0,0,0.16)]">
+        <div className="absolute right-6 bottom-8 w-[290px] rounded-[2rem] border border-white/25 bg-white/95 p-4 shadow-[0_24px_50px_rgba(0,0,0,0.16)]">
           <div className="rounded-[1.5rem] bg-[linear-gradient(145deg,#123B7A,#1f4c96)] p-4 text-white">
             <div className="text-xs text-white/70">جلسة اليوم</div>
             <div className="display-font mt-2 text-xl font-bold">20 كمي + 15 لفظي</div>
