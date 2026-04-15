@@ -15,9 +15,9 @@ export function MiyaarLogo({
         <svg viewBox="0 0 64 64" className="h-full w-full">
           <defs>
             <linearGradient id="miyaarBrand" x1="12%" y1="10%" x2="86%" y2="86%">
-              <stop offset="0%" stopColor="#7c72ff" />
-              <stop offset="48%" stopColor="#1e2a55" />
-              <stop offset="100%" stopColor="#d2a85a" />
+              <stop offset="0%" stopColor="#4f46e5" />
+              <stop offset="48%" stopColor="#7c3aed" />
+              <stop offset="100%" stopColor="#f59e0b" />
             </linearGradient>
           </defs>
           <rect x="4" y="4" width="56" height="56" rx="18" fill="url(#miyaarBrand)" />

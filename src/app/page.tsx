@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowLeft, CheckCircle2 } from "lucide-react";
+import { ArrowLeft, CheckCircle2, PlayCircle, Sparkles, Star } from "lucide-react";
 
 import { BankExplorer } from "@/components/bank-explorer";
 import { Reveal } from "@/components/reveal";
@@ -9,418 +9,137 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import {
-  banks,
-  benefits,
-  dashboardBars,
-  dashboardMetrics,
-  dashboardSummary,
-  features,
-  finalStats,
-  heroProof,
-  interfaces,
-  planPoints,
-  proofStats,
-  quickStats,
-  testimonials,
-  weeklyPlan,
-} from "@/data/miyaar";
+import { banks, benefits, dashboardBars, finalStats, interfaces, weeklyPlan } from "@/data/miyaar";
 
 const navLinks = [
-  { href: "/#features", label: "المزايا" },
+  { href: "/#why", label: "لماذا معيار" },
   { href: "/#banks", label: "بنوك الأسئلة" },
-  { href: "/#plan", label: "الخطة الذكية" },
-  { href: "/#dashboard", label: "لوحة الطالب" },
+  { href: "/#student", label: "تجربة الطالب" },
   { href: "/#testimonials", label: "آراء الطلاب" },
-  { href: "/#interfaces", label: "الواجهات" },
+];
+
+const trustCards = [
+  ["25,000+", "سؤال تدريبي منظم"],
+  ["120+", "اختبار محاكي"],
+  ["16,000+", "طالب يذاكر مع معيار"],
+  ["يوميًا", "خطة ذكية تتغير معك"],
+];
+
+const whyCards = [
+  "بنك أسئلة ضخم",
+  "خطة على مقاسك",
+  "مراجعة الأخطاء",
+  "اختبارات محاكية",
+  "تحليلات أداء",
+  "توصيات يومية",
+];
+
+const steps = [
+  ["01", "اختبر مستواك", "ابدأ بتشخيص سريع يحدد أين تقف بدل التخمين."],
+  ["02", "خذ خطة يومية ذكية", "اعرف ماذا تذاكر اليوم وماذا تراجع غدًا."],
+  ["03", "ارفع درجتك خطوة بخطوة", "راقب تقدمك وانتقل للاختبارات المحاكية في الوقت المناسب."],
+];
+
+const testimonials = [
+  ["رهف الشمري", "طالبة قدرات", "+18 درجة", "خلال 6 أسابيع", "الخطة كانت واضحة جدًا، وكل يوم أعرف ماذا أبدأ به بدل التشتت."],
+  ["عبدالله القحطاني", "طالب ثالث ثانوي", "ثقة أعلى", "قبل الاختبار النهائي", "لوحة الطالب أوضحت لي أخطائي المتكررة وجعلت المراجعة أذكى."],
+  ["لمى الحربي", "مستخدمة مستمرة", "+11 درجة", "مع مراجعة يومية", "واجهة مريحة جدًا، والتقارير فرقت معي بين ضعف الفهم وضعف السرعة."],
 ];
 
 export default function HomePage() {
   return (
     <div className="min-h-screen">
-      <SiteHeader links={navLinks} />
+      <SiteHeader links={navLinks} ctaHref="/dashboard" ctaLabel="شاهد تجربة الطالب" />
 
       <main>
-        <section className="section-shell overflow-hidden pt-10 md:pt-16" id="hero">
-          <div className="mx-auto grid w-[min(calc(100%-2rem),1180px)] gap-10 md:grid-cols-[1.03fr,0.97fr] md:items-center">
+        <section className="section-shell overflow-hidden pb-8 pt-8 md:pt-14" id="hero">
+          <div className="mx-auto grid w-[min(calc(100%-2rem),1180px)] gap-10 lg:grid-cols-[0.92fr,1.08fr] lg:items-center">
             <Reveal>
-              <Badge>منصة قدرات عربية حديثة بلمسة فاخرة</Badge>
-              <h1 className="page-heading mt-5">
-                استعد لاختبار القدرات بطريقة <span className="bg-[linear-gradient(135deg,#1e2a55,#7568ff,#d2a85a)] bg-clip-text text-transparent">أذكى</span> مع معيار
+              <Badge className="bg-white/90">منصة قدرات عربية حديثة بلمسة فاخرة</Badge>
+              <h1 className="page-heading mt-6">
+                اقفل على القدرات
+                <span className="bg-[linear-gradient(135deg,#4f46e5,#7c3aed,#f59e0b)] bg-clip-text text-transparent">
+                  {" "}
+                  بخطة ذكية
+                </span>
+                ، تدريب يومي، واختبارات تحاكي الواقع
               </h1>
               <p className="section-copy max-w-2xl">
-                بنوك أسئلة ضخمة، قطع لفظية مترابطة، اختبارات محاكية، وخطة يومية ذكية
-                مصممة حسب مستواك الحقيقي. كل ذلك داخل تجربة عربية واضحة، راقية،
-                وتمنحك إحساس الثقة من أول ثانية.
+                بنوك أسئلة ضخمة، خطة مذاكرة تتغير حسب مستواك، ولوحة طالب تبين لك ماذا تذاكر اليوم وكيف ترتفع درجتك.
               </p>
-              <div className="mt-7 flex flex-wrap items-center gap-3">
-                <Link href="#cta">
-                  <Button size="lg">ابدأ الآن</Button>
-                </Link>
-                <Link href="/banks">
-                  <Button size="lg" variant="outline">
-                    تصفح البنوك
-                  </Button>
-                </Link>
+              <div className="mt-8 flex flex-wrap gap-3">
+                <Link href="#cta"><Button size="lg">ابدأ الآن</Button></Link>
+                <Link href="#student"><Button size="lg" variant="outline">شاهد كيف تعمل المنصة</Button></Link>
               </div>
-
-              <div className="mt-7 flex flex-wrap gap-3">
-                {heroProof.map((item) => (
-                  <div
-                    key={item.title}
-                    className="rounded-[1.4rem] border border-white/70 bg-white/80 px-4 py-3 shadow-soft"
-                  >
-                    <div className="display-font text-sm font-bold text-slate-950">{item.title}</div>
-                    <div className="mt-1 text-xs text-slate-500">{item.text}</div>
-                  </div>
+              <div className="mt-5 flex flex-wrap gap-3">
+                {["اختبر مستواك الآن", "جلسة اليوم جاهزة", "الخطة الذكية تتغير معك"].map((item) => (
+                  <span key={item} className="mini-pill rounded-full bg-white/85 px-4 py-2 text-sm shadow-soft">{item}</span>
                 ))}
               </div>
-
-              <div className="mt-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-                {quickStats.map((item) => {
-                  const Icon = item.icon;
-                  return (
-                    <Card key={item.label}>
-                      <CardContent className="p-4">
-                        <div className="flex items-center gap-2 text-slate-500">
-                          <Icon className="h-4 w-4 text-violet-700" />
-                          <span className="text-xs">{item.label}</span>
-                        </div>
-                        <div className="display-font mt-2 text-2xl font-bold text-slate-950">{item.value}</div>
-                      </CardContent>
-                    </Card>
-                  );
-                })}
-              </div>
             </Reveal>
 
             <Reveal delay={0.05}>
-              <div className="relative">
-                <div className="absolute right-8 top-0 rounded-full border border-violet-200 bg-white/90 px-4 py-2 text-sm font-semibold text-violet-700 shadow-soft">
-                  +16,000 طالب يذاكر مع معيار
-                </div>
-                <div className="absolute -left-2 bottom-16 rounded-full border border-amber-200 bg-white/90 px-4 py-2 text-sm font-semibold text-amber-700 shadow-soft">
-                  خطة تتغير مع مستواك
-                </div>
-                <Card className="overflow-hidden rounded-[2.3rem] bg-[radial-gradient(circle_at_top_right,rgba(117,104,255,0.16),transparent_24%),linear-gradient(180deg,rgba(255,255,255,0.96),rgba(247,248,253,0.92))] p-6 shadow-luxe">
-                  <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-200/80 pb-5">
-                    <div>
-                      <p className="text-sm text-slate-500">لوحة معيار</p>
-                      <h2 className="display-font text-2xl font-bold text-slate-950">
-                        تجربة منظمة تقودك للدرجة الأعلى
-                      </h2>
+              <Card className="overflow-hidden rounded-[2.6rem] border-0 bg-[radial-gradient(circle_at_top_left,rgba(124,58,237,0.15),transparent_24%),radial-gradient(circle_at_bottom_right,rgba(245,158,11,0.12),transparent_22%),linear-gradient(180deg,rgba(255,255,255,0.98),rgba(246,247,252,0.94))] shadow-luxe">
+                <CardContent className="grid gap-4 p-5 md:grid-cols-[1.05fr,0.95fr]">
+                  <div className="rounded-[2rem] bg-[linear-gradient(145deg,#121b37,#243364,#4f46e5)] p-6 text-white">
+                    <div className="flex items-center justify-between gap-3">
+                      <div>
+                        <p className="text-sm text-white/70">جلسة اليوم</p>
+                        <h2 className="display-font mt-2 text-2xl font-bold">خطة جاهزة ترفع الدرجة</h2>
+                      </div>
+                      <Badge className="border-white/10 bg-white/10 text-white">Smart</Badge>
                     </div>
-                    <Badge>MVP جاهز</Badge>
+                    <div className="mt-5 grid gap-3">
+                      {["15 سؤال لفظي", "قطعة قصيرة", "مراجعة 8 أخطاء"].map((item) => (
+                        <div key={item} className="rounded-[1.4rem] border border-white/10 bg-white/5 p-4">{item}</div>
+                      ))}
+                    </div>
+                    <div className="mt-5">
+                      <div className="flex items-center justify-between text-sm text-white/75">
+                        <span>جاهزية هذا الأسبوع</span>
+                        <span className="font-semibold">82%</span>
+                      </div>
+                      <Progress value={82} className="mt-3 bg-white/10" indicatorClassName="bg-[linear-gradient(90deg,#f8e0ac,#ffffff)]" />
+                    </div>
                   </div>
 
-                  <div className="mt-5 grid gap-4 md:grid-cols-2">
-                    <div className="rounded-[1.8rem] bg-[linear-gradient(145deg,#16213f,#2b3570,#7568ff)] p-5 text-white shadow-luxe">
-                      <p className="text-sm text-white/70">توصيات اليوم</p>
-                      <div className="display-font mt-3 text-2xl font-bold leading-relaxed">
-                        قطعة قصيرة + 15 سؤال لفظي + مراجعة الأخطاء
-                      </div>
-                      <p className="mt-3 text-sm leading-7 text-white/70">
-                        المسار اليومي يتشكل تلقائيًا حسب السرعة والدقة والوقت المتاح
-                        قبل الاختبار.
-                      </p>
-                      <Progress
-                        value={72}
-                        className="mt-5 bg-white/15"
-                        indicatorClassName="bg-[linear-gradient(90deg,#f6deb1,#ffffff)]"
-                      />
-                    </div>
-
-                    <Card className="rounded-[1.8rem] bg-white/90">
+                  <div className="grid gap-4">
+                    <Card className="rounded-[2rem] border-white/80 bg-white/92">
                       <CardContent className="p-5">
                         <div className="flex items-center justify-between gap-3">
-                          <p className="text-sm text-slate-500">الإتقان الحالي</p>
-                          <div className="display-font text-2xl font-bold text-slate-950">82%</div>
+                          <div>
+                            <p className="text-sm text-slate-500">شريط تقدم حي</p>
+                            <h3 className="display-font mt-2 text-xl font-bold text-slate-950">الإتقان يتغير أمامك</h3>
+                          </div>
+                          <Sparkles className="h-5 w-5 text-violet-600" />
                         </div>
                         <div className="mt-5 space-y-4">
+                          {[["الإتقان", 82], ["القطع", 64], ["التناظر", 91]].map(([label, value]) => (
+                            <div key={label as string} className="space-y-2">
+                              <div className="flex items-center justify-between text-sm"><span>{label}</span><span>{value}%</span></div>
+                              <Progress value={value as number} />
+                            </div>
+                          ))}
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    <Card className="rounded-[2rem] border-white/80 bg-white/92">
+                      <CardContent className="p-5">
+                        <p className="text-sm text-slate-500">قبل / بعد</p>
+                        <div className="mt-4 grid gap-3">
                           {[
-                            { label: "التناظر", value: 91 },
-                            { label: "إكمال الجمل", value: 76 },
-                            { label: "القطع", value: 63 },
-                          ].map((item) => (
-                            <div key={item.label} className="space-y-2">
-                              <div className="text-sm text-slate-600">{item.label}</div>
-                              <Progress value={item.value} />
+                            ["قبل الخطة", "تشتت بين بنوك كثيرة ومراجعة بلا أولوية."],
+                            ["بعد الخطة", "مسار يومي واضح وتقدم يمكن قياسه."],
+                          ].map(([title, text]) => (
+                            <div key={title as string} className="rounded-[1.4rem] border border-slate-200/80 bg-slate-50/80 p-4">
+                              <div className="display-font font-bold text-slate-950">{title}</div>
+                              <p className="mt-2 text-sm leading-7 text-slate-600">{text}</p>
                             </div>
                           ))}
                         </div>
                       </CardContent>
                     </Card>
-
-                    <div className="surface-dark md:col-span-2 p-5">
-                      <div className="flex flex-wrap items-center justify-between gap-4">
-                        <div>
-                          <p className="text-sm text-white/70">بنوك جاهزة حسب المهارة</p>
-                          <h3 className="display-font mt-2 text-xl font-bold">
-                            ابنِ اختبارك أو تدرب بسرعة
-                          </h3>
-                        </div>
-                        <span className="mini-pill border-white/10 bg-white/10 text-white">لفظي</span>
-                      </div>
-
-                      <div className="mt-5 grid gap-3 sm:grid-cols-3">
-                        {banks.slice(0, 3).map((bank) => (
-                          <div
-                            key={bank.id}
-                            className="rounded-[1.5rem] border border-white/10 bg-white/5 p-4"
-                          >
-                            <div className="text-sm text-white/70">{bank.title}</div>
-                            <div className="display-font mt-2 text-2xl font-bold text-white">
-                              {bank.count.toLocaleString("en-US")}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                </Card>
-              </div>
-            </Reveal>
-          </div>
-        </section>
-
-        <section className="section-shell pt-2">
-          <div className="mx-auto grid w-[min(calc(100%-2rem),1180px)] gap-4 rounded-[2rem] bg-[linear-gradient(145deg,#111930,#182646_60%,#1d2b56)] p-5 text-white shadow-luxe md:grid-cols-4">
-            {proofStats.map((item) => (
-              <div key={item.label} className="rounded-[1.4rem] border border-white/10 bg-white/5 p-5">
-                <div className="display-font text-3xl font-bold">{item.value}</div>
-                <div className="mt-2 text-sm text-white/70">{item.label}</div>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        <section className="section-shell" id="features">
-          <div className="mx-auto w-[min(calc(100%-2rem),1180px)]">
-            <Reveal>
-              <SectionTitle
-                badge="المزايا الأساسية"
-                title="كل ما يحتاجه طالب القدرات داخل تجربة واحدة واضحة وراقية"
-                text="استلهمنا من الهيكلة التسويقية القوية للمنصات التعليمية الكبيرة، لكن صغناها لهوية معيار بشكل أكثر هدوءًا، تنظيمًا، واحترافًا."
-              />
-            </Reveal>
-
-            <div className="mt-10 grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-              {features.map((feature, index) => {
-                const Icon = feature.icon;
-                return (
-                  <Reveal key={feature.title} delay={index * 0.04}>
-                    <Card className="h-full rounded-[2rem] bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(245,247,252,0.9))]">
-                      <CardContent className="p-6">
-                        <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[linear-gradient(145deg,rgba(117,104,255,0.14),rgba(210,168,90,0.16))] text-violet-700">
-                          <Icon className="h-6 w-6" />
-                        </div>
-                        <h3 className="display-font mt-5 text-xl font-bold text-slate-950">
-                          {feature.title}
-                        </h3>
-                        <p className="mt-3 text-sm leading-8 text-slate-600">{feature.text}</p>
-                      </CardContent>
-                    </Card>
-                  </Reveal>
-                );
-              })}
-            </div>
-          </div>
-        </section>
-
-        <section className="section-shell" id="banks">
-          <div className="mx-auto grid w-[min(calc(100%-2rem),1180px)] gap-8 lg:grid-cols-[1.18fr,0.82fr]">
-            <Reveal>
-              <SectionTitle
-                badge="بنوك الأسئلة"
-                title="ابحث وفلتر وتدرّب على البنك المناسب في ثوانٍ"
-                text="لفظي، قطع، تناظر لفظي، إكمال الجمل، الخطأ السياقي، والمفردة الشاذة. كل بنك مصمم ليخدم التدريب السريع والاختبار المخصص."
-                align="right"
-              />
-              <div className="mt-8">
-                <BankExplorer items={banks} />
-              </div>
-            </Reveal>
-
-            <div className="space-y-5">
-              <Reveal delay={0.05}>
-                <div className="surface-dark p-6">
-                  <p className="text-sm text-white/70">كيف تُبنى بنوك معيار؟</p>
-                  <h3 className="display-font mt-3 text-2xl font-bold">هيكلة ذكية وتخصيص مرن</h3>
-                  <div className="mt-5 space-y-3">
-                    {[
-                      {
-                        title: "هيكلة ذكية",
-                        text: "ربط القطعة بعدة أسئلة بدل تكرار النص داخل كل عنصر.",
-                      },
-                      {
-                        title: "تصنيف دقيق",
-                        text: "كل سؤال مرتبط بمهارة وصعوبة وتكرار وتفسير واضح.",
-                      },
-                      {
-                        title: "استخدام مرن",
-                        text: "تدريب سريع، اختبار مخصص، أو توصية يومية حسب الأداء.",
-                      },
-                    ].map((item) => (
-                      <div
-                        key={item.title}
-                        className="rounded-[1.4rem] border border-white/10 bg-white/5 p-4"
-                      >
-                        <div className="display-font text-base font-bold text-white">{item.title}</div>
-                        <div className="mt-1 text-sm leading-7 text-white/70">{item.text}</div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </Reveal>
-
-              <Reveal delay={0.08}>
-                <Card>
-                  <CardContent className="p-6">
-                    <p className="text-sm font-semibold text-slate-500">ميزة إضافية مهمة</p>
-                    <ul className="mt-4 space-y-3 text-sm leading-8 text-slate-600">
-                      {benefits.map((item) => (
-                        <li key={item} className="flex gap-2">
-                          <CheckCircle2 className="mt-1 h-4 w-4 shrink-0 text-emerald-600" />
-                          {item}
-                        </li>
-                      ))}
-                    </ul>
-                  </CardContent>
-                </Card>
-              </Reveal>
-            </div>
-          </div>
-        </section>
-
-        <section className="section-shell" id="plan">
-          <div className="mx-auto grid w-[min(calc(100%-2rem),1180px)] gap-8 lg:grid-cols-[0.9fr,1.1fr]">
-            <Reveal>
-              <div className="surface-card p-7">
-                <Badge>الخطة الذكية</Badge>
-                <h2 className="section-title max-w-2xl text-right">
-                  ليست خطة ثابتة للجميع. إنها خطة تتشكل حسبك أنت.
-                </h2>
-                <p className="section-copy max-w-xl text-right">
-                  معيار تتابع أداء الطالب وتبني له مسارًا يوميًا أو أسبوعيًا بحسب
-                  نقاط القوة والضعف، قرب موعد الاختبار، وعدد الساعات المتاحة له.
-                </p>
-                <div className="mt-6 grid gap-3">
-                  {planPoints.map((point) => (
-                    <div
-                      key={point.title}
-                      className="rounded-[1.5rem] border border-slate-200/80 bg-white/80 p-5"
-                    >
-                      <div className="display-font text-lg font-bold text-slate-950">{point.title}</div>
-                      <div className="mt-2 text-sm leading-8 text-slate-600">{point.text}</div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </Reveal>
-
-            <Reveal delay={0.05}>
-              <div className="surface-card p-7">
-                <div className="flex flex-wrap items-center justify-between gap-4">
-                  <div>
-                    <p className="text-sm text-slate-500">أسبوعك في معيار</p>
-                    <h3 className="display-font text-2xl font-bold text-slate-950">
-                      الخطة تتحسن مع كل جلسة
-                    </h3>
-                  </div>
-                  <Badge>Dynamic Plan</Badge>
-                </div>
-                <div className="mt-6 space-y-4">
-                  {weeklyPlan.map((item) => (
-                    <div
-                      key={item.day}
-                      className="rounded-[1.5rem] border border-slate-200/80 bg-white/70 p-4"
-                    >
-                      <div className="flex flex-wrap items-center justify-between gap-3">
-                        <div>
-                          <div className="text-sm text-slate-500">{item.day}</div>
-                          <div className="display-font mt-1 text-lg font-bold text-slate-950">
-                            {item.task}
-                          </div>
-                        </div>
-                        <div className="display-font text-lg font-bold text-slate-950">
-                          {item.progress}%
-                        </div>
-                      </div>
-                      <Progress value={item.progress} className="mt-4" />
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </Reveal>
-          </div>
-        </section>
-
-        <section className="section-shell" id="dashboard">
-          <div className="mx-auto w-[min(calc(100%-2rem),1180px)]">
-            <Reveal>
-              <SectionTitle
-                badge="لوحة الطالب"
-                title="Dashboard أنيق يوضح التقدم بلا تعقيد"
-                text="نسبة التقدم، نقاط القوة والضعف، عدد الأسئلة المحلولة، المحفوظة، الأداء الأسبوعي، وتوصيات اليوم في مساحة واحدة واضحة."
-              />
-            </Reveal>
-
-            <Reveal delay={0.04}>
-              <Card className="mt-10 p-2">
-                <CardContent className="space-y-6 p-6">
-                  <div className="flex flex-wrap items-center justify-between gap-4">
-                    <div>
-                      <p className="text-sm text-slate-500">مسار الطالب</p>
-                      <h3 className="display-font text-2xl font-bold text-slate-950">
-                        لوحة مريحة تركز على القرار التالي
-                      </h3>
-                    </div>
-                    <Link href="/dashboard">
-                      <Button variant="outline">فتح اللوحة</Button>
-                    </Link>
-                  </div>
-
-                  <div className="grid gap-5 lg:grid-cols-[1.3fr,0.7fr]">
-                    <div className="space-y-5">
-                      {dashboardMetrics.map((item) => (
-                        <div
-                          key={item.title}
-                          className="rounded-[1.7rem] border border-slate-200/80 bg-white/80 p-5"
-                        >
-                          <p className="text-sm text-slate-500">{item.title}</p>
-                          <div className="display-font mt-2 text-3xl font-bold text-slate-950">
-                            {item.value}
-                          </div>
-                          <p className="mt-2 text-sm leading-7 text-slate-600">{item.note}</p>
-                        </div>
-                      ))}
-
-                      <div className="rounded-[1.7rem] border border-slate-200/80 bg-white/80 p-5">
-                        <p className="text-sm text-slate-500">نقاط القوة والضعف</p>
-                        <div className="mt-4 space-y-4">
-                          {dashboardBars.map((item) => (
-                            <div key={item.label} className="space-y-2">
-                              <div className="text-sm text-slate-600">{item.label}</div>
-                              <Progress value={item.value} />
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="space-y-4">
-                      {dashboardSummary.map((item) => (
-                        <div
-                          key={item.label}
-                          className="rounded-[1.7rem] border border-slate-200/80 bg-white/80 p-5"
-                        >
-                          <div className="display-font text-3xl font-bold text-slate-950">
-                            {item.value}
-                          </div>
-                          <p className="mt-2 text-sm text-slate-600">{item.label}</p>
-                        </div>
-                      ))}
-                    </div>
                   </div>
                 </CardContent>
               </Card>
@@ -428,120 +147,141 @@ export default function HomePage() {
           </div>
         </section>
 
-        <section className="section-shell" id="testimonials">
-          <div className="mx-auto w-[min(calc(100%-2rem),1180px)]">
-            <Reveal>
-              <SectionTitle
-                badge="آراء الطلاب"
-                title="ثقة تنعكس في التجربة لا في الكلمات فقط"
-                text="بطاقات شهادات منظمة وراقية تركز على أثر المنصة: التحسن، وضوح الخطة، وراحة الاستخدام."
-              />
-            </Reveal>
+        <section className="section-shell pt-0">
+          <div className="mx-auto grid w-[min(calc(100%-2rem),1180px)] gap-4 md:grid-cols-2 xl:grid-cols-4">
+            {trustCards.map(([value, label], index) => (
+              <Reveal key={label} delay={index * 0.03}>
+                <Card className="rounded-[2rem] border-white/80 bg-white/90"><CardContent className="p-6"><div className="display-font text-3xl font-bold text-slate-950">{value}</div><div className="mt-3 text-lg font-semibold text-slate-900">{label}</div></CardContent></Card>
+              </Reveal>
+            ))}
+          </div>
+        </section>
 
-            <div className="mt-10 grid gap-5 lg:grid-cols-3">
-              {testimonials.map((item, index) => (
-                <Reveal key={item.name} delay={index * 0.05}>
-                  <Card className="h-full bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(244,246,251,0.92))]">
-                    <CardContent className="p-6">
-                      <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[linear-gradient(145deg,rgba(117,104,255,0.14),rgba(210,168,90,0.16))] text-lg font-bold text-violet-700">
-                        “
-                      </div>
-                      <blockquote className="mt-4 leading-9 text-slate-900">
-                        {item.quote}
-                      </blockquote>
-                      <div className="mt-6 flex flex-wrap items-center justify-between gap-3 border-t border-slate-200/80 pt-4">
-                        <div>
-                          <div className="display-font font-bold text-slate-950">{item.name}</div>
-                          <div className="text-sm text-slate-500">{item.meta}</div>
-                        </div>
-                        <div className="text-left md:text-right">
-                          <div className="display-font font-bold text-slate-950">{item.result}</div>
-                          <div className="text-sm text-slate-500">الأثر الملحوظ</div>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
+        <section className="section-shell" id="why">
+          <div className="mx-auto w-[min(calc(100%-2rem),1180px)]">
+            <Reveal><SectionTitle badge="لماذا معيار؟" title="وضوح أسرع، بصريات أقوى، وتجربة أبسط من أول ثانية" text="البنية هنا مختصرة ومباشرة: قيمة واضحة، مزايا كبيرة، وتدرج يقود الطالب إلى الخطة والنتيجة." /></Reveal>
+            <div className="mt-10 grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+              {whyCards.map((item, index) => (
+                <Reveal key={item} delay={index * 0.04}>
+                  <Card className="h-full rounded-[2rem] border-white/80 bg-white/92"><CardContent className="p-6"><div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[linear-gradient(145deg,rgba(79,70,229,0.12),rgba(245,158,11,0.18))] text-indigo-700">{index + 1}</div><h3 className="display-font mt-5 text-2xl font-bold text-slate-950">{item}</h3><p className="mt-3 text-sm leading-8 text-slate-600">تفصيل مباشر وواضح يساعد الطالب أن يعرف الفائدة دون قراءة طويلة أو ازدحام بصري.</p></CardContent></Card>
                 </Reveal>
               ))}
             </div>
           </div>
         </section>
 
-        <section className="section-shell pt-4">
-          <div className="mx-auto grid w-[min(calc(100%-2rem),1180px)] gap-4 rounded-[2rem] bg-[linear-gradient(145deg,#111930,#182646_60%,#1d2b56)] p-5 text-white shadow-luxe md:grid-cols-4">
-            {finalStats.map((item) => (
-              <div key={item.label} className="rounded-[1.4rem] border border-white/10 bg-white/5 p-5">
-                <div className="display-font text-3xl font-bold">{item.value}</div>
-                <div className="mt-2 text-sm text-white/70">{item.label}</div>
+        <section className="section-shell pt-2">
+          <div className="mx-auto grid w-[min(calc(100%-2rem),1180px)] gap-8 lg:grid-cols-[0.84fr,1.16fr] lg:items-center">
+            <Reveal>
+              <div className="surface-card p-7">
+                <Badge>كيف تعمل المنصة</Badge>
+                <h2 className="section-title max-w-2xl text-right">اختبر مستواك، خذ خطة ذكية، وارفع درجتك خطوة بخطوة</h2>
+                <p className="section-copy max-w-xl text-right">التجربة هنا تقود الطالب إلى القرار التالي بدل أن تفتح له عشرات المسارات في وقت واحد.</p>
+                <div className="mt-6 flex flex-wrap gap-3">
+                  <Link href="/exam"><Button>اختبر مستواك الآن</Button></Link>
+                  <Link href="#student"><Button variant="outline">شاهد رحلة الطالب</Button></Link>
+                </div>
               </div>
-            ))}
+            </Reveal>
+            <div className="grid gap-4 md:grid-cols-3">
+              {steps.map(([step, title, text], index) => (
+                <Reveal key={step} delay={index * 0.05}>
+                  <Card className="h-full rounded-[2rem] border-white/80 bg-white/92"><CardContent className="p-6"><div className="display-font text-sm font-bold tracking-[0.18em] text-indigo-600">{step}</div><h3 className="display-font mt-4 text-2xl font-bold text-slate-950">{title}</h3><p className="mt-3 text-sm leading-8 text-slate-600">{text}</p></CardContent></Card>
+                </Reveal>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        <section className="section-shell" id="banks">
+          <div className="mx-auto grid w-[min(calc(100%-2rem),1180px)] gap-8 lg:grid-cols-[1.12fr,0.88fr]">
+            <Reveal>
+              <SectionTitle badge="بنوك الأسئلة" title="ابحث وفلتر وابدأ من البنك الذي تحتاجه فعلًا" text="لفظي، قطع، تناظر لفظي، إكمال الجمل، الخطأ السياقي، والمفردة الشاذة داخل واجهة مرتبة وسريعة." align="right" />
+              <div className="mt-8"><BankExplorer items={banks} /></div>
+            </Reveal>
+            <div className="space-y-5">
+              <Reveal delay={0.05}>
+                <div className="surface-dark p-6">
+                  <p className="text-sm text-white/70">الأسئلة الأكثر تدريبًا</p>
+                  <div className="mt-5 grid gap-3">
+                    {["التناظر اللفظي", "إكمال الجمل", "الخطأ السياقي", "القطع القصيرة"].map((item) => (
+                      <div key={item} className="rounded-[1.4rem] border border-white/10 bg-white/5 p-4">
+                        <div className="display-font text-lg font-bold text-white">{item}</div>
+                        <div className="mt-1 text-sm text-white/70">محتوى حي يتحرك مع استخدام الطلاب</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </Reveal>
+              <Reveal delay={0.08}>
+                <Card className="rounded-[2rem] border-white/80 bg-white/92"><CardContent className="p-6"><p className="text-sm font-semibold text-slate-500">لماذا هذه البنية أفضل؟</p><div className="mt-4 space-y-3 text-sm leading-8 text-slate-600">{benefits.map((item) => <div key={item} className="flex gap-2"><CheckCircle2 className="mt-1 h-4 w-4 shrink-0 text-emerald-600" />{item}</div>)}</div></CardContent></Card>
+              </Reveal>
+            </div>
+          </div>
+        </section>
+
+        <section className="section-shell" id="student">
+          <div className="mx-auto w-[min(calc(100%-2rem),1180px)]">
+            <Reveal><SectionTitle badge="تجربة الطالب" title="الخطة، التقدم، والتوصيات اليومية كلها أمامك في شاشة واحدة" text="جلسة اليوم، شريط التقدم، ونقاط القوة والضعف تظهر بوضوح حتى تصبح المذاكرة أكثر تنظيمًا وأقل تشتيتًا." /></Reveal>
+            <div className="mt-10 grid gap-6 lg:grid-cols-[1.18fr,0.82fr]">
+              <Reveal>
+                <Card className="rounded-[2.3rem] border-white/80 bg-white/92">
+                  <CardContent className="space-y-6 p-6">
+                    <div className="flex flex-wrap items-center justify-between gap-4">
+                      <div><p className="text-sm text-slate-500">الخطة الذكية تتغير معك</p><h3 className="display-font text-2xl font-bold text-slate-950">Dashboard يريك القرار التالي</h3></div>
+                      <Link href="/dashboard"><Button variant="outline">شاهد تجربة الطالب</Button></Link>
+                    </div>
+                    <div className="grid gap-5 md:grid-cols-2">
+                      <div className="rounded-[1.7rem] border border-slate-200/80 bg-slate-50/80 p-5">
+                        <p className="text-sm text-slate-500">شريط تقدم حي</p>
+                        <div className="mt-4 space-y-4">{dashboardBars.map((item) => <div key={item.label} className="space-y-2"><div className="flex items-center justify-between text-sm"><span>{item.label}</span><span>{item.value}%</span></div><Progress value={item.value} /></div>)}</div>
+                      </div>
+                      <div className="rounded-[1.7rem] border border-slate-200/80 bg-slate-50/80 p-5">
+                        <p className="text-sm text-slate-500">خطة هذا الأسبوع</p>
+                        <div className="mt-4 space-y-3">{weeklyPlan.map((item) => <div key={item.day} className="rounded-[1.4rem] border border-slate-200/80 bg-white p-4"><div className="text-sm text-slate-500">{item.day}</div><div className="display-font mt-1 text-lg font-bold text-slate-950">{item.task}</div><Progress value={item.progress} className="mt-4" /></div>)}</div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </Reveal>
+              <Reveal delay={0.05}>
+                <div className="space-y-5">
+                  <div className="surface-dark p-6"><p className="text-sm text-white/70">جلسة اليوم</p><div className="mt-4 grid gap-3">{["15 سؤال لفظي", "قطعة قصيرة", "مراجعة 8 أخطاء"].map((item) => <div key={item} className="rounded-[1.4rem] border border-white/10 bg-white/5 p-4 text-white">{item}</div>)}</div></div>
+                  <Card className="rounded-[2rem] border-white/80 bg-white/92"><CardContent className="p-6"><p className="text-sm font-semibold text-slate-500">الخطة الذكية تتغير معك</p><div className="mt-4 space-y-3 text-sm leading-8 text-slate-600">{["ابدأ اليوم بقطعة قصيرة ثم انتقل إلى اللفظي.", "راجع أخطاء آخر 3 أيام قبل الاختبار المصغر.", "إذا تحسنت سرعتك، تتغير الأولويات تلقائيًا."].map((item) => <div key={item} className="rounded-[1.4rem] border border-slate-200/80 bg-slate-50/80 p-4">{item}</div>)}</div></CardContent></Card>
+                </div>
+              </Reveal>
+            </div>
           </div>
         </section>
 
         <section className="section-shell" id="interfaces">
           <div className="mx-auto w-[min(calc(100%-2rem),1180px)]">
-            <Reveal>
-              <SectionTitle
-                badge="الواجهات المطلوبة"
-                title="نموذج متكامل لرحلة معيار من الصفحة الأولى حتى الإدارة"
-                text="هذه روابط الواجهات الأساسية المبدئية: الصفحة الرئيسية، بنوك الأسئلة، صفحة القطعة، الاختبار المحاكي، النتائج، لوحة الطالب، ولوحة الإدارة."
-              />
-            </Reveal>
-
-            <div className="mt-10 grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-              {interfaces.map((item, index) => (
-                <Reveal key={item.title} delay={index * 0.04}>
-                  <Card className="h-full">
-                    <CardContent className="p-6">
-                      <div className="flex items-center justify-between gap-3">
-                        <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[linear-gradient(145deg,rgba(117,104,255,0.14),rgba(210,168,90,0.16))] text-sm font-bold text-violet-700">
-                          {index + 1}
-                        </div>
-                        <span className="mini-pill bg-amber-50 text-amber-700">Prototype</span>
-                      </div>
-                      <h3 className="display-font mt-5 text-xl font-bold text-slate-950">
-                        {item.title}
-                      </h3>
-                      <p className="mt-3 text-sm leading-8 text-slate-600">{item.text}</p>
-                      <Link
-                        href={item.href}
-                        className="mt-5 flex items-center justify-between rounded-[1.3rem] border border-slate-200 bg-slate-50/80 px-4 py-3 text-sm font-semibold text-slate-800 transition hover:-translate-y-0.5"
-                      >
-                        <span>{item.cta}</span>
-                        <ArrowLeft className="h-4 w-4" />
-                      </Link>
-                    </CardContent>
-                  </Card>
-                </Reveal>
-              ))}
-            </div>
+            <Reveal><SectionTitle badge="عرض الواجهات" title="واجهة رئيسية أقوى، وصفحات أوضح، وبطاقات أقرب للمنتج الحقيقي" text="بدل العرض السردي، أصبحت الواجهات تظهر كبطاقات بصرية واضحة تسهّل تخيل المنتج النهائي." /></Reveal>
+            <div className="mt-10 grid gap-5 md:grid-cols-2 xl:grid-cols-3">{interfaces.map((item, index) => <Reveal key={item.title} delay={index * 0.04}><Card className="overflow-hidden rounded-[2.2rem] border-white/80 bg-white/92"><div className="border-b border-slate-200/80 bg-[linear-gradient(145deg,rgba(79,70,229,0.08),rgba(245,158,11,0.14))] p-5"><div className="rounded-[1.6rem] border border-white/80 bg-white/85 p-4 shadow-soft"><div className="h-8 rounded-2xl bg-[linear-gradient(135deg,#4f46e5,#7c3aed)]" /><div className="mt-3 grid gap-2"><div className="h-12 rounded-[1rem] bg-slate-100" /><div className="h-12 rounded-[1rem] bg-slate-100" /><div className="h-12 rounded-[1rem] bg-slate-100" /></div></div></div><CardContent className="p-6"><div className="flex items-center justify-between gap-3"><div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[linear-gradient(145deg,rgba(79,70,229,0.12),rgba(245,158,11,0.18))] text-indigo-700">{index + 1}</div><span className="mini-pill bg-amber-50 text-amber-700">واجهة أساسية</span></div><h3 className="display-font mt-5 text-xl font-bold text-slate-950">{item.title}</h3><p className="mt-3 text-sm leading-8 text-slate-600">{item.text}</p><Link href={item.href} className="mt-5 flex items-center justify-between rounded-[1.3rem] border border-slate-200 bg-slate-50/80 px-4 py-3 text-sm font-semibold text-slate-800 transition hover:-translate-y-0.5 hover:bg-white"><span>{item.cta}</span><ArrowLeft className="h-4 w-4" /></Link></CardContent></Card></Reveal>)}</div>
           </div>
+        </section>
+
+        <section className="section-shell" id="testimonials">
+          <div className="mx-auto w-[min(calc(100%-2rem),1180px)]">
+            <Reveal><SectionTitle badge="آراء الطلاب" title="شهادات أوضح، نتائج أوضح، وثقة أكبر" text="بطاقات أفخم مع نجوم ونتيجة ملحوظة تعزز الإحساس بأن المنصة حقيقية ومؤثرة." /></Reveal>
+            <div className="mt-10 grid gap-5 lg:grid-cols-3">{testimonials.map(([name, role, result, meta, quote], index) => <Reveal key={name} delay={index * 0.05}><Card className="h-full rounded-[2.2rem] border-white/80 bg-white/92"><CardContent className="p-6"><div className="flex items-start justify-between gap-4"><div><div className="display-font font-bold text-slate-950">{name}</div><div className="text-sm text-slate-500">{role}</div></div><div className="flex items-center gap-1 text-amber-500">{Array.from({ length: 5 }).map((_, starIndex) => <Star key={starIndex} className="h-4 w-4 fill-current" />)}</div></div><blockquote className="mt-5 text-base leading-9 text-slate-900">{quote}</blockquote><div className="mt-6 flex flex-wrap gap-2"><span className="mini-pill bg-violet-50 text-violet-700">{result}</span><span className="mini-pill bg-amber-50 text-amber-700">{meta}</span></div></CardContent></Card></Reveal>)}</div>
+          </div>
+        </section>
+
+        <section className="section-shell pt-4">
+          <div className="mx-auto grid w-[min(calc(100%-2rem),1180px)] gap-4 rounded-[2rem] bg-[linear-gradient(145deg,#101933,#17244d_55%,#4f46e5)] p-5 text-white shadow-luxe md:grid-cols-4">{finalStats.map((item) => <div key={item.label} className="rounded-[1.4rem] border border-white/10 bg-white/5 p-5"><div className="display-font text-3xl font-bold">{item.value}</div><div className="mt-2 text-sm text-white/70">{item.label}</div></div>)}</div>
         </section>
 
         <section className="section-shell pt-2" id="cta">
           <div className="mx-auto w-[min(calc(100%-2rem),1180px)]">
             <Reveal>
-              <Card className="overflow-hidden bg-[radial-gradient(circle_at_top_left,rgba(117,104,255,0.12),transparent_20%),linear-gradient(180deg,rgba(255,255,255,0.96),rgba(246,247,252,0.94))]">
+              <Card className="overflow-hidden rounded-[2.5rem] border-0 bg-[radial-gradient(circle_at_top_left,rgba(124,58,237,0.12),transparent_24%),radial-gradient(circle_at_bottom_right,rgba(245,158,11,0.12),transparent_18%),linear-gradient(180deg,rgba(255,255,255,0.98),rgba(245,247,252,0.94))] shadow-luxe">
                 <CardContent className="flex flex-col items-start justify-between gap-6 p-8 md:flex-row md:items-center">
-                  <div>
-                    <Badge>ابدأ من اليوم</Badge>
-                    <h2 className="section-title max-w-2xl text-right">
-                      ارفع مستواك في القدرات مع معيار
-                    </h2>
-                    <p className="section-copy max-w-2xl text-right">
-                      واجهة فاخرة، خطة ذكية، ومحتوى منظم يجعل الطالب يشعر أنه داخل
-                      منصة كبيرة صُممت بعناية حقيقية.
-                    </p>
-                  </div>
+                  <div><Badge>ابدأ رحلتك مع معيار</Badge><h2 className="section-title max-w-2xl text-right">جاهز تبدأ خطة ترفع درجتك؟</h2><p className="section-copy max-w-2xl text-right">ابدأ اليوم، ودع المنصة تحدد لك ماذا تذاكر ومتى تراجع وكيف تراقب تقدمك بدون ازدحام أو تشتيت.</p></div>
                   <div className="flex flex-wrap gap-3">
-                    <Link href="/exam">
-                      <Button size="lg">شاهد الاختبار</Button>
-                    </Link>
-                    <Link href="/banks">
-                      <Button size="lg" variant="outline">
-                        تصفح البنوك
-                      </Button>
-                    </Link>
+                    <Link href="/exam"><Button size="lg">ابدأ الآن</Button></Link>
+                    <Link href="/dashboard"><Button size="lg" variant="outline">شاهد تجربة الطالب</Button></Link>
+                    <Link href="/exam" className="inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold text-indigo-700 transition hover:text-indigo-800"><PlayCircle className="h-4 w-4" />اختبر مستواك الآن</Link>
                   </div>
                 </CardContent>
               </Card>

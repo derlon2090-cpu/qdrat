@@ -4,21 +4,21 @@
 
 @layer base {
   :root {
-    --background: 225 29% 98%;
-    --foreground: 224 30% 12%;
+    --background: 240 27% 99%;
+    --foreground: 222 47% 11%;
     --card: 0 0% 100%;
-    --card-foreground: 224 30% 12%;
-    --primary: 223 46% 17%;
+    --card-foreground: 222 47% 11%;
+    --primary: 239 76% 59%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 247 100% 70%;
+    --secondary: 262 83% 58%;
     --secondary-foreground: 0 0% 100%;
-    --muted: 220 26% 95%;
-    --muted-foreground: 223 14% 45%;
-    --accent: 40 57% 59%;
-    --accent-foreground: 223 46% 17%;
+    --muted: 220 27% 96%;
+    --muted-foreground: 222 14% 42%;
+    --accent: 38 92% 50%;
+    --accent-foreground: 222 47% 11%;
     --border: 220 25% 88%;
     --input: 220 25% 88%;
-    --ring: 247 100% 70%;
+    --ring: 239 76% 59%;
     --font-display: "Alexandria", "IBM Plex Sans Arabic", "Tajawal", "Segoe UI", sans-serif;
     --font-body: "IBM Plex Sans Arabic", "Tajawal", "Segoe UI", sans-serif;
   }
@@ -33,7 +33,7 @@
 
   body {
     @apply min-w-80 bg-[image:var(--bg-page)] text-slate-900 antialiased;
-    --bg-page: radial-gradient(circle_at_top_right,rgba(117,104,255,.14),transparent_24%),radial-gradient(circle_at_20%_10%,rgba(210,168,90,.13),transparent_20%),linear-gradient(180deg,#f7f7fb_0%,#fbfbfe_34%,#f2f4f9_100%);
+    --bg-page: radial-gradient(circle_at_top_right,rgba(124,58,237,.14),transparent_23%),radial-gradient(circle_at_20%_10%,rgba(245,158,11,.10),transparent_18%),linear-gradient(180deg,#fafafc_0%,#fbfbff_38%,#f1f4fb_100%);
     font-family: var(--font-body), sans-serif;
   }
 }
@@ -65,7 +65,7 @@
   }
 
   .surface-dark {
-    @apply rounded-[2rem] bg-[linear-gradient(145deg,#10182f,#182646)] text-white shadow-luxe;
+    @apply rounded-[2rem] bg-[linear-gradient(145deg,#101933,#18244b_55%,#4f46e5)] text-white shadow-luxe;
   }
 
   .section-shell {
@@ -77,7 +77,7 @@
   }
 
   .page-heading {
-    @apply mb-4 text-4xl font-extrabold leading-tight tracking-tight text-slate-950 md:text-6xl;
+    @apply mb-4 text-4xl font-extrabold leading-[1.08] tracking-tight text-slate-950 md:text-6xl;
     font-family: var(--font-display), sans-serif;
   }
 
