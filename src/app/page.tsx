@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowLeft, CheckCircle2, PlayCircle, Sparkles, Star } from "lucide-react";
+import { CheckCircle2, PlayCircle, Sparkles, Star } from "lucide-react";
 
 import { HeroShowcase } from "@/components/hero-showcase";
 import { Reveal } from "@/components/reveal";
@@ -8,12 +8,11 @@ import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
 
 const navLinks = [
   { href: "/#hero", label: "الرئيسية" },
   { href: "/#why", label: "لماذا معيار" },
-  { href: "/#student", label: "تجربة الطالب" },
+  { href: "/#diagnostic", label: "التشخيص" },
   { href: "/#testimonials", label: "آراء الطلاب" },
 ];
 
@@ -43,46 +42,6 @@ const diagnosticPoints = [
   "يعطيك نقطة بداية واضحة بدل المذاكرة العشوائية.",
   "يرتب أولويات الكمي واللفظي حسب مستواك الحالي.",
   "يبني أول أسبوع من الخطة بناءً على النتيجة.",
-];
-
-const studentBars = [
-  { label: "الكمي", value: 86 },
-  { label: "اللفظي", value: 79 },
-  { label: "الإتقان العام", value: 82 },
-];
-
-const studentPlan = [
-  { day: "اليوم 1", task: "كمي سرعة + أساسيات", progress: 84 },
-  { day: "اليوم 2", task: "لفظي استيعاب + تناظر", progress: 62 },
-  { day: "اليوم 3", task: "مراجعة أخطاء متكررة", progress: 41 },
-  { day: "اليوم 4", task: "اختبار محاكي مصغّر", progress: 18 },
-];
-
-const interfaces = [
-  {
-    title: "التشخيص السريع",
-    text: "واجهة قصيرة تحدد مستواك وتبدأ منها الخطة الذكية بدل التخمين.",
-    href: "/exam",
-    cta: "ابدأ التشخيص",
-  },
-  {
-    title: "الصفحة الرئيسية",
-    text: "Landing مرتبة برسالة مباشرة، مزايا واضحة، وآراء تعطي ثقة من أول شاشة.",
-    href: "/",
-    cta: "عرض الصفحة",
-  },
-  {
-    title: "صفحة بنوك الأسئلة",
-    text: "استعراض البنوك والبحث العميق والفلترة حسب النوع والمهارة والصعوبة.",
-    href: "/banks",
-    cta: "فتح البنوك",
-  },
-  {
-    title: "لوحة الطالب",
-    text: "خطة الأسبوع، التقدم، جلسة اليوم، وتوصيات المراجعة في مكان واحد.",
-    href: "/dashboard",
-    cta: "شاهد اللوحة",
-  },
 ];
 
 const testimonials = [
@@ -132,13 +91,13 @@ export default function HomePage() {
                     ابدأ الآن
                   </Button>
                 </Link>
-                <Link href="#student">
+                <Link href="/banks">
                   <Button
                     size="lg"
                     variant="outline"
                     className="border-white/20 bg-white/10 text-white hover:bg-white/15"
                   >
-                    شاهد تجربة الطالب
+                    استعرض البنوك
                   </Button>
                 </Link>
               </div>
@@ -263,9 +222,9 @@ export default function HomePage() {
                     <Link href="/exam">
                       <Button size="lg">ابدأ التشخيص</Button>
                     </Link>
-                    <Link href="/dashboard">
+                    <Link href="/banks">
                       <Button size="lg" variant="outline">
-                        شاهد كيف تتغير الخطة
+                        انتقل إلى البنوك
                       </Button>
                     </Link>
                   </div>
@@ -287,166 +246,6 @@ export default function HomePage() {
                 ))}
               </div>
             </Reveal>
-          </div>
-        </section>
-
-        <section className="section-shell" id="student">
-          <div className="mx-auto w-[min(calc(100%-2rem),1180px)]">
-            <Reveal>
-              <SectionTitle
-                badge="تجربة الطالب"
-                title="هذه أقوى نقطة في معيار: لوحة واضحة تقول لك ماذا تفعل الآن"
-                text="الخطة، جلسة اليوم، شريط التقدم، وتوصيات المراجعة تظهر في مساحة واحدة أنيقة وواضحة."
-              />
-            </Reveal>
-            <div className="mt-10 grid gap-6 lg:grid-cols-[1.18fr,0.82fr]">
-              <Reveal>
-                <Card className="rounded-[2.3rem] border-white/80 bg-white/94 shadow-soft">
-                  <CardContent className="space-y-6 p-6">
-                    <div className="flex flex-wrap items-center justify-between gap-4">
-                      <div>
-                        <p className="text-sm text-slate-500">الخطة الذكية تتغير معك</p>
-                        <h3 className="display-font text-2xl font-bold text-slate-950">
-                          Dashboard يريك القرار التالي
-                        </h3>
-                      </div>
-                      <Link href="/dashboard">
-                        <Button variant="outline">شاهد تجربة الطالب</Button>
-                      </Link>
-                    </div>
-                    <div className="grid gap-5 md:grid-cols-2">
-                      <div className="rounded-[1.7rem] border border-slate-200/80 bg-slate-50/80 p-5">
-                        <p className="text-sm text-slate-500">شريط تقدم حي</p>
-                        <div className="mt-4 space-y-4">
-                          {studentBars.map((item) => (
-                            <div key={item.label} className="space-y-2">
-                              <div className="flex items-center justify-between text-sm">
-                                <span>{item.label}</span>
-                                <span>{item.value}%</span>
-                              </div>
-                              <Progress value={item.value} />
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                      <div className="rounded-[1.7rem] border border-slate-200/80 bg-slate-50/80 p-5">
-                        <p className="text-sm text-slate-500">خطة هذا الأسبوع</p>
-                        <div className="mt-4 space-y-3">
-                          {studentPlan.map((item) => (
-                            <div
-                              key={item.day}
-                              className="rounded-[1.4rem] border border-slate-200/80 bg-white p-4"
-                            >
-                              <div className="text-sm text-slate-500">{item.day}</div>
-                              <div className="display-font mt-1 text-lg font-bold text-slate-950">
-                                {item.task}
-                              </div>
-                              <Progress value={item.progress} className="mt-4" />
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </Reveal>
-              <Reveal delay={0.05}>
-                <div className="space-y-5">
-                  <div className="surface-dark p-6">
-                    <p className="text-sm text-white/70">جلسة اليوم</p>
-                    <div className="mt-4 grid gap-3">
-                      {["20 سؤال كمي", "15 سؤال لفظي", "مراجعة 8 أخطاء"].map((item) => (
-                        <div
-                          key={item}
-                          className="rounded-[1.4rem] border border-white/10 bg-white/6 p-4 text-white"
-                        >
-                          {item}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                  <Card className="rounded-[2rem] border-white/80 bg-white/94 shadow-soft">
-                    <CardContent className="p-6">
-                      <p className="text-sm font-semibold text-slate-500">توصية سريعة</p>
-                      <div className="mt-4 space-y-3 text-sm leading-8 text-slate-600">
-                        {[
-                          "ابدأ بالكمي إذا كان عندك وقت قصير اليوم.",
-                          "اجعل اللفظي بعده مباشرة لرفع التنوع الذهني.",
-                          "إذا تحسنت سرعتك، تتغير الأولويات تلقائيًا.",
-                        ].map((item) => (
-                          <div
-                            key={item}
-                            className="rounded-[1.4rem] border border-slate-200/80 bg-slate-50/80 p-4"
-                          >
-                            {item}
-                          </div>
-                        ))}
-                      </div>
-                    </CardContent>
-                  </Card>
-                </div>
-              </Reveal>
-            </div>
-          </div>
-        </section>
-
-        <section className="section-shell" id="interfaces">
-          <div className="mx-auto w-[min(calc(100%-2rem),1180px)]">
-            <Reveal>
-              <SectionTitle
-                badge="عرض الواجهات"
-                title="أربع شاشات أساسية فقط بدل عرض طويل ومزدحم"
-                text="عرض بصري سريع يوصلك للفكرة بسرعة: التشخيص، الرئيسية، البنوك، ولوحة الطالب."
-              />
-            </Reveal>
-            <div className="mt-10 flex snap-x gap-5 overflow-x-auto pb-3">
-              {interfaces.map((item, index) => (
-                <Reveal key={item.title} delay={index * 0.04} className="min-w-[285px] max-w-[285px] flex-none snap-start md:min-w-[300px] md:max-w-[300px]">
-                  <Card className="h-full overflow-hidden rounded-[2.2rem] border-white/80 bg-white/94 shadow-soft">
-                    <div className="border-b border-slate-200/80 bg-[linear-gradient(145deg,rgba(18,59,122,0.08),rgba(201,161,91,0.16))] p-5">
-                      <div className="rounded-[1.7rem] border border-white/80 bg-white/90 p-4 shadow-soft">
-                        <div className="flex items-center justify-between">
-                          <div className="h-8 w-28 rounded-2xl bg-[linear-gradient(135deg,#123B7A,#C9A15B)]" />
-                          <div className="h-3 w-12 rounded-full bg-slate-200" />
-                        </div>
-                        <div className="mt-3 grid gap-2">
-                          <div className="h-28 rounded-[1.1rem] bg-[linear-gradient(180deg,#eef3fb,#f7efe1)]" />
-                          <div className="grid gap-2 sm:grid-cols-2">
-                            <div className="h-12 rounded-[1rem] bg-slate-100" />
-                            <div className="h-12 rounded-[1rem] bg-slate-100" />
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                    <CardContent className="p-6">
-                      <div className="flex items-center justify-between gap-3">
-                        <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[linear-gradient(145deg,rgba(18,59,122,0.12),rgba(201,161,91,0.18))] text-[#123B7A]">
-                          {index + 1}
-                        </div>
-                        <span className="mini-pill bg-amber-50 text-amber-700">واجهة أساسية</span>
-                      </div>
-                      <h3 className="display-font mt-5 text-xl font-bold text-slate-950">{item.title}</h3>
-                      <p className="mt-3 text-sm leading-8 text-slate-600">{item.text}</p>
-                      <Link
-                        href={item.href}
-                        className="mt-5 flex items-center justify-between rounded-[1.3rem] border border-slate-200 bg-slate-50/80 px-4 py-3 text-sm font-semibold text-slate-800 transition hover:-translate-y-0.5 hover:bg-white"
-                      >
-                        <span>{item.cta}</span>
-                        <ArrowLeft className="h-4 w-4" />
-                      </Link>
-                    </CardContent>
-                  </Card>
-                </Reveal>
-              ))}
-            </div>
-            <div className="mt-5 flex items-center justify-center gap-2">
-              {interfaces.map((item, index) => (
-                <span
-                  key={item.title}
-                  className={`h-2.5 rounded-full ${index === 0 ? "w-8 bg-[#123B7A]" : "w-2.5 bg-slate-300"}`}
-                />
-              ))}
-            </div>
           </div>
         </section>
 
@@ -526,9 +325,9 @@ export default function HomePage() {
                         ابدأ الآن
                       </Button>
                     </Link>
-                    <Link href="/dashboard">
+                    <Link href="/banks">
                       <Button size="lg" variant="outline">
-                        شاهد تجربة الطالب
+                        استعرض البنوك
                       </Button>
                     </Link>
                     <Link
