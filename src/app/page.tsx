@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { PlayCircle, Star } from "lucide-react";
 
@@ -147,19 +148,15 @@ export default function HomePage() {
                 <Card className="overflow-hidden rounded-[2.3rem] border border-[#E8D8B3] bg-[linear-gradient(180deg,#fffdfa,#f7f1e5)] shadow-soft">
                   <CardContent className="p-8">
                     <div className="rounded-[2rem] bg-[linear-gradient(180deg,#fff4cf,#ffd86f)] p-6">
-                      <div className="relative mx-auto flex h-[360px] w-[250px] items-end justify-center rounded-[7rem] border-[6px] border-[#0F325F] bg-[linear-gradient(180deg,#ffd65f,#ffd975)]">
-                        <div className="absolute -right-12 top-6 rounded-[1.1rem] bg-[#2F8CE2] px-4 py-3 text-sm font-bold leading-7 text-white shadow-soft">
-                          تبغى أقولك
-                          <br />
-                          ليش معيار؟
+                      <div className="relative mx-auto overflow-hidden rounded-[2rem] border-4 border-[#0F325F] bg-[linear-gradient(180deg,#ffe293,#ffd55f)]">
+                        <div className="relative h-[420px] w-full">
+                          <Image
+                            src="/why-miyaar-art.png"
+                            alt="تبغى أقولك ليش معيار"
+                            fill
+                            className="object-cover object-center"
+                          />
                         </div>
-                        <div className="absolute bottom-0 h-[292px] w-[120px] rounded-t-[60px] bg-[#F2F4F7]" />
-                        <div className="absolute bottom-[186px] h-[58px] w-[58px] rounded-full bg-[#E8BE98]" />
-                        <div className="absolute bottom-[200px] h-[30px] w-[86px] rounded-full bg-[#9A3740]" />
-                        <div className="absolute bottom-[118px] left-[30px] h-[24px] w-[52px] rotate-[18deg] rounded-full bg-[#F2F4F7]" />
-                        <div className="absolute bottom-[118px] right-[30px] h-[24px] w-[52px] -rotate-[18deg] rounded-full bg-[#F2F4F7]" />
-                        <div className="absolute bottom-[204px] h-[18px] w-[30px] rounded-full bg-[#6F3B2C]" />
-                        <div className="absolute bottom-[190px] h-[20px] w-[16px] rounded-b-full bg-[#6F3B2C]" />
                       </div>
                     </div>
 
