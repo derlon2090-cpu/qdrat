@@ -12,7 +12,7 @@ type NavItem = {
 export function SiteHeader({
   links,
   ctaHref = "/dashboard",
-  ctaLabel = "شاهد تجربة الطالب",
+  ctaLabel = "ابدأ الآن",
 }: {
   links: NavItem[];
   ctaHref?: string;
@@ -35,10 +35,7 @@ export function SiteHeader({
         </nav>
         <div className="flex flex-wrap items-center gap-2">
           <Link href={ctaHref}>
-            <Button variant="outline">{ctaLabel}</Button>
-          </Link>
-          <Link href="/#cta">
-            <Button>ابدأ الآن</Button>
+            <Button>{ctaLabel}</Button>
           </Link>
         </div>
       </div>
