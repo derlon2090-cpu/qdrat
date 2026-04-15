@@ -23,11 +23,23 @@ const trustCards = [
   ["خطة ذكية يومية", "تعرف اليوم ماذا تبدأ به، ومتى تراجع، ومتى تنتقل للاختبار."],
 ];
 
-const bankHighlights = [
-  { title: "الكمي", text: "تدريب منظم على أهم أفكار وأسئلة القدرات الكمي." },
-  { title: "اللفظي", text: "بنوك لفظي واضحة تغطي الاستيعاب، التناظر، والسياق." },
-  { title: "الاختبارات", text: "اختبارات محاكية كاملة تقيس مستواك قبل يوم الاختبار." },
-  { title: "المراجعة", text: "مسار خاص للأسئلة الخاطئة والمحفوظه والضعيفة." },
+const whyBenefits = [
+  {
+    title: "أسئلة متنوعة واختبارات محاكية لزيادة تحضيرك",
+    text: "هنا تلقى أكبر تنوع من أسئلة الكمي واللفظي، وتقدر تسوي اختبارات سريعة أو كاملة تعزز فهمك.",
+  },
+  {
+    title: "خطة مذاكرة تناسب مستواك بالضبط",
+    text: "الخطة اليومية والأسبوعية تتغير حسب مستواك ونتيجتك، بدل جدول ثابت لا يناسب الجميع.",
+  },
+  {
+    title: "مراجعة مرتبة لكل ما حفظته أو أخطأت فيه",
+    text: "أي سؤال يحتاج مراجعة يرجع لك في مسار واضح، حتى توصل له بسهولة بدون ضياع بين الأقسام.",
+  },
+  {
+    title: "نماذج جاهزة للتدريب قبل يوم الاختبار",
+    text: "ابدأ من نماذج كاملة أو مصغرة بسرعة، ثم انتقل للبنوك التفصيلية عندما تحتاج تدريبًا أعمق.",
+  },
 ];
 
 const diagnosticPoints = [
@@ -53,8 +65,6 @@ const testimonialAvatars = [
   "from-[#C99A43] to-[#D9B26A]",
   "from-[#26497F] to-[#16315E]",
 ];
-
-const heroMetrics = ["25,000+ سؤال", "120+ اختبار", "16,000+ طالب", "خطة ذكية يومية"];
 
 export default function HomePage() {
   return (
@@ -102,16 +112,6 @@ export default function HomePage() {
                   اختبر مستواك الآن
                 </Link>
               </div>
-              <div className="mt-6 flex flex-wrap gap-3">
-                {heroMetrics.map((item) => (
-                  <span
-                    key={item}
-                    className="rounded-full border border-white/15 bg-white/10 px-4 py-2 text-sm font-semibold text-white shadow-soft backdrop-blur"
-                  >
-                    {item}
-                  </span>
-                ))}
-              </div>
             </Reveal>
 
             <Reveal delay={0.05}>
@@ -120,13 +120,13 @@ export default function HomePage() {
           </div>
         </section>
 
-        <section className="section-shell pt-0">
+        <section className="relative z-20 -mt-10 pb-8 pt-0 md:-mt-14">
           <div className="mx-auto grid w-[min(calc(100%-2rem),1180px)] gap-4 md:grid-cols-2 xl:grid-cols-4">
             {trustCards.map(([value, label], index) => (
               <Reveal key={value} delay={index * 0.03}>
-                <Card className="rounded-[2rem] border-white/80 bg-white/92 shadow-soft">
-                  <CardContent className="p-6">
-                    <div className="display-font text-3xl font-bold text-[#123B7A]">{value}</div>
+                <Card className="rounded-[2.2rem] border-white/90 bg-white/96 shadow-[0_24px_60px_rgba(17,24,39,0.08)]">
+                  <CardContent className="p-7 text-center">
+                    <div className="display-font text-3xl font-bold text-[#123B7A] md:text-4xl">{value}</div>
                     <div className="mt-3 text-base leading-8 text-slate-600">{label}</div>
                   </CardContent>
                 </Card>
@@ -140,40 +140,58 @@ export default function HomePage() {
             <Reveal>
               <SectionTitle
                 badge="لماذا معيار"
-                title="نظرة سريعة وواضحة على ما تحتاجه في معيار"
-                text="اختصرنا الصفحة الرئيسية على أهم الأقسام فقط، وتركنا التفاصيل الكاملة لصفحة البنوك حتى تبقى التجربة أوضح وأخف."
+                title="كل ما تحتاجه للتحضير يظهر لك بشكل أوضح وأخف"
+                text="رتبنا البداية بحيث تعرف الفكرة بسرعة: مزايا واضحة، واجهة أهدأ، ثم تنتقل للتفاصيل عند الحاجة."
               />
             </Reveal>
-            <div className="mt-10 grid gap-5 md:grid-cols-2 xl:grid-cols-4">
-              {bankHighlights.map((item, index) => (
-                <Reveal key={item.title} delay={index * 0.04}>
-                  <Card className="h-full rounded-[2rem] border-white/80 bg-white/95 shadow-soft">
-                    <CardContent className="p-6">
-                      <div className="mr-auto flex h-14 w-14 items-center justify-center rounded-full bg-[linear-gradient(145deg,rgba(18,59,122,0.08),rgba(201,161,91,0.22))] text-2xl font-bold text-[#123B7A]">
-                        {index + 1}
+            <div className="mt-10 grid gap-8 lg:grid-cols-[1.05fr,0.95fr] lg:items-start">
+              <div className="space-y-5">
+                {whyBenefits.map((item, index) => (
+                  <Reveal key={item.title} delay={index * 0.04}>
+                    <Card className="rounded-[2rem] border-white/85 bg-white/95 shadow-soft">
+                      <CardContent className="p-6">
+                        <div className="flex items-start gap-4">
+                          <div className="mt-1 flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[linear-gradient(145deg,rgba(18,59,122,0.08),rgba(201,161,91,0.24))] text-lg font-bold text-[#123B7A]">
+                            {index + 1}
+                          </div>
+                          <div>
+                            <h3 className="display-font text-2xl font-bold text-slate-950">{item.title}</h3>
+                            <p className="mt-3 text-base leading-8 text-slate-600">{item.text}</p>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </Reveal>
+                ))}
+              </div>
+
+              <Reveal delay={0.05}>
+                <Card className="overflow-hidden rounded-[2.3rem] border border-[#E8D8B3] bg-[linear-gradient(180deg,#fffdfa,#f7f1e5)] shadow-soft">
+                  <CardContent className="p-8">
+                    <div className="rounded-[2rem] bg-[linear-gradient(180deg,#fff4cf,#ffd86f)] p-6">
+                      <div className="relative mx-auto flex h-[360px] w-[250px] items-end justify-center rounded-[7rem] border-[6px] border-[#0F325F] bg-[linear-gradient(180deg,#ffd65f,#ffd975)]">
+                        <div className="absolute -right-12 top-6 rounded-[1.1rem] bg-[#2F8CE2] px-4 py-3 text-sm font-bold leading-7 text-white shadow-soft">
+                          تبغى أقولك
+                          <br />
+                          ليش معيار؟
+                        </div>
+                        <div className="absolute bottom-0 h-[292px] w-[120px] rounded-t-[60px] bg-[#F2F4F7]" />
+                        <div className="absolute bottom-[186px] h-[58px] w-[58px] rounded-full bg-[#E8BE98]" />
+                        <div className="absolute bottom-[200px] h-[30px] w-[86px] rounded-full bg-[#9A3740]" />
+                        <div className="absolute bottom-[118px] left-[30px] h-[24px] w-[52px] rotate-[18deg] rounded-full bg-[#F2F4F7]" />
+                        <div className="absolute bottom-[118px] right-[30px] h-[24px] w-[52px] -rotate-[18deg] rounded-full bg-[#F2F4F7]" />
+                        <div className="absolute bottom-[204px] h-[18px] w-[30px] rounded-full bg-[#6F3B2C]" />
+                        <div className="absolute bottom-[190px] h-[20px] w-[16px] rounded-b-full bg-[#6F3B2C]" />
                       </div>
-                      <h3 className="display-font mt-8 text-3xl font-bold text-slate-950">{item.title}</h3>
-                      <p className="mt-4 text-base leading-8 text-slate-600">{item.text}</p>
-                    </CardContent>
-                  </Card>
-                </Reveal>
-              ))}
+                    </div>
+
+                    <div className="mt-6 rounded-[1.8rem] bg-[linear-gradient(145deg,#123B7A,#1C4F96)] px-5 py-5 text-center text-lg font-bold leading-8 text-white">
+                      بداية أوضح، وترتيب أخف، ثم انتقال مباشر إلى البنوك أو التشخيص بدون ازدحام.
+                    </div>
+                  </CardContent>
+                </Card>
+              </Reveal>
             </div>
-            <Reveal delay={0.08}>
-              <Card className="mt-6 rounded-[2.1rem] border border-[#E8D8B3] bg-[linear-gradient(180deg,#fffdfa,#f8f3ea)] shadow-soft">
-                <CardContent className="flex flex-col items-center gap-4 p-6 text-center md:flex-row md:justify-between md:text-right">
-                  <div>
-                    <p className="display-font text-2xl font-bold text-slate-950">كل التفاصيل موجودة داخل صفحة البنوك</p>
-                    <p className="mt-2 text-base leading-8 text-slate-600">
-                      ادخل إلى صفحة البنوك إذا أردت البحث، الفلترة، واستعراض التدريب بشكل أعمق.
-                    </p>
-                  </div>
-                  <Link href="/banks">
-                    <Button size="lg">استعرض جميع البنوك</Button>
-                  </Link>
-                </CardContent>
-              </Card>
-            </Reveal>
           </div>
         </section>
 
