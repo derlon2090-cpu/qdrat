@@ -14,7 +14,7 @@ const footerLinks = [
 
 export function SiteFooter() {
   return (
-    <footer className="mt-16 bg-[linear-gradient(180deg,#11935c,#0f8a58)] text-white">
+    <footer className="mt-16 bg-[linear-gradient(180deg,#102955,#123b7a_58%,#173f82)] text-white">
       <div className="mx-auto w-[min(calc(100%-2rem),1180px)] py-8">
         <div className="flex flex-col gap-6 border-b border-white/15 pb-6 lg:flex-row lg:items-center lg:justify-between">
           <div className="flex flex-wrap items-center gap-3 text-sm font-semibold">
@@ -33,17 +33,17 @@ export function SiteFooter() {
 
         <div className="mt-6 flex flex-wrap items-center gap-x-8 gap-y-4 text-base font-semibold">
           {footerLinks.map((item) => (
-            <Link key={item.href} href={item.href} className="transition hover:text-[#FFE1A8]">
+            <Link key={item.href} href={item.href} className="transition hover:text-[#F6D28B]">
               {item.label}
             </Link>
           ))}
-          <Link href="#hero" className="inline-flex items-center gap-2 transition hover:text-[#FFE1A8]">
+          <Link href="#hero" className="inline-flex items-center gap-2 transition hover:text-[#F6D28B]">
             <ArrowUp className="h-4 w-4" />
             العودة للأعلى
           </Link>
         </div>
 
-        <div className="mt-6 rounded-[1.2rem] border border-white/12 bg-[#0f764b] px-5 py-4 text-center text-lg font-semibold">
+        <div className="mt-6 rounded-[1.2rem] border border-white/12 bg-[#0E2A56] px-5 py-4 text-center text-lg font-semibold">
           معيار منصة سعودية للتحضير للقدرات الكمي واللفظي بخطة يومية واضحة واختبارات محاكية ومراجعة مركزة.
         </div>
 

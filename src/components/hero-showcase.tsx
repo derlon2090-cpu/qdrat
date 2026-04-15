@@ -14,7 +14,7 @@ export function HeroShowcase() {
     <div>
       <div className="grid gap-4 lg:hidden">
         <div className="rounded-[2rem] border border-white/15 bg-white/10 p-4 text-white backdrop-blur">
-          <div className="rounded-[1.6rem] border-[6px] border-[#D39B2F] bg-[linear-gradient(180deg,#0f694b,#0d8a5b)] p-5">
+          <div className="rounded-[1.6rem] border-[6px] border-[#D3A14B] bg-[linear-gradient(180deg,#123B7A,#15305F)] p-5">
             <div className="text-sm text-white/75">قدرات كمي ولفظي</div>
             <h3 className="display-font mt-3 text-2xl font-bold leading-tight">
               خطة يومية واضحة واختبارات تحاكي الواقع
@@ -62,15 +62,15 @@ export function HeroShowcase() {
       ))}
 
       <div className="relative mx-auto flex h-[540px] w-full items-end justify-center">
-        <div className="absolute left-10 top-10 h-[380px] w-[430px] rounded-[1.8rem] border-[8px] border-[#D39B2F] bg-[linear-gradient(180deg,#0f694b,#0d8a5b)] shadow-[0_30px_70px_rgba(0,0,0,0.22)]">
-          <div className="absolute inset-0 rounded-[1.2rem] bg-[radial-gradient(circle_at_20%_20%,rgba(255,255,255,0.08),transparent_20%),radial-gradient(circle_at_80%_24%,rgba(255,255,255,0.07),transparent_18%),linear-gradient(180deg,rgba(255,255,255,0.02),rgba(0,0,0,0.10))]" />
+        <div className="absolute left-10 top-10 h-[380px] w-[430px] rounded-[1.8rem] border-[8px] border-[#D3A14B] bg-[linear-gradient(180deg,#14325f,#123b7a)] shadow-[0_30px_70px_rgba(0,0,0,0.22)]">
+          <div className="absolute inset-0 rounded-[1.2rem] bg-[radial-gradient(circle_at_20%_20%,rgba(255,255,255,0.08),transparent_20%),radial-gradient(circle_at_80%_24%,rgba(201,161,91,0.12),transparent_18%),linear-gradient(180deg,rgba(255,255,255,0.02),rgba(0,0,0,0.12))]" />
           <div className="relative z-10 p-7 text-white">
             <div className="flex items-center gap-2 text-white/85">
               <GraduationCap className="h-5 w-5" />
               <span className="text-sm font-semibold">قدرات كمي ولفظي</span>
             </div>
             <h3 className="display-font mt-6 max-w-[260px] text-3xl font-black leading-tight">
-              تمهيد يومي منظم يساعدك تقفل على اختبارك
+              لوحة واضحة تقودك من التشخيص إلى يوم الاختبار
             </h3>
             <div className="mt-6 grid gap-3">
               {[
@@ -82,7 +82,7 @@ export function HeroShowcase() {
                   key={item}
                   className="flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 text-sm font-medium text-white/90"
                 >
-                  <CheckCircle2 className="h-4 w-4 text-[#FFE1A8]" />
+                  <CheckCircle2 className="h-4 w-4 text-[#F6D28B]" />
                   {item}
                 </div>
               ))}
@@ -117,7 +117,7 @@ export function HeroShowcase() {
           <div className="absolute bottom-[190px] left-[78px] h-[20px] w-[16px] rounded-b-full bg-[#693326]" />
         </div>
 
-        <div className="absolute right-4 bottom-6 w-[270px] rounded-[2rem] border border-white/25 bg-white/92 p-4 shadow-[0_24px_50px_rgba(0,0,0,0.16)]">
+        <div className="absolute right-4 bottom-6 w-[270px] rounded-[2rem] border border-white/25 bg-white/94 p-4 shadow-[0_24px_50px_rgba(0,0,0,0.16)]">
           <div className="rounded-[1.5rem] bg-[linear-gradient(145deg,#123B7A,#1f4c96)] p-4 text-white">
             <div className="text-xs text-white/70">جلسة اليوم</div>
             <div className="display-font mt-2 text-xl font-bold">20 كمي + 15 لفظي</div>
@@ -147,7 +147,7 @@ export function HeroShowcase() {
             ))}
           </div>
 
-          <div className="mt-4 rounded-[1.4rem] border border-[#E3C58E] bg-[#FFF6E5] p-4">
+          <div className="mt-4 rounded-[1.4rem] border border-[#E3C58E] bg-[#FFF7E8] p-4">
             <div className="flex items-center gap-2 text-[#123B7A]">
               <BarChart3 className="h-4 w-4" />
               <span className="text-sm font-semibold">توصية سريعة</span>

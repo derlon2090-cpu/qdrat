@@ -65,14 +65,14 @@
   }
 
   .surface-dark {
-    @apply rounded-[2rem] bg-[linear-gradient(145deg,#0f264f,#123b7a_55%,#1f4c96)] text-white shadow-luxe;
+    @apply rounded-[2rem] bg-[linear-gradient(145deg,#102955,#123b7a_52%,#305fa8)] text-white shadow-luxe;
   }
 
   .hero-school {
     background:
-      radial-gradient(circle at 20% 18%, rgba(255,255,255,0.07), transparent 18%),
-      radial-gradient(circle at 82% 22%, rgba(255,255,255,0.05), transparent 18%),
-      linear-gradient(135deg, #0e8a57 0%, #0d995f 52%, #0d8a63 100%);
+      radial-gradient(circle at 18% 16%, rgba(255,255,255,0.08), transparent 18%),
+      radial-gradient(circle at 82% 18%, rgba(201,161,91,0.18), transparent 18%),
+      linear-gradient(135deg, #102955 0%, #123b7a 48%, #1c4d98 100%);
     position: relative;
   }
 
@@ -80,11 +80,11 @@
     content: "";
     position: absolute;
     inset: 0;
-    opacity: 0.18;
+    opacity: 0.16;
     background-image:
-      linear-gradient(transparent 93%, rgba(255,255,255,.18) 93%),
-      linear-gradient(90deg, transparent 93%, rgba(255,255,255,.16) 93%);
-    background-size: 120px 120px;
+      linear-gradient(transparent 93%, rgba(255,255,255,.14) 93%),
+      linear-gradient(90deg, transparent 93%, rgba(255,255,255,.12) 93%);
+    background-size: 110px 110px;
     mask-image: radial-gradient(circle at center, rgba(0,0,0,1), rgba(0,0,0,.48));
     pointer-events: none;
   }
