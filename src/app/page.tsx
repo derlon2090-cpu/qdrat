@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { CheckCircle2, PlayCircle, Sparkles, Star } from "lucide-react";
+import { PlayCircle, Star } from "lucide-react";
 
 import { HeroShowcase } from "@/components/hero-showcase";
 import { Reveal } from "@/components/reveal";
@@ -28,14 +28,6 @@ const bankHighlights = [
   { title: "اللفظي", text: "بنوك لفظي واضحة تغطي الاستيعاب، التناظر، والسياق." },
   { title: "الاختبارات", text: "اختبارات محاكية كاملة تقيس مستواك قبل يوم الاختبار." },
   { title: "المراجعة", text: "مسار خاص للأسئلة الخاطئة والمحفوظه والضعيفة." },
-];
-
-const mostTrained = ["التناظر اللفظي", "إكمال الجمل", "الخطأ السياقي", "القطع القصيرة"];
-
-const whyReasons = [
-  "منصة واضحة ومختصرة تختصر عليك طريق القدرات بدل التنقل بين مصادر كثيرة.",
-  "قاعدة أسئلة كبيرة تتحرك مع التدريب وتخدم الكمي واللفظي داخل نفس التجربة.",
-  "خطة ذكية ومراجعة مرتبة تجعلك تعرف القرار التالي بدون تشتت.",
 ];
 
 const diagnosticPoints = [
@@ -144,66 +136,44 @@ export default function HomePage() {
         </section>
 
         <section className="section-shell" id="why">
-          <div className="mx-auto grid w-[min(calc(100%-2rem),1180px)] gap-8 lg:grid-cols-[1.12fr,0.88fr]">
+          <div className="mx-auto w-[min(calc(100%-2rem),1180px)]">
             <Reveal>
               <SectionTitle
                 badge="لماذا معيار"
-                title="اختصرنا الصفحة الرئيسية، وتركنا التفاصيل لصفحة البنوك"
-                text="هنا نظرة سريعة على أهم الأقسام فقط، ثم زر واضح يقودك إلى جميع البنوك بدون إغراق مبكر بالتفاصيل."
-                align="right"
+                title="نظرة سريعة وواضحة على ما تحتاجه في معيار"
+                text="اختصرنا الصفحة الرئيسية على أهم الأقسام فقط، وتركنا التفاصيل الكاملة لصفحة البنوك حتى تبقى التجربة أوضح وأخف."
               />
-              <div className="mt-8 grid gap-4 sm:grid-cols-2">
-                {bankHighlights.map((item, index) => (
-                  <Card key={item.title} className="rounded-[2rem] border-white/80 bg-white/94 shadow-soft">
+            </Reveal>
+            <div className="mt-10 grid gap-5 md:grid-cols-2 xl:grid-cols-4">
+              {bankHighlights.map((item, index) => (
+                <Reveal key={item.title} delay={index * 0.04}>
+                  <Card className="h-full rounded-[2rem] border-white/80 bg-white/95 shadow-soft">
                     <CardContent className="p-6">
-                      <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[linear-gradient(145deg,rgba(18,59,122,0.08),rgba(201,161,91,0.22))] text-lg font-bold text-[#123B7A]">
+                      <div className="mr-auto flex h-14 w-14 items-center justify-center rounded-full bg-[linear-gradient(145deg,rgba(18,59,122,0.08),rgba(201,161,91,0.22))] text-2xl font-bold text-[#123B7A]">
                         {index + 1}
                       </div>
-                      <h3 className="display-font mt-5 text-2xl font-bold text-slate-950">{item.title}</h3>
-                      <p className="mt-3 text-sm leading-8 text-slate-600">{item.text}</p>
+                      <h3 className="display-font mt-8 text-3xl font-bold text-slate-950">{item.title}</h3>
+                      <p className="mt-4 text-base leading-8 text-slate-600">{item.text}</p>
                     </CardContent>
                   </Card>
-                ))}
-              </div>
-              <div className="mt-6">
-                <Link href="/banks">
-                  <Button size="lg">استعرض جميع البنوك</Button>
-                </Link>
-              </div>
-            </Reveal>
-
-            <div className="space-y-5">
-              <Reveal delay={0.05}>
-                <Card className="rounded-[2.1rem] border border-[#E8D8B3] bg-[linear-gradient(180deg,#fffdfa,#f8f3ea)] shadow-soft">
-                  <CardContent className="p-6">
-                    <div className="grid gap-4">
-                      {whyReasons.map((item, index) => (
-                        <div key={item} className="flex items-center gap-4 rounded-[1.6rem] border border-[#EADFC8] bg-white/90 px-5 py-4">
-                          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[linear-gradient(145deg,rgba(18,59,122,0.10),rgba(201,161,91,0.24))] text-[#C99A43]">
-                            <Sparkles className="h-5 w-5" />
-                          </div>
-                          <p className="text-base leading-8 text-slate-800">{item}</p>
-                        </div>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
-              </Reveal>
-
-              <Reveal delay={0.08}>
-                <div className="surface-dark p-6">
-                  <p className="text-sm text-white/70">الأسئلة الأكثر تدريبًا</p>
-                  <div className="mt-5 grid gap-3 sm:grid-cols-2">
-                    {mostTrained.map((item) => (
-                      <div key={item} className="rounded-[1.4rem] border border-white/10 bg-white/6 p-4">
-                        <div className="display-font text-lg font-bold text-white">{item}</div>
-                        <div className="mt-1 text-sm text-white/70">محتوى حي يتحرك مع استخدام الطلاب</div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </Reveal>
+                </Reveal>
+              ))}
             </div>
+            <Reveal delay={0.08}>
+              <Card className="mt-6 rounded-[2.1rem] border border-[#E8D8B3] bg-[linear-gradient(180deg,#fffdfa,#f8f3ea)] shadow-soft">
+                <CardContent className="flex flex-col items-center gap-4 p-6 text-center md:flex-row md:justify-between md:text-right">
+                  <div>
+                    <p className="display-font text-2xl font-bold text-slate-950">كل التفاصيل موجودة داخل صفحة البنوك</p>
+                    <p className="mt-2 text-base leading-8 text-slate-600">
+                      ادخل إلى صفحة البنوك إذا أردت البحث، الفلترة، واستعراض التدريب بشكل أعمق.
+                    </p>
+                  </div>
+                  <Link href="/banks">
+                    <Button size="lg">استعرض جميع البنوك</Button>
+                  </Link>
+                </CardContent>
+              </Card>
+            </Reveal>
           </div>
         </section>
 
