@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { ArrowLeft, CheckCircle2, PlayCircle, Star } from "lucide-react";
 
-import { BankExplorer } from "@/components/bank-explorer";
 import { HeroShowcase } from "@/components/hero-showcase";
 import { Reveal } from "@/components/reveal";
 import { SectionTitle } from "@/components/section-title";
@@ -10,11 +9,11 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { banks, benefits, dashboardBars, finalStats, interfaces, weeklyPlan } from "@/data/miyaar";
+import { dashboardBars, finalStats, interfaces, weeklyPlan } from "@/data/miyaar";
 
 const navLinks = [
-  { href: "/#why", label: "لماذا معيار" },
-  { href: "/#banks", label: "بنوك الأسئلة" },
+  { href: "/#hero", label: "الرئيسية" },
+  { href: "/#why", label: "المزايا" },
   { href: "/#student", label: "تجربة الطالب" },
   { href: "/#testimonials", label: "آراء الطلاب" },
 ];
@@ -47,6 +46,15 @@ const testimonials = [
   ["لمى الحربي", "مستخدمة مستمرة", "+11 درجة", "مع مراجعة يومية", "واجهة مريحة جدًا، والتقارير فرقت معي بين ضعف الفهم وضعف السرعة."],
 ];
 
+const heroMetrics = ["25,000+ سؤال", "120+ اختبار", "16,000+ طالب", "خطة ذكية يومية"];
+
+const bankHighlights = [
+  { title: "لفظي", text: "أسئلة منظمة لرفع السرعة والدقة في الأقسام اللفظية." },
+  { title: "قطع", text: "تدريب على الاستيعاب، الفكرة العامة، وتحليل العلاقات." },
+  { title: "إكمال الجمل", text: "جلسات سريعة مبنية على فهم السياق والربط." },
+  { title: "التناظر", text: "بنوك مركزة على إدراك العلاقة والتصنيف الذهني." },
+];
+
 export default function HomePage() {
   return (
     <div className="min-h-screen">
@@ -59,7 +67,7 @@ export default function HomePage() {
               <Badge className="bg-white/90">منصة قدرات عربية حديثة بلمسة فاخرة</Badge>
               <h1 className="page-heading mt-6">
                 اقفل على القدرات
-                <span className="bg-[linear-gradient(135deg,#4f46e5,#7c3aed,#f59e0b)] bg-clip-text text-transparent">
+                <span className="bg-[linear-gradient(135deg,#123B7A,#C9A15B)] bg-clip-text text-transparent">
                   {" "}
                   بخطة ذكية
                 </span>
@@ -72,13 +80,17 @@ export default function HomePage() {
                 <Link href="#cta"><Button size="lg">ابدأ الآن</Button></Link>
                 <Link href="#student"><Button size="lg" variant="outline">شاهد كيف تعمل المنصة</Button></Link>
               </div>
-              <div className="mt-4 flex flex-wrap items-center gap-3">
-                <Link href="/exam" className="inline-flex items-center gap-2 text-sm font-semibold text-indigo-700 transition hover:text-indigo-800">
+              <div className="mt-5 flex flex-wrap items-center gap-3">
+                <Link href="/exam" className="inline-flex items-center gap-2 text-sm font-semibold text-[#123B7A] transition hover:text-[#0f2f61]">
                   <PlayCircle className="h-4 w-4" />
                   اختبر مستواك الآن
                 </Link>
-                {["جلسة اليوم جاهزة", "الخطة الذكية تتغير معك"].map((item) => (
-                  <span key={item} className="mini-pill rounded-full bg-white/85 px-4 py-2 text-sm shadow-soft">{item}</span>
+              </div>
+              <div className="mt-6 flex flex-wrap gap-3">
+                {heroMetrics.map((item) => (
+                  <span key={item} className="mini-pill rounded-full border-[#e8dcc5] bg-white/90 px-4 py-2 text-sm text-slate-700 shadow-soft">
+                    {item}
+                  </span>
                 ))}
               </div>
             </Reveal>
@@ -106,7 +118,7 @@ export default function HomePage() {
 
         <section className="section-shell" id="why">
           <div className="mx-auto w-[min(calc(100%-2rem),1180px)]">
-            <Reveal><SectionTitle badge="لماذا معيار؟" title="وضوح أسرع، بصريات أقوى، وتجربة أبسط من أول ثانية" text="البنية هنا مختصرة ومباشرة: قيمة واضحة، مزايا كبيرة، وتدرج يقود الطالب إلى الخطة والنتيجة." /></Reveal>
+            <Reveal><SectionTitle badge="لماذا معيار؟" title="فوائد واضحة، عرض أبسط، وتجربة تشعرك بالقيمة من أول ثانية" text="المطلوب هنا أن يفهم الطالب بسرعة: ما الذي يقدمه معيار؟ وكيف يساعده يوميًا؟ ولماذا يبدو أكثر نضجًا وتنظيمًا؟" /></Reveal>
             <div className="mt-10 grid gap-5 md:grid-cols-2 xl:grid-cols-3">
               {whyCards.map(([title, text], index) => (
                 <Reveal key={title} delay={index * 0.04}>
@@ -151,8 +163,20 @@ export default function HomePage() {
         <section className="section-shell" id="banks">
           <div className="mx-auto grid w-[min(calc(100%-2rem),1180px)] gap-8 lg:grid-cols-[1.12fr,0.88fr]">
             <Reveal>
-              <SectionTitle badge="بنوك الأسئلة" title="ابحث وفلتر وابدأ من البنك الذي تحتاجه فعلًا" text="لفظي، قطع، تناظر لفظي، إكمال الجمل، الخطأ السياقي، والمفردة الشاذة داخل واجهة مرتبة وسريعة." align="right" />
-              <div className="mt-8"><BankExplorer items={banks} /></div>
+              <SectionTitle badge="بنوك الأسئلة" title="اختصرنا الصفحة الرئيسية، وتركنا التفاصيل لصفحة البنوك" text="هنا نظرة سريعة على أهم الأقسام فقط، ثم زر واضح يقودك إلى جميع البنوك بدون إغراق مبكر بالتفاصيل." align="right" />
+              <div className="mt-8 grid gap-4 sm:grid-cols-2">
+                {bankHighlights.map((item) => (
+                  <Card key={item.title} className="rounded-[2rem] border-white/80 bg-white/92">
+                    <CardContent className="p-6">
+                      <h3 className="display-font text-2xl font-bold text-slate-950">{item.title}</h3>
+                      <p className="mt-3 text-sm leading-8 text-slate-600">{item.text}</p>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+              <div className="mt-6">
+                <Link href="/banks"><Button size="lg">استعرض جميع البنوك</Button></Link>
+              </div>
             </Reveal>
             <div className="space-y-5">
               <Reveal delay={0.05}>
@@ -169,7 +193,23 @@ export default function HomePage() {
                 </div>
               </Reveal>
               <Reveal delay={0.08}>
-                <Card className="rounded-[2rem] border-white/80 bg-white/92"><CardContent className="p-6"><p className="text-sm font-semibold text-slate-500">لماذا هذه البنية أفضل؟</p><div className="mt-4 space-y-3 text-sm leading-8 text-slate-600">{benefits.map((item) => <div key={item} className="flex gap-2"><CheckCircle2 className="mt-1 h-4 w-4 shrink-0 text-emerald-600" />{item}</div>)}</div></CardContent></Card>
+                <Card className="rounded-[2rem] border-white/80 bg-white/92">
+                  <CardContent className="p-6">
+                    <p className="text-sm font-semibold text-slate-500">لماذا هذا أفضل للصفحة الرئيسية؟</p>
+                    <div className="mt-4 space-y-3 text-sm leading-8 text-slate-600">
+                      {[
+                        "يوصل الفكرة بسرعة بدل فتح البحث والفلترة مبكرًا داخل الصفحة الرئيسية.",
+                        "يترك صفحة البنوك المتخصصة للبحث العميق والتدريب التفصيلي.",
+                        "يحافظ على سرعة الإقناع في الأعلى قبل الدخول إلى التفاصيل.",
+                      ].map((item) => (
+                        <div key={item} className="flex gap-2">
+                          <CheckCircle2 className="mt-1 h-4 w-4 shrink-0 text-emerald-600" />
+                          {item}
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
               </Reveal>
             </div>
           </div>
@@ -212,7 +252,37 @@ export default function HomePage() {
         <section className="section-shell" id="interfaces">
           <div className="mx-auto w-[min(calc(100%-2rem),1180px)]">
             <Reveal><SectionTitle badge="عرض الواجهات" title="واجهة رئيسية أقوى، وصفحات أوضح، وبطاقات أقرب للمنتج الحقيقي" text="بدل العرض السردي، أصبحت الواجهات تظهر كبطاقات بصرية واضحة تسهّل تخيل المنتج النهائي." /></Reveal>
-            <div className="mt-10 grid gap-5 md:grid-cols-2 xl:grid-cols-3">{interfaces.map((item, index) => <Reveal key={item.title} delay={index * 0.04}><Card className="overflow-hidden rounded-[2.2rem] border-white/80 bg-white/92"><div className="border-b border-slate-200/80 bg-[linear-gradient(145deg,rgba(79,70,229,0.08),rgba(245,158,11,0.14))] p-5"><div className="rounded-[1.6rem] border border-white/80 bg-white/85 p-4 shadow-soft"><div className="h-8 rounded-2xl bg-[linear-gradient(135deg,#4f46e5,#7c3aed)]" /><div className="mt-3 grid gap-2"><div className="h-12 rounded-[1rem] bg-slate-100" /><div className="h-12 rounded-[1rem] bg-slate-100" /><div className="h-12 rounded-[1rem] bg-slate-100" /></div></div></div><CardContent className="p-6"><div className="flex items-center justify-between gap-3"><div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[linear-gradient(145deg,rgba(79,70,229,0.12),rgba(245,158,11,0.18))] text-indigo-700">{index + 1}</div><span className="mini-pill bg-amber-50 text-amber-700">واجهة أساسية</span></div><h3 className="display-font mt-5 text-xl font-bold text-slate-950">{item.title}</h3><p className="mt-3 text-sm leading-8 text-slate-600">{item.text}</p><Link href={item.href} className="mt-5 flex items-center justify-between rounded-[1.3rem] border border-slate-200 bg-slate-50/80 px-4 py-3 text-sm font-semibold text-slate-800 transition hover:-translate-y-0.5 hover:bg-white"><span>{item.cta}</span><ArrowLeft className="h-4 w-4" /></Link></CardContent></Card></Reveal>)}</div>
+            <div className="mt-10 flex snap-x gap-5 overflow-x-auto pb-2">
+              {interfaces.map((item, index) => (
+                <Reveal key={item.title} delay={index * 0.04} className="min-w-[320px] flex-1 snap-start md:min-w-[360px]">
+                  <Card className="h-full overflow-hidden rounded-[2.2rem] border-white/80 bg-white/92">
+                    <div className="border-b border-slate-200/80 bg-[linear-gradient(145deg,rgba(18,59,122,0.08),rgba(201,161,91,0.14))] p-5">
+                      <div className="rounded-[1.6rem] border border-white/80 bg-white/85 p-4 shadow-soft">
+                        <div className="h-8 rounded-2xl bg-[linear-gradient(135deg,#123B7A,#C9A15B)]" />
+                        <div className="mt-3 grid gap-2">
+                          <div className="h-14 rounded-[1rem] bg-slate-100" />
+                          <div className="grid gap-2 sm:grid-cols-2">
+                            <div className="h-16 rounded-[1rem] bg-slate-100" />
+                            <div className="h-16 rounded-[1rem] bg-slate-100" />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <CardContent className="p-6">
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[linear-gradient(145deg,rgba(18,59,122,0.12),rgba(201,161,91,0.18))] text-[#123B7A]">
+                          {index + 1}
+                        </div>
+                        <span className="mini-pill bg-amber-50 text-amber-700">واجهة أساسية</span>
+                      </div>
+                      <h3 className="display-font mt-5 text-xl font-bold text-slate-950">{item.title}</h3>
+                      <p className="mt-3 text-sm leading-8 text-slate-600">{item.text}</p>
+                      <Link href={item.href} className="mt-5 flex items-center justify-between rounded-[1.3rem] border border-slate-200 bg-slate-50/80 px-4 py-3 text-sm font-semibold text-slate-800 transition hover:-translate-y-0.5 hover:bg-white"><span>{item.cta}</span><ArrowLeft className="h-4 w-4" /></Link>
+                    </CardContent>
+                  </Card>
+                </Reveal>
+              ))}
+            </div>
           </div>
         </section>
 

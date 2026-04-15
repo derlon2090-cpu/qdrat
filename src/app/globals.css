@@ -4,21 +4,21 @@
 
 @layer base {
   :root {
-    --background: 240 27% 99%;
+    --background: 43 20% 97%;
     --foreground: 222 47% 11%;
     --card: 0 0% 100%;
     --card-foreground: 222 47% 11%;
-    --primary: 239 76% 59%;
+    --primary: 214 74% 28%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 262 83% 58%;
-    --secondary-foreground: 0 0% 100%;
+    --secondary: 39 50% 57%;
+    --secondary-foreground: 214 74% 28%;
     --muted: 220 27% 96%;
     --muted-foreground: 222 14% 42%;
-    --accent: 38 92% 50%;
+    --accent: 39 50% 57%;
     --accent-foreground: 222 47% 11%;
     --border: 220 25% 88%;
     --input: 220 25% 88%;
-    --ring: 239 76% 59%;
+    --ring: 214 74% 28%;
     --font-display: "Alexandria", "IBM Plex Sans Arabic", "Tajawal", "Segoe UI", sans-serif;
     --font-body: "IBM Plex Sans Arabic", "Tajawal", "Segoe UI", sans-serif;
   }
@@ -33,7 +33,7 @@
 
   body {
     @apply min-w-80 bg-[image:var(--bg-page)] text-slate-900 antialiased;
-    --bg-page: radial-gradient(circle_at_top_right,rgba(124,58,237,.14),transparent_23%),radial-gradient(circle_at_20%_10%,rgba(245,158,11,.10),transparent_18%),linear-gradient(180deg,#fafafc_0%,#fbfbff_38%,#f1f4fb_100%);
+    --bg-page: radial-gradient(circle_at_top_right,rgba(201,161,91,.14),transparent_18%),radial-gradient(circle_at_18%_8%,rgba(18,59,122,.08),transparent_20%),linear-gradient(180deg,#f8f7f4_0%,#fbfaf8_42%,#f3f4f7_100%);
     font-family: var(--font-body), sans-serif;
   }
 }
@@ -65,7 +65,7 @@
   }
 
   .surface-dark {
-    @apply rounded-[2rem] bg-[linear-gradient(145deg,#101933,#18244b_55%,#4f46e5)] text-white shadow-luxe;
+    @apply rounded-[2rem] bg-[linear-gradient(145deg,#0f264f,#123b7a_55%,#1f4c96)] text-white shadow-luxe;
   }
 
   .section-shell {

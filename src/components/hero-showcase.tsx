@@ -6,8 +6,8 @@ import { Progress } from "@/components/ui/progress";
 
 const floatingCards = [
   { label: "25,000+ سؤال", className: "right-3 top-6 text-slate-900" },
-  { label: "120+ اختبار", className: "left-3 top-24 text-violet-700 border-violet-200" },
-  { label: "خطة ذكية", className: "right-8 bottom-4 text-indigo-700 border-indigo-200" },
+  { label: "120+ اختبار", className: "left-3 top-24 text-[#123B7A] border-[#d8c7a7]" },
+  { label: "خطة ذكية", className: "right-8 bottom-4 text-[#123B7A] border-[#d8c7a7]" },
   { label: "تقدم أسبوعي", className: "-left-2 bottom-24 text-amber-700 border-amber-200" },
 ];
 
@@ -29,7 +29,7 @@ export function HeroShowcase() {
         </div>
       ))}
 
-      <Card className="overflow-hidden rounded-[2.8rem] border-0 bg-[radial-gradient(circle_at_top_left,rgba(124,58,237,0.15),transparent_24%),radial-gradient(circle_at_bottom_right,rgba(245,158,11,0.12),transparent_22%),linear-gradient(180deg,rgba(255,255,255,0.99),rgba(246,247,252,0.95))] shadow-luxe">
+      <Card className="overflow-hidden rounded-[2.8rem] border-0 bg-[radial-gradient(circle_at_top_left,rgba(18,59,122,0.09),transparent_24%),radial-gradient(circle_at_bottom_right,rgba(201,161,91,0.16),transparent_22%),linear-gradient(180deg,rgba(255,255,255,0.99),rgba(248,247,244,0.95))] shadow-luxe">
         <CardContent className="grid gap-4 p-5 lg:grid-cols-[0.96fr,1.04fr]">
           <div className="grid gap-4">
             <div className="surface-dark p-5">
@@ -69,7 +69,7 @@ export function HeroShowcase() {
                       <path
                         d="M61 136c9-14 20-21 34-21 16 0 28 7 38 21"
                         fill="none"
-                        stroke="#7c3aed"
+                            stroke="#C9A15B"
                         strokeWidth="16"
                         strokeLinecap="round"
                       />
@@ -138,7 +138,7 @@ export function HeroShowcase() {
                         الإتقان يتغير أمامك
                       </h3>
                     </div>
-                    <Sparkles className="h-5 w-5 text-violet-600" />
+                    <Sparkles className="h-5 w-5 text-[#C9A15B]" />
                   </div>
                   <div className="mt-5 space-y-4">
                     {progressBars.map((item) => (
@@ -169,7 +169,7 @@ export function HeroShowcase() {
                           key={item.label}
                           className="flex items-center gap-3 rounded-[1.3rem] border border-slate-200/80 bg-slate-50/80 p-4"
                         >
-                          <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[linear-gradient(145deg,rgba(79,70,229,0.12),rgba(245,158,11,0.18))] text-indigo-700">
+                          <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[linear-gradient(145deg,rgba(18,59,122,0.10),rgba(201,161,91,0.22))] text-[#123B7A]">
                             <Icon className="h-4 w-4" />
                           </div>
                           <span className="font-semibold text-slate-900">{item.label}</span>
@@ -186,7 +186,7 @@ export function HeroShowcase() {
             <div className="mx-auto flex h-[530px] w-[290px] flex-col rounded-[2.8rem] border border-slate-200 bg-[linear-gradient(180deg,#fbfbff,#f4f6fc)] p-4 shadow-inner">
               <div className="mx-auto h-1.5 w-24 rounded-full bg-slate-200" />
 
-              <div className="mt-4 rounded-[1.8rem] bg-[linear-gradient(145deg,#4f46e5,#7c3aed)] p-4 text-white">
+              <div className="mt-4 rounded-[1.8rem] bg-[linear-gradient(145deg,#123B7A,#1f4c96)] p-4 text-white">
                 <p className="text-xs text-white/70">لوحة الطالب</p>
                 <div className="display-font mt-2 text-2xl font-bold">ماذا تذاكر اليوم؟</div>
                 <p className="mt-2 text-sm leading-7 text-white/80">
