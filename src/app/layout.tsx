@@ -1,6 +1,21 @@
 import type { Metadata } from "next";
+import { Alexandria, IBM_Plex_Sans_Arabic } from "next/font/google";
 
 import "./globals.css";
+
+const alexandria = Alexandria({
+  subsets: ["arabic", "latin"],
+  weight: ["400", "500", "600", "700", "800"],
+  variable: "--font-heading",
+  display: "swap",
+});
+
+const ibmPlexArabic = IBM_Plex_Sans_Arabic({
+  subsets: ["arabic", "latin"],
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-body",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   title: "معيار | منصة عربية ذكية للتحضير للقدرات",
@@ -18,7 +33,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ar" dir="rtl">
-      <body className="miyaar-grid">{children}</body>
+      <body className={`${alexandria.variable} ${ibmPlexArabic.variable} miyaar-grid`}>
+        {children}
+      </body>
     </html>
   );
 }
