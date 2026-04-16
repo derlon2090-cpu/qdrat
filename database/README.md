@@ -6,12 +6,15 @@
 
 - `schema.sql`
   يبني الجداول والأنواع والفهارس الأساسية للمستخدمين والباقات والاشتراكات وبنوك الأسئلة والقطع والأسئلة والمحاولات والخطط.
+- `seed.sql`
+  يضيف الباقات الأساسية، Features الباقات، المهارات الرئيسية، والمجموعات الأولى لبنوك الكمي واللفظي والقطع.
 
 ## كيف تشغله على Neon
 
 1. أضف `DATABASE_URL` في `.env.local`.
 2. افتح SQL Editor داخل Neon.
 3. انسخ محتوى `schema.sql` ونفّذه.
+4. بعده نفّذ `seed.sql` لإضافة البيانات الأولية.
 
 ## لماذا هذه البنية
 
@@ -39,6 +42,9 @@
 - `app_review_queue`
 - `app_study_plans`
 - `app_study_plan_tasks`
+- `app_subscription_plan_features`
+- `app_question_sources`
+- `app_import_batches`
 
 ## ملاحظة
 

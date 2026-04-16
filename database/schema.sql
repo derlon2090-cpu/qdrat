@@ -1,29 +1,106 @@
 create extension if not exists pgcrypto;
 create extension if not exists pg_trgm;
 
-create type app_user_role as enum ('student', 'admin', 'editor', 'coach');
-create type app_subscription_status as enum ('trial', 'active', 'past_due', 'cancelled', 'expired');
-create type app_plan_interval as enum ('monthly', 'quarterly', 'yearly', 'lifetime');
-create type app_bank_section as enum ('verbal', 'quantitative', 'mixed');
-create type app_bank_kind as enum ('question_bank', 'passage_bank', 'paper_model', 'mock_exam');
-create type app_question_type as enum (
-  'analogy',
-  'sentence_completion',
-  'contextual_error',
-  'odd_word',
-  'reading_passage',
-  'quantitative_problem',
-  'mixed'
-);
-create type app_difficulty as enum ('easy', 'medium', 'hard', 'elite');
-create type app_attempt_status as enum ('in_progress', 'submitted', 'reviewed');
-create type app_answer_state as enum ('answered', 'skipped', 'flagged');
-create type app_review_bucket as enum ('saved', 'incorrect', 'weak', 'late');
-create type app_task_kind as enum ('diagnostic', 'practice', 'review', 'mock_exam');
+do $$
+begin
+  if not exists (select 1 from pg_type where typname = 'app_user_role') then
+    create type app_user_role as enum ('student', 'admin', 'editor', 'coach');
+  end if;
+end
+$$;
+
+do $$
+begin
+  if not exists (select 1 from pg_type where typname = 'app_subscription_status') then
+    create type app_subscription_status as enum ('trial', 'active', 'past_due', 'cancelled', 'expired');
+  end if;
+end
+$$;
+
+do $$
+begin
+  if not exists (select 1 from pg_type where typname = 'app_plan_interval') then
+    create type app_plan_interval as enum ('monthly', 'quarterly', 'yearly', 'lifetime');
+  end if;
+end
+$$;
+
+do $$
+begin
+  if not exists (select 1 from pg_type where typname = 'app_bank_section') then
+    create type app_bank_section as enum ('verbal', 'quantitative', 'mixed');
+  end if;
+end
+$$;
+
+do $$
+begin
+  if not exists (select 1 from pg_type where typname = 'app_bank_kind') then
+    create type app_bank_kind as enum ('question_bank', 'passage_bank', 'paper_model', 'mock_exam');
+  end if;
+end
+$$;
+
+do $$
+begin
+  if not exists (select 1 from pg_type where typname = 'app_question_type') then
+    create type app_question_type as enum (
+      'analogy',
+      'sentence_completion',
+      'contextual_error',
+      'odd_word',
+      'reading_passage',
+      'quantitative_problem',
+      'mixed'
+    );
+  end if;
+end
+$$;
+
+do $$
+begin
+  if not exists (select 1 from pg_type where typname = 'app_difficulty') then
+    create type app_difficulty as enum ('easy', 'medium', 'hard', 'elite');
+  end if;
+end
+$$;
+
+do $$
+begin
+  if not exists (select 1 from pg_type where typname = 'app_attempt_status') then
+    create type app_attempt_status as enum ('in_progress', 'submitted', 'reviewed');
+  end if;
+end
+$$;
+
+do $$
+begin
+  if not exists (select 1 from pg_type where typname = 'app_answer_state') then
+    create type app_answer_state as enum ('answered', 'skipped', 'flagged');
+  end if;
+end
+$$;
+
+do $$
+begin
+  if not exists (select 1 from pg_type where typname = 'app_review_bucket') then
+    create type app_review_bucket as enum ('saved', 'incorrect', 'weak', 'late');
+  end if;
+end
+$$;
+
+do $$
+begin
+  if not exists (select 1 from pg_type where typname = 'app_task_kind') then
+    create type app_task_kind as enum ('diagnostic', 'practice', 'review', 'mock_exam');
+  end if;
+end
+$$;
 
 create table if not exists app_users (
   id uuid primary key default gen_random_uuid(),
   email varchar(255) not null unique,
+  username varchar(60) unique,
   phone varchar(30),
   full_name varchar(160) not null,
   password_hash text,
@@ -54,6 +131,7 @@ create table if not exists app_subscription_plans (
   description text,
   interval app_plan_interval not null,
   price_sar numeric(10,2) not null,
+  sort_order smallint not null default 1,
   question_limit integer,
   mock_exam_limit integer,
   supports_study_plan boolean not null default true,
@@ -81,6 +159,21 @@ create unique index if not exists idx_user_subscriptions_active
   on app_user_subscriptions (user_id, status)
   where status in ('trial', 'active');
 
+create table if not exists app_subscription_plan_features (
+  id bigserial primary key,
+  plan_id uuid not null references app_subscription_plans(id) on delete cascade,
+  feature_key varchar(80) not null,
+  feature_label varchar(160) not null,
+  feature_value varchar(255),
+  is_enabled boolean not null default true,
+  sort_order smallint not null default 1,
+  created_at timestamptz not null default now(),
+  unique (plan_id, feature_key)
+);
+
+create index if not exists idx_plan_features_plan_sort
+  on app_subscription_plan_features (plan_id, sort_order);
+
 create table if not exists app_skills (
   id bigserial primary key,
   section app_bank_section not null,
@@ -94,6 +187,29 @@ create table if not exists app_tags (
   id bigserial primary key,
   tag_name varchar(120) not null unique,
   tag_slug varchar(120) not null unique,
+  created_at timestamptz not null default now()
+);
+
+create table if not exists app_question_sources (
+  id bigserial primary key,
+  source_slug varchar(160) not null unique,
+  source_name varchar(255) not null,
+  source_type varchar(80),
+  author_name varchar(160),
+  metadata jsonb not null default '{}'::jsonb,
+  created_at timestamptz not null default now()
+);
+
+create table if not exists app_import_batches (
+  id bigserial primary key,
+  source_id bigint references app_question_sources(id) on delete set null,
+  batch_name varchar(255) not null,
+  imported_by uuid references app_users(id),
+  section app_bank_section,
+  total_rows integer not null default 0,
+  inserted_rows integer not null default 0,
+  rejected_rows integer not null default 0,
+  notes text,
   created_at timestamptz not null default now()
 );
 
@@ -137,6 +253,8 @@ create table if not exists app_questions (
   bank_id bigint not null references app_question_banks(id) on delete cascade,
   passage_id bigint references app_passages(id) on delete set null,
   skill_id bigint references app_skills(id) on delete set null,
+  source_id bigint references app_question_sources(id) on delete set null,
+  import_batch_id bigint references app_import_batches(id) on delete set null,
   question_code varchar(80) unique,
   section app_bank_section not null,
   question_type app_question_type not null,
@@ -329,3 +447,128 @@ select
 from app_question_banks qb
 left join app_questions q on q.bank_id = qb.id and q.is_published = true
 group by qb.id, qb.slug, qb.title, qb.section, qb.kind, qb.question_type, qb.is_published;
+
+alter table if exists app_users
+  add column if not exists username varchar(60);
+
+create unique index if not exists idx_app_users_username
+  on app_users (username)
+  where username is not null;
+
+alter table if exists app_subscription_plans
+  add column if not exists sort_order smallint not null default 1;
+
+alter table if exists app_question_banks
+  add column if not exists search_priority smallint not null default 1,
+  add column if not exists estimated_total_size bigint not null default 0;
+
+alter table if exists app_questions
+  add column if not exists source_id bigint references app_question_sources(id) on delete set null,
+  add column if not exists import_batch_id bigint references app_import_batches(id) on delete set null;
+
+do $$
+begin
+  if not exists (select 1 from pg_constraint where conname = 'chk_app_users_email_not_blank') then
+    alter table app_users
+      add constraint chk_app_users_email_not_blank check (length(trim(email)) > 3);
+  end if;
+end
+$$;
+
+do $$
+begin
+  if not exists (select 1 from pg_constraint where conname = 'chk_app_subscription_plans_price_nonnegative') then
+    alter table app_subscription_plans
+      add constraint chk_app_subscription_plans_price_nonnegative check (price_sar >= 0);
+  end if;
+
+  if not exists (select 1 from pg_constraint where conname = 'chk_app_subscription_plans_limits_nonnegative') then
+    alter table app_subscription_plans
+      add constraint chk_app_subscription_plans_limits_nonnegative check (
+        coalesce(question_limit, 0) >= 0 and coalesce(mock_exam_limit, 0) >= 0
+      );
+  end if;
+end
+$$;
+
+do $$
+begin
+  if not exists (select 1 from pg_constraint where conname = 'chk_app_question_banks_total_questions_nonnegative') then
+    alter table app_question_banks
+      add constraint chk_app_question_banks_total_questions_nonnegative check (total_questions >= 0);
+  end if;
+
+  if not exists (select 1 from pg_constraint where conname = 'chk_app_question_banks_estimated_total_size_nonnegative') then
+    alter table app_question_banks
+      add constraint chk_app_question_banks_estimated_total_size_nonnegative check (estimated_total_size >= 0);
+  end if;
+end
+$$;
+
+do $$
+begin
+  if not exists (select 1 from pg_constraint where conname = 'chk_app_questions_usage_nonnegative') then
+    alter table app_questions
+      add constraint chk_app_questions_usage_nonnegative check (
+        usage_count >= 0 and save_count >= 0 and error_count >= 0
+      );
+  end if;
+end
+$$;
+
+do $$
+begin
+  if not exists (select 1 from pg_constraint where conname = 'chk_app_study_plan_tasks_numbers_nonnegative') then
+    alter table app_study_plan_tasks
+      add constraint chk_app_study_plan_tasks_numbers_nonnegative check (
+        coalesce(estimated_minutes, 0) >= 0 and coalesce(target_questions, 0) >= 0
+      );
+  end if;
+end
+$$;
+
+create or replace function set_updated_at()
+returns trigger
+language plpgsql
+as $$
+begin
+  new.updated_at = now();
+  return new;
+end;
+$$;
+
+drop trigger if exists trg_app_users_updated_at on app_users;
+create trigger trg_app_users_updated_at before update on app_users
+for each row execute function set_updated_at();
+
+drop trigger if exists trg_app_student_profiles_updated_at on app_student_profiles;
+create trigger trg_app_student_profiles_updated_at before update on app_student_profiles
+for each row execute function set_updated_at();
+
+drop trigger if exists trg_app_subscription_plans_updated_at on app_subscription_plans;
+create trigger trg_app_subscription_plans_updated_at before update on app_subscription_plans
+for each row execute function set_updated_at();
+
+drop trigger if exists trg_app_user_subscriptions_updated_at on app_user_subscriptions;
+create trigger trg_app_user_subscriptions_updated_at before update on app_user_subscriptions
+for each row execute function set_updated_at();
+
+drop trigger if exists trg_app_question_banks_updated_at on app_question_banks;
+create trigger trg_app_question_banks_updated_at before update on app_question_banks
+for each row execute function set_updated_at();
+
+drop trigger if exists trg_app_passages_updated_at on app_passages;
+create trigger trg_app_passages_updated_at before update on app_passages
+for each row execute function set_updated_at();
+
+drop trigger if exists trg_app_questions_updated_at on app_questions;
+create trigger trg_app_questions_updated_at before update on app_questions
+for each row execute function set_updated_at();
+
+drop trigger if exists trg_app_mock_exams_updated_at on app_mock_exams;
+create trigger trg_app_mock_exams_updated_at before update on app_mock_exams
+for each row execute function set_updated_at();
+
+drop trigger if exists trg_app_study_plans_updated_at on app_study_plans;
+create trigger trg_app_study_plans_updated_at before update on app_study_plans
+for each row execute function set_updated_at();
