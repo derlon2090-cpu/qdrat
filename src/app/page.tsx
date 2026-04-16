@@ -66,21 +66,21 @@ export default function HomePage() {
       <SiteHeader links={navLinks} ctaHref="/#cta" ctaLabel="ابدأ الآن" />
 
       <main>
-        <section className="hero-school section-shell overflow-hidden pb-12 pt-10 md:pt-16" id="hero">
+        <section className="hero-school section-shell overflow-hidden" id="hero">
           <div className="mx-auto grid w-[min(calc(100%-2rem),1180px)] gap-12 lg:grid-cols-[0.96fr,1.04fr] lg:items-center">
             <Reveal>
               <span className="inline-flex rounded-full border border-white/18 bg-white/10 px-4 py-2 text-sm font-semibold text-white/90">
                 منصة قدرات كمي ولفظي فقط
               </span>
-              <h1 className="page-heading mt-6 max-w-3xl text-white">
+              <h1 className="page-heading hero-title mt-6 text-white">
                 تحضير أذكى للقدرات
                 <span className="block text-[#F6D28B]">الكمي واللفظي</span>
                 بخطة يومية واختبارات تحاكي الواقع
               </h1>
-              <p className="mt-5 max-w-2xl text-lg leading-9 text-white/82">
+              <p className="hero-subtitle text-white/82">
                 تعرف مستواك، تبدأ بخطة واضحة، وتتحرك في الكمي واللفظي بدون تشتيت أو لف طويل.
               </p>
-              <div className="mt-8 flex flex-wrap gap-3">
+              <div className="hero-actions">
                 <Link href="#cta">
                   <Button size="lg" variant="secondary">
                     ابدأ الآن
@@ -127,14 +127,14 @@ export default function HomePage() {
                 {whyBenefits.map((item, index) => (
                   <Reveal key={item.title} delay={index * 0.04}>
                     <Card className="rounded-[2rem] border-white/85 bg-white/95 shadow-soft">
-                      <CardContent className="p-6">
+                      <CardContent className="p-7 md:p-8">
                         <div className="flex items-start gap-4">
-                          <div className="mt-1 flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[linear-gradient(145deg,rgba(18,59,122,0.08),rgba(201,161,91,0.24))] text-lg font-bold text-[#123B7A]">
+                          <div className="mt-1 mb-5 flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[linear-gradient(145deg,rgba(18,59,122,0.08),rgba(201,161,91,0.24))] text-lg font-bold text-[#123B7A]">
                             {index + 1}
                           </div>
                           <div>
-                            <h3 className="display-font text-2xl font-bold text-slate-950">{item.title}</h3>
-                            <p className="mt-3 text-base leading-8 text-slate-600">{item.text}</p>
+                            <h3 className="display-font card-title font-bold text-slate-950">{item.title}</h3>
+                            <p className="card-text text-slate-600">{item.text}</p>
                           </div>
                         </div>
                       </CardContent>
@@ -169,11 +169,11 @@ export default function HomePage() {
           </div>
         </section>
 
-        <section className="section-shell pt-2" id="diagnostic">
+        <section className="section-shell" id="diagnostic">
           <div className="mx-auto grid w-[min(calc(100%-2rem),1180px)] gap-6 lg:grid-cols-[0.9fr,1.1fr]">
             <Reveal>
               <Card className="rounded-[2.2rem] border border-[#E8D8B3] bg-[linear-gradient(180deg,#fffdfa,#f7f1e5)] shadow-soft">
-                <CardContent className="p-7">
+                <CardContent className="p-8">
                   <span className="mini-pill bg-[#123B7A]/5 text-[#123B7A]">التشخيص السريع</span>
                   <h2 className="section-title max-w-2xl text-right">اختبر مستواك قبل أن تبدأ الخطة</h2>
                   <p className="section-copy max-w-2xl text-right">
@@ -197,11 +197,11 @@ export default function HomePage() {
               <div className="grid gap-4 md:grid-cols-3">
                 {diagnosticPoints.map((item, index) => (
                   <Card key={item} className="rounded-[2rem] border-white/80 bg-white/94 shadow-soft">
-                    <CardContent className="p-6">
-                      <div className="display-font text-sm font-bold tracking-[0.18em] text-[#123B7A]">
+                    <CardContent className="p-7">
+                      <div className="display-font mb-5 text-sm font-bold tracking-[0.18em] text-[#123B7A]">
                         0{index + 1}
                       </div>
-                      <p className="mt-4 text-base leading-8 text-slate-700">{item}</p>
+                      <p className="card-text text-slate-700">{item}</p>
                     </CardContent>
                   </Card>
                 ))}
@@ -228,17 +228,17 @@ export default function HomePage() {
               <div className="grid gap-5 md:grid-cols-3">
               {testimonials.map(([name, role, result, meta, quote], index) => (
                 <Reveal key={`${name}-${index}`} delay={index * 0.04}>
-                  <Card className="h-full overflow-hidden rounded-[2.2rem] border-white/80 bg-white/95 shadow-soft">
+                  <Card className="testimonial-card h-full overflow-hidden border-white/80 bg-white/95 shadow-soft">
                     <div
-                      className={`mx-5 mt-5 rounded-[1.2rem] px-5 py-4 text-center text-2xl font-black text-white shadow-soft ${testimonialColors[index % testimonialColors.length]}`}
+                      className={`testimonial-score mx-1 rounded-[1.2rem] px-5 py-4 text-center text-2xl font-black text-white shadow-soft ${testimonialColors[index % testimonialColors.length]}`}
                     >
                       {result}
                     </div>
-                    <CardContent className="p-6">
+                    <CardContent className="p-0 pt-6">
                       <div className="flex items-start justify-between gap-4">
                         <div>
-                          <div className="display-font font-bold text-slate-950">{name}</div>
-                          <div className="text-sm text-slate-500">{role}</div>
+                          <div className="display-font testimonial-name text-slate-950">{name}</div>
+                          <div className="testimonial-role text-slate-500">{role}</div>
                         </div>
                         <div className={`flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br text-sm font-black text-white ${testimonialAvatars[index % testimonialAvatars.length]}`}>
                           {name.slice(0, 1)}
@@ -250,11 +250,11 @@ export default function HomePage() {
                             <Star key={starIndex} className="h-4 w-4 fill-current" />
                           ))}
                         </div>
-                        <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">
+                        <span className="testimonial-meta rounded-full bg-slate-100 px-3 py-1 font-semibold text-slate-600">
                           {meta}
                         </span>
                       </div>
-                      <blockquote className="mt-5 text-base leading-9 text-slate-900">{quote}</blockquote>
+                      <blockquote className="testimonial-quote text-slate-900">{quote}</blockquote>
                     </CardContent>
                   </Card>
                 </Reveal>
@@ -264,11 +264,11 @@ export default function HomePage() {
           </div>
         </section>
 
-        <section className="section-shell pt-2" id="cta">
+        <section className="section-shell" id="cta">
           <div className="mx-auto w-[min(calc(100%-2rem),1180px)]">
             <Reveal>
               <Card className="overflow-hidden rounded-[2.5rem] border border-[#E8D8B3] bg-[radial-gradient(circle_at_top_left,rgba(18,59,122,0.10),transparent_24%),radial-gradient(circle_at_bottom_right,rgba(201,161,91,0.14),transparent_18%),linear-gradient(180deg,rgba(255,255,255,0.98),rgba(248,247,244,0.95))] shadow-luxe">
-                <CardContent className="flex flex-col items-start justify-between gap-6 p-8 md:flex-row md:items-center">
+                <CardContent className="flex flex-col items-start justify-between gap-8 p-8 md:flex-row md:items-center md:p-10">
                   <div>
                     <span className="mini-pill bg-[#123B7A]/5 text-[#123B7A]">ابدأ رحلتك مع معيار</span>
                     <h2 className="section-title max-w-2xl text-right">جاهز تبدأ خطة ترفع درجتك؟</h2>

@@ -13,7 +13,7 @@ export function SectionTitle({
 }) {
   return (
     <div className={align === "center" ? "section-heading" : "max-w-3xl text-right"}>
-      <Badge>{badge}</Badge>
+      <Badge className="section-eyebrow">{badge}</Badge>
       <h2 className="section-title">{title}</h2>
       <p className="section-copy">{text}</p>
     </div>

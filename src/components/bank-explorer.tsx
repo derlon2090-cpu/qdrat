@@ -157,14 +157,14 @@ export function BankExplorer({
   return (
     <div className="space-y-6">
       <Card className="overflow-hidden rounded-[2.2rem] border border-[#E8D8B3] bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(248,247,244,0.96))] shadow-soft">
-        <CardContent className="space-y-6 p-5 md:p-7">
+        <CardContent className="space-y-8 p-6 md:p-8">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-            <div className="max-w-2xl space-y-3">
+            <div className="max-w-2xl space-y-4">
               <Badge className="border-transparent bg-[#123B7A] text-white">بحث السؤال</Badge>
-              <h2 className="display-font text-3xl font-bold text-slate-950 md:text-4xl">
+              <h2 className="display-font section-title max-w-none text-right text-slate-950">
                 ابحث داخل نص السؤال نفسه بدل الدوران بين البنوك
               </h2>
-              <p className="max-w-2xl text-base leading-8 text-slate-600">
+              <p className="section-copy mb-0 max-w-2xl text-slate-600">
                 اكتب كلمة من السؤال، ثم صفِّ النتائج حسب القسم أو الصعوبة أو المهارة، وافتح السؤال مباشرة.
               </p>
             </div>
@@ -175,10 +175,10 @@ export function BankExplorer({
               ].map(([title, text]) => (
                 <div
                   key={title}
-                  className="rounded-[1.4rem] border border-[#E8D8B3] bg-white/80 p-4 text-right"
+                  className="rounded-[1.4rem] border border-[#E8D8B3] bg-white/80 p-5 text-right"
                 >
-                  <div className="display-font text-base font-bold text-[#123B7A]">{title}</div>
-                  <div className="mt-1 text-sm text-slate-500">{text}</div>
+                  <div className="display-font card-title mb-2 text-[#123B7A]">{title}</div>
+                  <div className="card-text text-sm text-slate-500">{text}</div>
                 </div>
               ))}
             </div>
@@ -201,7 +201,7 @@ export function BankExplorer({
               </label>
 
               {questionQuery.trim() ? (
-                <div className="rounded-[1.6rem] border border-slate-200 bg-white/88 p-4">
+                <div className="rounded-[1.6rem] border border-slate-200 bg-white/88 p-5">
                   <div className="mb-3 flex items-center gap-2 text-sm font-semibold text-slate-500">
                     <Sparkles className="h-4 w-4 text-[#C99A43]" />
                     اقتراحات سريعة
@@ -224,7 +224,7 @@ export function BankExplorer({
                   </div>
                 </div>
               ) : recentSearches.length ? (
-                <div className="rounded-[1.6rem] border border-slate-200 bg-white/88 p-4">
+                <div className="rounded-[1.6rem] border border-slate-200 bg-white/88 p-5">
                   <div className="mb-3 flex items-center gap-2 text-sm font-semibold text-slate-500">
                     <Clock3 className="h-4 w-4 text-[#123B7A]" />
                     آخر عمليات البحث
@@ -319,9 +319,9 @@ export function BankExplorer({
                 {filteredQuestions.slice(0, 8).map((question) => (
                   <div
                     key={question.id}
-                    className="flex flex-col gap-4 rounded-[1.7rem] border border-slate-200/80 bg-white/90 p-5 lg:flex-row lg:items-center lg:justify-between"
-                  >
-                    <div className="space-y-3">
+                  className="flex flex-col gap-5 rounded-[1.7rem] border border-slate-200/80 bg-white/90 p-6 lg:flex-row lg:items-center lg:justify-between"
+                >
+                  <div className="space-y-3">
                       <div className="flex flex-wrap items-center gap-2">
                         <Badge className="border-transparent bg-[#123B7A] text-white">
                           {question.section}
@@ -330,7 +330,7 @@ export function BankExplorer({
                         <Badge className="bg-slate-100 text-slate-700">{question.difficulty}</Badge>
                         <Badge className="bg-emerald-50 text-emerald-700">{question.state}</Badge>
                       </div>
-                      <h3 className="display-font text-xl font-bold leading-9 text-slate-950">
+                      <h3 className="display-font card-title mb-0 text-xl font-bold leading-9 text-slate-950">
                         {createSnippet(question.text, deferredQuestionQuery)}
                       </h3>
                       <div className="text-sm text-slate-500">المهارة: {question.skill}</div>
@@ -354,7 +354,7 @@ export function BankExplorer({
       </Card>
 
       <Card className="rounded-[2.2rem]">
-        <CardContent className="space-y-5 p-5 md:p-6">
+        <CardContent className="space-y-6 p-6 md:p-8">
           <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
             <label className="grid w-full gap-2 md:max-w-md">
               <span className="text-sm font-medium text-slate-500">بحث داخل البنوك</span>
@@ -387,16 +387,16 @@ export function BankExplorer({
               filteredBanks.map((bank) => (
                 <div
                   key={bank.id}
-                  className="flex flex-col gap-4 rounded-[1.7rem] border border-slate-200/80 bg-white/75 p-5 md:flex-row md:items-center md:justify-between"
+                  className="flex flex-col gap-5 rounded-[1.7rem] border border-slate-200/80 bg-white/75 p-6 md:flex-row md:items-center md:justify-between"
                 >
                   <div className="space-y-2">
                     <div className="flex flex-wrap items-center gap-2">
-                      <h3 className="display-font text-lg font-bold text-slate-950">{bank.title}</h3>
+                      <h3 className="display-font card-title mb-0 text-lg font-bold text-slate-950">{bank.title}</h3>
                       <Badge className="border-transparent bg-slate-950 text-white">{bank.type}</Badge>
                       <Badge className="bg-violet-50 text-violet-700">{bank.level}</Badge>
                       <Badge className="bg-amber-50 text-amber-700">{bank.tag}</Badge>
                     </div>
-                    <p className="text-sm leading-7 text-slate-600">
+                    <p className="card-text text-sm text-slate-600">
                       بنك واضح ومباشر للتدريب السريع أو بناء اختبار مخصص أو المتابعة من نفس الصفحة.
                     </p>
                   </div>
