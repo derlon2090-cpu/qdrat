@@ -10,10 +10,12 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 
 const navLinks = [
-  { href: "/#hero", label: "الرئيسية" },
-  { href: "/#why", label: "لماذا معيار" },
-  { href: "/#diagnostic", label: "التشخيص" },
-  { href: "/#testimonials", label: "آراء الطلاب" },
+  { href: "/", label: "الرئيسية" },
+  { href: "/diagnostic", label: "التشخيص" },
+  { href: "/question-banks", label: "بنوك الأسئلة" },
+  { href: "/study-plan", label: "الخطة اليومية" },
+  { href: "/pricing", label: "الأسعار" },
+  { href: "/blog", label: "المدونة" },
 ];
 
 const whyBenefits = [
@@ -59,10 +61,25 @@ const testimonialAvatars = [
   "from-[#26497F] to-[#16315E]",
 ];
 
+const productShots = [
+  {
+    title: "صفحة التشخيص",
+    text: "اختبار قصير يحدد نقطة البداية ويغذي أول أسبوع من الخطة.",
+    href: "/diagnostic",
+    cta: "فتح التشخيص",
+  },
+  {
+    title: "لوحة الطالب",
+    text: "تقدمك، مراجعتك، وأولوياتك القادمة في لقطة واحدة واضحة.",
+    href: "/dashboard",
+    cta: "عرض اللوحة",
+  },
+];
+
 export default function HomePage() {
   return (
     <div className="min-h-screen">
-      <SiteHeader links={navLinks} ctaHref="/#cta" ctaLabel="ابدأ الآن" />
+      <SiteHeader links={navLinks} ctaHref="/exam" ctaLabel="ابدأ الآن" />
 
       <main>
         <section className="hero-school section-shell overflow-hidden" id="hero">
@@ -79,9 +96,18 @@ export default function HomePage() {
                 منصة تساعدك تقيس مستواك وتبني خطة واضحة بدون تشتيت.
               </p>
               <div className="hero-actions">
-                <Link href="/exam">
+                <Link href="/diagnostic">
                   <Button size="lg" className="btn-primary">
-                    ابدأ رحلتك الآن
+                    ابدأ الآن
+                  </Button>
+                </Link>
+                <Link href="/exam">
+                  <Button
+                    size="lg"
+                    variant="outline"
+                    className="border-white/20 bg-white/10 text-white hover:bg-white/15"
+                  >
+                    اختبر مستواك
                   </Button>
                 </Link>
               </div>
@@ -150,6 +176,47 @@ export default function HomePage() {
                         <div>
                           <h3 className="display-font card-title font-bold text-slate-950">{item.title}</h3>
                           <p className="card-text text-slate-600">{item.text}</p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </Reveal>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        <section className="section-shell" id="product">
+          <div className="mx-auto w-[min(calc(100%-2rem),1180px)]">
+            <Reveal>
+              <SectionTitle
+                badge="لقطة من المنتج"
+                title="واجهتان واضحتان بدل شرح طويل"
+                text="لمحة سريعة تقرّب لك شكل التجربة، ثم تنتقل مباشرة إلى الصفحة المناسبة."
+              />
+            </Reveal>
+            <div className="mt-10 grid gap-5 md:grid-cols-2">
+              {productShots.map((item, index) => (
+                <Reveal key={item.title} delay={index * 0.05}>
+                  <Card className="overflow-hidden rounded-[2.2rem] border-white/80 bg-white/95 shadow-soft">
+                    <CardContent className="p-0">
+                      <div className="border-b border-slate-100 bg-[linear-gradient(145deg,#123B7A,#1B3562)] p-7 text-white">
+                        <div className="grid gap-3">
+                          <div className="h-4 w-20 rounded-full bg-white/20" />
+                          <div className="h-28 rounded-[1.5rem] bg-white/10" />
+                          <div className="grid grid-cols-2 gap-3">
+                            <div className="h-12 rounded-2xl bg-white/10" />
+                            <div className="h-12 rounded-2xl bg-white/10" />
+                          </div>
+                        </div>
+                      </div>
+                      <div className="p-7">
+                        <h3 className="display-font card-title font-bold text-slate-950">{item.title}</h3>
+                        <p className="card-text text-slate-600">{item.text}</p>
+                        <div className="mt-6">
+                          <Link href={item.href}>
+                            <Button variant="outline">{item.cta}</Button>
+                          </Link>
                         </div>
                       </div>
                     </CardContent>

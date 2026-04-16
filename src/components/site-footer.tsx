@@ -4,12 +4,16 @@ import { ArrowUp, Download, MessageCircleMore, Newspaper, ShieldCheck, Smartphon
 import { MiyaarLogo } from "@/components/miyaar-logo";
 
 const footerLinks = [
-  { href: "/terms", label: "الشروط والأحكام" },
-  { href: "/privacy", label: "سياسة الخصوصية" },
-  { href: "/contact", label: "تواصل معنا" },
+  { href: "/diagnostic", label: "التشخيص" },
+  { href: "/question-banks", label: "بنوك الأسئلة" },
+  { href: "/study-plan", label: "الخطة اليومية" },
+  { href: "/dashboard", label: "لوحة الطالب" },
+  { href: "/pricing", label: "الأسعار" },
+  { href: "/faq", label: "الأسئلة الشائعة" },
+  { href: "/success-stories", label: "نتائج وتجارب الطلاب" },
+  { href: "/about", label: "من نحن" },
   { href: "/blog", label: "المدونة" },
-  { href: "/exam", label: "اعرف مستواك في القدرات" },
-  { href: "/banks", label: "بنوك الأسئلة" },
+  { href: "/contact", label: "تواصل معنا" },
 ];
 
 export function SiteFooter() {
@@ -54,7 +58,7 @@ export function SiteFooter() {
               <span className="text-sm font-semibold">تواصل سريع</span>
             </div>
             <p className="mt-3 text-sm leading-7 text-white/85">
-              إذا عندك سؤال عن الاشتراك أو الخطة أو بنك معين، صفحة التواصل جاهزة لك.
+              إذا عندك سؤال عن الاشتراك أو الخطة أو نقطة البداية، صفحة التواصل جاهزة لك.
             </p>
           </div>
 
@@ -64,7 +68,7 @@ export function SiteFooter() {
               <span className="text-sm font-semibold">محتوى ومقالات</span>
             </div>
             <p className="mt-3 text-sm leading-7 text-white/85">
-              جهزنا مساحة مستقلة للمقالات والنصائح والتحديثات حتى تكون التجربة أوضح وأكثر اكتمالًا.
+              فصلنا المقالات والشرح والتفاصيل في صفحات مستقلة حتى تبقى الواجهة الرئيسية أخف وأوضح.
             </p>
           </div>
 
@@ -74,7 +78,7 @@ export function SiteFooter() {
               <span className="text-sm font-semibold">ثقة ووضوح</span>
             </div>
             <p className="mt-3 text-sm leading-7 text-white/85">
-              صفحات الخصوصية والشروط أصبحت مستقلة وواضحة بدل أن تبقى روابط شكلية فقط.
+              أضفنا صفحات مستقلة للتشخيص والخطة والنتائج والأسئلة الشائعة بدل تكبير الصفحة الرئيسية.
             </p>
           </div>
         </div>
