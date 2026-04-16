@@ -14,16 +14,18 @@ import {
   studentRecommendations,
   weeklyPlan,
 } from "@/data/miyaar";
+import { getDatabaseHealth } from "@/lib/db";
 
 const navLinks = [
   { href: "/", label: "الرئيسية" },
-  { href: "/banks", label: "البنوك" },
+  { href: "/question-bank", label: "بنك الأسئلة" },
   { href: "/dashboard", label: "لوحة الطالب" },
   { href: "/results", label: "النتائج" },
-  { href: "/admin", label: "الإدارة" },
 ];
 
-export default function DashboardPage() {
+export default async function DashboardPage() {
+  const databaseHealth = await getDatabaseHealth();
+
   return (
     <div className="min-h-screen">
       <SiteHeader links={navLinks} ctaHref="/exam" ctaLabel="ابدأ جلسة اليوم" />
@@ -32,12 +34,10 @@ export default function DashboardPage() {
           <Reveal>
             <div className="surface-card p-7">
               <Badge>Dashboard الطالب</Badge>
-              <h1 className="page-heading mt-5">
-                مسارك اليومي واضح، وتقدمك دائمًا تحت عينك
-              </h1>
+              <h1 className="page-heading mt-5">مسارك اليومي واضح، وتقدمك دائمًا تحت عينك</h1>
               <p className="section-copy max-w-2xl">
-                هذه اللوحة مصممة لتجمع أهم ما يهم الطالب في مكان واحد: نسبة التقدم،
-                الجلسات القادمة، الأسئلة المحفوظة، الأداء الأسبوعي، وتوصيات اليوم.
+                هذه اللوحة تجمع أهم ما يحتاجه الطالب في مكان واحد: التقدم، الجلسات القادمة، المراجعة، والآن أيضًا
+                حالة الاتصال بقاعدة البيانات.
               </p>
               <div className="mt-7 flex flex-wrap gap-3">
                 <Link href="/exam">
@@ -52,19 +52,42 @@ export default function DashboardPage() {
 
           <Reveal delay={0.05}>
             <div className="surface-dark p-7">
-              <p className="text-sm text-white/70">ملخص الطالب</p>
-              <h2 className="display-font mt-3 text-3xl font-bold">لوحة عملية بدون ازدحام بصري</h2>
-              <div className="mt-6 grid gap-3 sm:grid-cols-3">
-                {[
-                  { value: "78%", label: "إتقان حالي" },
-                  { value: "4,260", label: "سؤال محلول" },
-                  { value: "37", label: "سؤال محفوظ" },
-                ].map((item) => (
-                  <div key={item.label} className="rounded-[1.5rem] border border-white/10 bg-white/5 p-4">
-                    <div className="display-font text-2xl font-bold">{item.value}</div>
-                    <div className="mt-1 text-sm text-white/70">{item.label}</div>
+              <p className="text-sm text-white/70">Neon Status</p>
+              <h2 className="display-font mt-3 text-3xl font-bold">حالة ربط قاعدة البيانات</h2>
+              <div className="mt-6 space-y-3">
+                <div className="rounded-[1.5rem] border border-white/10 bg-white/5 p-5">
+                  <div className="display-font text-2xl font-bold">
+                    {databaseHealth.connected
+                      ? "متصل"
+                      : databaseHealth.configured
+                        ? "بحاجة تصحيح"
+                        : "غير مفعّل"}
                   </div>
-                ))}
+                  <div className="mt-2 text-sm leading-7 text-white/78">{databaseHealth.message}</div>
+                </div>
+
+                {databaseHealth.connected ? (
+                  <div className="grid gap-3 sm:grid-cols-3">
+                    <div className="rounded-[1.5rem] border border-white/10 bg-white/5 p-4">
+                      <div className="display-font text-lg font-bold">{databaseHealth.database}</div>
+                      <div className="mt-1 text-sm text-white/70">اسم القاعدة</div>
+                    </div>
+                    <div className="rounded-[1.5rem] border border-white/10 bg-white/5 p-4">
+                      <div className="display-font text-lg font-bold">{databaseHealth.user}</div>
+                      <div className="mt-1 text-sm text-white/70">المستخدم</div>
+                    </div>
+                    <div className="rounded-[1.5rem] border border-white/10 bg-white/5 p-4">
+                      <div className="display-font text-lg font-bold break-all">{databaseHealth.host}</div>
+                      <div className="mt-1 text-sm text-white/70">المضيف</div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="rounded-[1.5rem] border border-white/10 bg-white/5 p-4 text-sm leading-7 text-white/78">
+                    أضف رابط الاتصال داخل <code className="rounded bg-white/10 px-2 py-1">.env.local</code> ثم افتح
+                    <code className="mr-2 rounded bg-white/10 px-2 py-1">/api/database-health</code>
+                    للتأكد من نجاح الربط.
+                  </div>
+                )}
               </div>
             </div>
           </Reveal>
@@ -87,14 +110,9 @@ export default function DashboardPage() {
                 <div className="mt-6 grid gap-5 lg:grid-cols-[1.3fr,0.7fr]">
                   <div className="space-y-5">
                     {dashboardMetrics.map((item) => (
-                      <div
-                        key={item.title}
-                        className="rounded-[1.7rem] border border-slate-200/80 bg-white/80 p-5"
-                      >
+                      <div key={item.title} className="rounded-[1.7rem] border border-slate-200/80 bg-white/80 p-5">
                         <p className="text-sm text-slate-500">{item.title}</p>
-                        <div className="display-font mt-2 text-3xl font-bold text-slate-950">
-                          {item.value}
-                        </div>
+                        <div className="display-font mt-2 text-3xl font-bold text-slate-950">{item.value}</div>
                         <p className="mt-2 text-sm leading-7 text-slate-600">{item.note}</p>
                       </div>
                     ))}
@@ -113,13 +131,8 @@ export default function DashboardPage() {
 
                   <div className="space-y-4">
                     {dashboardSummary.map((item) => (
-                      <div
-                        key={item.label}
-                        className="rounded-[1.7rem] border border-slate-200/80 bg-white/80 p-5"
-                      >
-                        <div className="display-font text-3xl font-bold text-slate-950">
-                          {item.value}
-                        </div>
+                      <div key={item.label} className="rounded-[1.7rem] border border-slate-200/80 bg-white/80 p-5">
+                        <div className="display-font text-3xl font-bold text-slate-950">{item.value}</div>
                         <p className="mt-2 text-sm text-slate-600">{item.label}</p>
                       </div>
                     ))}
@@ -137,28 +150,19 @@ export default function DashboardPage() {
                 <div className="flex flex-wrap items-center justify-between gap-4">
                   <div>
                     <p className="text-sm text-slate-500">الخطة الأسبوعية</p>
-                    <h3 className="display-font text-2xl font-bold text-slate-950">
-                      مسار هذا الأسبوع
-                    </h3>
+                    <h3 className="display-font text-2xl font-bold text-slate-950">مسار هذا الأسبوع</h3>
                   </div>
                   <Badge>Adaptive Plan</Badge>
                 </div>
                 <div className="mt-6 space-y-4">
                   {weeklyPlan.map((item) => (
-                    <div
-                      key={item.day}
-                      className="rounded-[1.5rem] border border-slate-200/80 bg-white/75 p-4"
-                    >
+                    <div key={item.day} className="rounded-[1.5rem] border border-slate-200/80 bg-white/75 p-4">
                       <div className="flex flex-wrap items-center justify-between gap-3">
                         <div>
                           <div className="text-sm text-slate-500">{item.day}</div>
-                          <div className="display-font mt-1 text-lg font-bold text-slate-950">
-                            {item.task}
-                          </div>
+                          <div className="display-font mt-1 text-lg font-bold text-slate-950">{item.task}</div>
                         </div>
-                        <div className="display-font text-lg font-bold text-slate-950">
-                          {item.progress}%
-                        </div>
+                        <div className="display-font text-lg font-bold text-slate-950">{item.progress}%</div>
                       </div>
                       <Progress value={item.progress} className="mt-4" />
                     </div>
@@ -173,9 +177,7 @@ export default function DashboardPage() {
               <Card>
                 <CardContent className="p-6">
                   <p className="text-sm font-semibold text-slate-500">نشاط حديث</p>
-                  <h3 className="display-font mt-3 text-2xl font-bold text-slate-950">
-                    ما الذي أنجزته مؤخرًا؟
-                  </h3>
+                  <h3 className="display-font mt-3 text-2xl font-bold text-slate-950">ما الذي أنجزته مؤخرًا</h3>
                   <div className="mt-5 space-y-3">
                     {studentFeed.map((item) => (
                       <div
@@ -194,9 +196,7 @@ export default function DashboardPage() {
               <Card>
                 <CardContent className="p-6">
                   <p className="text-sm font-semibold text-slate-500">توصيات اليوم</p>
-                  <h3 className="display-font mt-3 text-2xl font-bold text-slate-950">
-                    اقتراحات مبنية على الأداء
-                  </h3>
+                  <h3 className="display-font mt-3 text-2xl font-bold text-slate-950">اقتراحات مبنية على الأداء</h3>
                   <div className="mt-5 space-y-3">
                     {studentRecommendations.map((item) => (
                       <div

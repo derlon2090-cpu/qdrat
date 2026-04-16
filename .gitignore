@@ -4,3 +4,6 @@ dist
 build
 coverage
 *.log
+.env
+.env.local
+.env.*.local
