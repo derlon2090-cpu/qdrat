@@ -5,14 +5,14 @@ import { MiyaarLogo } from "@/components/miyaar-logo";
 
 const footerLinks = [
   { href: "/diagnostic", label: "التشخيص" },
-  { href: "/question-banks", label: "بنوك الأسئلة" },
-  { href: "/study-plan", label: "الخطة اليومية" },
-  { href: "/dashboard", label: "لوحة الطالب" },
+  { href: "/my-plan", label: "خطتي" },
+  { href: "/question-bank", label: "بنك الأسئلة" },
+  { href: "/updates", label: "الإصدارات" },
+  { href: "/paper-models", label: "نماذج الورقي" },
+  { href: "/wall-of-love", label: "جدار الحب" },
+  { href: "/golden-guarantee", label: "الضمان الذهبي" },
   { href: "/pricing", label: "الأسعار" },
   { href: "/faq", label: "الأسئلة الشائعة" },
-  { href: "/success-stories", label: "نتائج وتجارب الطلاب" },
-  { href: "/about", label: "من نحن" },
-  { href: "/blog", label: "المدونة" },
   { href: "/contact", label: "تواصل معنا" },
 ];
 
@@ -48,7 +48,7 @@ export function SiteFooter() {
         </div>
 
         <div className="mt-6 rounded-[1.2rem] border border-white/12 bg-[#0E2A56] px-5 py-4 text-center text-lg font-semibold">
-          معيار منصة سعودية للتحضير للقدرات الكمي واللفظي بخطة يومية واضحة واختبارات محاكية ومراجعة مركزة.
+          معيار منصة سعودية للتحضير للقدرات الكمي واللفظي بخطة يومية واضحة، بحث مباشر، واختبارات ومراجعة مركزة.
         </div>
 
         <div className="mt-6 grid gap-4 md:grid-cols-3">
@@ -58,34 +58,34 @@ export function SiteFooter() {
               <span className="text-sm font-semibold">تواصل سريع</span>
             </div>
             <p className="mt-3 text-sm leading-7 text-white/85">
-              إذا عندك سؤال عن الاشتراك أو الخطة أو نقطة البداية، صفحة التواصل جاهزة لك.
+              إذا كان عندك سؤال عن الاشتراك أو نقطة البداية أو الضمان، صفحة التواصل جاهزة لك.
             </p>
           </div>
 
           <div className="rounded-[1.4rem] border border-white/12 bg-white/10 p-5 backdrop-blur">
             <div className="flex items-center gap-2 text-[#FFE1A8]">
               <Newspaper className="h-4 w-4" />
-              <span className="text-sm font-semibold">محتوى ومقالات</span>
+              <span className="text-sm font-semibold">صفحات أوضح</span>
             </div>
             <p className="mt-3 text-sm leading-7 text-white/85">
-              فصلنا المقالات والشرح والتفاصيل في صفحات مستقلة حتى تبقى الواجهة الرئيسية أخف وأوضح.
+              نقلنا التفاصيل إلى صفحات مستقلة مثل خطتي، بنك الأسئلة، والنماذج حتى تبقى الواجهة الرئيسية أخف.
             </p>
           </div>
 
           <div className="rounded-[1.4rem] border border-white/12 bg-white/10 p-5 backdrop-blur">
             <div className="flex items-center gap-2 text-[#FFE1A8]">
               <ShieldCheck className="h-4 w-4" />
-              <span className="text-sm font-semibold">ثقة ووضوح</span>
+              <span className="text-sm font-semibold">ثقة وتنظيم</span>
             </div>
             <p className="mt-3 text-sm leading-7 text-white/85">
-              أضفنا صفحات مستقلة للتشخيص والخطة والنتائج والأسئلة الشائعة بدل تكبير الصفحة الرئيسية.
+              لكل صفحة أيقونة وهوية مساعدة ومسار واضح، بدل حشر كل شيء في الصفحة الرئيسية.
             </p>
           </div>
         </div>
 
         <div className="mt-6 flex flex-col gap-3 border-t border-white/15 pt-5 text-sm text-white/75 md:flex-row md:items-center md:justify-between">
           <div>© 2026 معيار. جميع الحقوق محفوظة.</div>
-          <div>مبني لطلاب القدرات الكمي واللفظي بواجهة واضحة ومريحة.</div>
+          <div>مبني لطلاب القدرات الكمي واللفظي بواجهة أوضح ومسار أنظف.</div>
         </div>
       </div>
     </footer>

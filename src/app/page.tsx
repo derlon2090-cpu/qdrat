@@ -9,84 +9,63 @@ import { SiteHeader } from "@/components/site-header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 
-const navLinks = [
-  { href: "/", label: "الرئيسية" },
-  { href: "/diagnostic", label: "التشخيص" },
-  { href: "/question-banks", label: "بنوك الأسئلة" },
-  { href: "/study-plan", label: "الخطة اليومية" },
-  { href: "/pricing", label: "الأسعار" },
-  { href: "/blog", label: "المدونة" },
-];
-
 const whyBenefits = [
   {
     title: "بنوك واضحة للكمي واللفظي",
-    text: "تصل للقسم المناسب بسرعة.",
+    text: "تصل للقسم المناسب بسرعة وتبدأ التدريب من المكان الصح.",
   },
   {
     title: "خطة تتغير مع مستواك",
-    text: "جلساتك تتبدل حسب نتيجتك.",
+    text: "جلساتك اليومية تتحرك حسب النتيجة والأخطاء والتقدم.",
   },
   {
     title: "مراجعة مرتبة بلا تشتيت",
-    text: "المحفوظ والخاطئ في مسار واحد.",
+    text: "المحفوظ والخاطئ والضعيف يدخلان في مسار واحد واضح.",
   },
   {
-    title: "اختبارات قريبة من الواقع",
-    text: "نماذج سريعة وكاملة قبل الاختبار.",
+    title: "نماذج قريبة من الواقع",
+    text: "اختبارات سريعة وكاملة قبل يوم الاختبار بواجهة مريحة.",
   },
 ];
 
 const diagnosticPoints = [
-  "يعطيك نقطة بداية واضحة بدل المذاكرة العشوائية.",
-  "يرتب أولويات الكمي واللفظي حسب مستواك الحالي.",
-  "يبني أول أسبوع من الخطة بناءً على النتيجة.",
+  "تحدد نقطة البداية في دقائق قليلة.",
+  "ترتب أولويات الكمي واللفظي مباشرة.",
+  "تبني أول أسبوع من الخطة بعد النتيجة.",
 ];
 
 const testimonials = [
-  ["رهف الشمري", "طالبة قدرات", "+18 درجة", "خلال 6 أسابيع", "الخطة كانت واضحة جدًا، وكل يوم أعرف ماذا أبدأ به بدل التشتت بين الأقسام."],
-  ["عبدالله القحطاني", "طالب ثالث ثانوي", "ثقة أعلى", "قبل الاختبار النهائي", "لوحة الطالب أوضحت لي نقاط الضعف الحقيقية، وصار القرار التالي واضحًا جدًا."],
-  ["لمى الحربي", "مستخدمة مستمرة", "+11 درجة", "مع مراجعة يومية", "المراجعة صارت مرتبة أكثر من أي تجربة سابقة، خصوصًا في اللفظي والأخطاء المتكررة."],
-];
-
-const testimonialColors = [
-  "bg-[linear-gradient(135deg,#123B7A,#1E56A0)]",
-  "bg-[linear-gradient(135deg,#C99A43,#B78122)]",
-  "bg-[linear-gradient(135deg,#1C3767,#315DA6)]",
-];
-
-const testimonialAvatars = [
-  "from-[#123B7A] to-[#2D67B4]",
-  "from-[#C99A43] to-[#D9B26A]",
-  "from-[#26497F] to-[#16315E]",
+  ["+18 درجة", "الخطة اختصرت عليّ الطريق وجعلت كل يوم أوضح من اليوم الذي قبله.", "رهف الشمري", "خلال 6 أسابيع"],
+  ["ثقة أعلى", "لوحة الطالب بينت لي نقاط الضعف الحقيقية بدل ما أوزع جهدي عشوائيًا.", "عبدالله القحطاني", "قبل الاختبار النهائي"],
+  ["+11 درجة", "المراجعة داخل معيار كانت أكثر ترتيبًا خصوصًا في اللفظي والأخطاء المتكررة.", "لمى الحربي", "مع مراجعة يومية"],
 ];
 
 const productShots = [
   {
-    title: "صفحة التشخيص",
-    text: "اختبار قصير يحدد نقطة البداية ويغذي أول أسبوع من الخطة.",
-    href: "/diagnostic",
-    cta: "فتح التشخيص",
+    title: "خطتي",
+    text: "خطة اليوم وخطة الأسبوع والتوصيات في مساحة واحدة أوضح.",
+    href: "/my-plan",
+    cta: "عرض خطتي",
   },
   {
-    title: "لوحة الطالب",
-    text: "تقدمك، مراجعتك، وأولوياتك القادمة في لقطة واحدة واضحة.",
-    href: "/dashboard",
-    cta: "عرض اللوحة",
+    title: "بنك الأسئلة",
+    text: "بحث مباشر داخل نص السؤال مع بنوك مرتبة حسب القسم والمهارة.",
+    href: "/question-bank",
+    cta: "افتح البنك",
   },
 ];
 
 export default function HomePage() {
   return (
     <div className="min-h-screen">
-      <SiteHeader links={navLinks} ctaHref="/exam" ctaLabel="ابدأ الآن" />
+      <SiteHeader ctaHref="/diagnostic" ctaLabel="ابدأ الآن" />
 
       <main>
         <section className="hero-school section-shell overflow-hidden" id="hero">
           <div className="mx-auto grid w-[min(calc(100%-2rem),1180px)] gap-12 lg:grid-cols-[0.96fr,1.04fr] lg:items-center">
             <Reveal>
               <span className="inline-flex rounded-full border border-white/18 bg-white/10 px-4 py-2 text-sm font-semibold text-white/90">
-                منصة قدرات كمي ولفظي فقط
+                منصة قدرات للكمي واللفظي فقط
               </span>
               <h1 className="page-heading hero-title mt-6 text-white">
                 تحضير أذكى للقدرات
@@ -95,7 +74,7 @@ export default function HomePage() {
               <p className="hero-subtitle text-white/82">
                 منصة تساعدك تقيس مستواك وتبني خطة واضحة بدون تشتيت.
               </p>
-              <div className="hero-actions">
+              <div className="hero-actions flex flex-wrap gap-3">
                 <Link href="/diagnostic">
                   <Button size="lg" className="btn-primary">
                     ابدأ الآن
@@ -125,12 +104,12 @@ export default function HomePage() {
               <Card className="rounded-[2.2rem] border border-[#E8D8B3] bg-[linear-gradient(180deg,#fffdfa,#f7f1e5)] shadow-soft">
                 <CardContent className="p-8">
                   <span className="mini-pill bg-[#123B7A]/5 text-[#123B7A]">التشخيص السريع</span>
-                  <h2 className="section-title max-w-2xl text-right">اختبر مستواك قبل أن تبدأ الخطة</h2>
+                  <h2 className="section-title max-w-2xl text-right">ابدأ من اختبار قصير يحدد نقطة البداية</h2>
                   <p className="section-copy max-w-2xl text-right">
-                    اختبار قصير يحدد نقطة البداية ويرتب لك أولويات التدريب مباشرة.
+                    تشخيص سريع يريك أين تبدأ الآن، ثم يرتب أولويات التدريب في الكمي واللفظي مباشرة.
                   </p>
                   <div className="mt-6 flex flex-wrap gap-3">
-                    <Link href="/exam">
+                    <Link href="/diagnostic">
                       <Button size="lg">ابدأ التشخيص</Button>
                     </Link>
                   </div>
@@ -170,7 +149,7 @@ export default function HomePage() {
                   <Card className="rounded-[2rem] border-white/85 bg-white/95 shadow-soft">
                     <CardContent className="p-7 md:p-8">
                       <div className="flex items-start gap-4">
-                        <div className="mt-1 mb-5 flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[linear-gradient(145deg,rgba(18,59,122,0.08),rgba(201,161,91,0.24))] text-lg font-bold text-[#123B7A]">
+                        <div className="mt-1 flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[linear-gradient(145deg,rgba(18,59,122,0.08),rgba(201,161,91,0.24))] text-lg font-bold text-[#123B7A]">
                           {index + 1}
                         </div>
                         <div>
@@ -190,9 +169,9 @@ export default function HomePage() {
           <div className="mx-auto w-[min(calc(100%-2rem),1180px)]">
             <Reveal>
               <SectionTitle
-                badge="لقطة من المنتج"
+                badge="لقطات من المنتج"
                 title="واجهتان واضحتان بدل شرح طويل"
-                text="لمحة سريعة تقرّب لك شكل التجربة، ثم تنتقل مباشرة إلى الصفحة المناسبة."
+                text="لمحة سريعة على الصفحات الأهم، ثم تنتقل مباشرة إلى الصفحة المناسبة."
               />
             </Reveal>
             <div className="mt-10 grid gap-5 md:grid-cols-2">
@@ -243,39 +222,27 @@ export default function HomePage() {
                 </span>
               </div>
               <div className="grid gap-5 md:grid-cols-3">
-              {testimonials.map(([name, role, result, meta, quote], index) => (
-                <Reveal key={`${name}-${index}`} delay={index * 0.04}>
-                  <Card className="testimonial-card h-full overflow-hidden border-white/80 bg-white/95 shadow-soft">
-                    <div
-                      className={`testimonial-score mx-1 rounded-[1.2rem] px-5 py-4 text-center text-2xl font-black text-white shadow-soft ${testimonialColors[index % testimonialColors.length]}`}
-                    >
-                      {result}
-                    </div>
-                    <CardContent className="p-0 pt-6">
-                      <div className="flex items-center justify-between gap-4">
+                {testimonials.map(([result, quote, name, meta], index) => (
+                  <Reveal key={`${name}-${index}`} delay={index * 0.04}>
+                    <Card className="testimonial-card h-full overflow-hidden border-white/80 bg-white/95 shadow-soft">
+                      <div className="mx-1 rounded-[1.2rem] bg-[linear-gradient(135deg,#123B7A,#1E56A0)] px-5 py-4 text-center text-2xl font-black text-white shadow-soft">
+                        {result}
+                      </div>
+                      <CardContent className="p-0 pt-6">
                         <div className="flex items-center gap-1 text-amber-500">
                           {Array.from({ length: 5 }).map((_, starIndex) => (
                             <Star key={starIndex} className="h-4 w-4 fill-current" />
                           ))}
                         </div>
-                        <span className="testimonial-meta rounded-full bg-slate-100 px-3 py-1 font-semibold text-slate-600">
-                          {meta}
-                        </span>
-                      </div>
-                      <blockquote className="testimonial-quote text-slate-900">{quote}</blockquote>
-                      <div className="mt-5 flex items-start justify-between gap-4 border-t border-slate-100 pt-5">
-                        <div>
+                        <blockquote className="testimonial-quote text-slate-900">{quote}</blockquote>
+                        <div className="mt-5 border-t border-slate-100 pt-5">
                           <div className="display-font testimonial-name text-slate-950">{name}</div>
-                          <div className="testimonial-role text-slate-500">{role}</div>
+                          <div className="testimonial-role text-slate-500">{meta}</div>
                         </div>
-                        <div className={`flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br text-sm font-black text-white ${testimonialAvatars[index % testimonialAvatars.length]}`}>
-                          {name.slice(0, 1)}
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </Reveal>
-              ))}
+                      </CardContent>
+                    </Card>
+                  </Reveal>
+                ))}
               </div>
             </div>
           </div>
@@ -290,12 +257,11 @@ export default function HomePage() {
                     <span className="mini-pill bg-[#123B7A]/5 text-[#123B7A]">ابدأ رحلتك مع معيار</span>
                     <h2 className="section-title max-w-2xl text-right">جاهز تبدأ خطة ترفع درجتك؟</h2>
                     <p className="section-copy max-w-2xl text-right">
-                      ابدأ اليوم، ودع معيار يحدد لك ماذا تذاكر ومتى تراجع وكيف تتابع تقدمك في الكمي
-                      واللفظي.
+                      ابدأ اليوم، ودع معيار يحدد لك ماذا تذاكر ومتى تراجع وكيف تتابع تقدمك في الكمي واللفظي.
                     </p>
                   </div>
                   <div className="flex flex-wrap gap-3">
-                    <Link href="/exam">
+                    <Link href="/diagnostic">
                       <Button size="lg" variant="secondary">
                         ابدأ الآن
                       </Button>

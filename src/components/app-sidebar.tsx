@@ -1,0 +1,43 @@
+"use client";
+
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+
+import { productSidebarItems } from "@/lib/site-nav";
+import { cn } from "@/lib/utils";
+
+export function AppSidebar() {
+  const pathname = usePathname();
+
+  return (
+    <aside className="hidden xl:block xl:w-[280px]">
+      <div className="sticky top-28 rounded-[2rem] border border-white/80 bg-white/94 p-4 shadow-soft">
+        <div className="mb-4 px-3">
+          <div className="text-xs font-semibold tracking-[0.18em] text-slate-400">PRODUCT MENU</div>
+          <div className="mt-2 display-font text-xl font-bold text-slate-950">رحلتك داخل معيار</div>
+        </div>
+
+        <div className="space-y-2">
+          {productSidebarItems.map((item) => {
+            const Icon = item.icon;
+            const active = pathname === item.href;
+
+            return (
+              <Link key={item.href} href={item.href} className={cn("nav-item", active && "nav-item-active")}>
+                <span className={cn("nav-icon-wrap", item.iconWrap, item.accent)}>
+                  <Icon className="h-5 w-5" />
+                </span>
+                <div className="min-w-0">
+                  <div>{item.label}</div>
+                  {item.description ? (
+                    <div className="text-xs font-medium text-slate-400">{item.description}</div>
+                  ) : null}
+                </div>
+              </Link>
+            );
+          })}
+        </div>
+      </div>
+    </aside>
+  );
+}

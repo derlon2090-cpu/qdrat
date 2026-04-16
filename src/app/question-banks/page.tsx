@@ -1,1 +1,1 @@
-export { default } from "../banks/page";
+export { default } from "../question-bank/page";
