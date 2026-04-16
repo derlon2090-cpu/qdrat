@@ -73,25 +73,15 @@ export default function HomePage() {
               </span>
               <h1 className="page-heading hero-title mt-6 text-white">
                 تحضير أذكى للقدرات
-                <span className="block text-[#F6D28B]">الكمي واللفظي</span>
-                بخطة يومية واختبارات تحاكي الواقع
+                <span className="highlight block">الكمي واللفظي</span>
               </h1>
               <p className="hero-subtitle text-white/82">
-                تعرف مستواك وتبدأ بخطة واضحة من أول يوم.
+                منصة تساعدك تقيس مستواك وتبني خطة واضحة بدون تشتيت.
               </p>
               <div className="hero-actions">
                 <Link href="/exam">
-                  <Button size="lg" variant="secondary">
-                    ابدأ الآن
-                  </Button>
-                </Link>
-                <Link href="/exam">
-                  <Button
-                    size="lg"
-                    variant="outline"
-                    className="border-white/20 bg-white/10 text-white hover:bg-white/15"
-                  >
-                    اختبر مستواك
+                  <Button size="lg" className="btn-primary">
+                    ابدأ رحلتك الآن
                   </Button>
                 </Link>
               </div>
