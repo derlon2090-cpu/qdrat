@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { MiyaarLogo } from "@/components/miyaar-logo";
+import { SearchTrigger } from "@/components/search-trigger";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -34,6 +35,7 @@ export function SiteHeader({
           ))}
         </nav>
         <div className="flex flex-wrap items-center gap-2">
+          <SearchTrigger />
           <Link href={ctaHref}>
             <Button>{ctaLabel}</Button>
           </Link>

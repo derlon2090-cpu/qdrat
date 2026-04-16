@@ -61,6 +61,12 @@ export function SearchOverlay() {
   }, []);
 
   useEffect(() => {
+    const onOpen = () => setOpen(true);
+    window.addEventListener("miyaar:open-search", onOpen);
+    return () => window.removeEventListener("miyaar:open-search", onOpen);
+  }, []);
+
+  useEffect(() => {
     const stored = window.localStorage.getItem(RECENT_SEARCHES_KEY);
     if (!stored) return;
 
@@ -106,17 +112,6 @@ export function SearchOverlay() {
 
   return (
     <>
-      <div className="fixed bottom-6 left-6 z-50">
-        <button
-          type="button"
-          onClick={() => setOpen(true)}
-          className="search-btn group"
-          aria-label="افتح البحث"
-        >
-          <Search className="h-5 w-5 text-[#123B7A] transition group-hover:scale-110" />
-        </button>
-      </div>
-
       {open ? (
         <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm">
           <div className="mx-auto flex min-h-screen w-[min(calc(100%-2rem),760px)] items-start justify-center pt-24">
