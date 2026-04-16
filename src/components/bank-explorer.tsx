@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useDeferredValue, useEffect, useState } from "react";
 import { Clock3, Search, Sparkles } from "lucide-react";
 
+import { buildPublicApiUrl } from "@/lib/api-base";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -17,6 +18,7 @@ const RECENT_SEARCHES_KEY = "miyaar-recent-question-searches";
 
 const bankFilters = [
   { value: "الكل", label: "الكل" },
+  { value: "كمي", label: "كمي" },
   { value: "لفظي", label: "لفظي" },
   { value: "قطع", label: "قطع" },
 ];
@@ -95,6 +97,8 @@ export function BankExplorer({
   const [activeDifficultyFilter, setActiveDifficultyFilter] = useState("الكل");
   const [activeSkillFilter, setActiveSkillFilter] = useState("الكل");
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
+  const [bankItems, setBankItems] = useState<Bank[]>(items);
+  const [searchItems, setSearchItems] = useState<Question[]>(questions);
   const deferredBankQuery = useDeferredValue(bankQuery);
   const deferredQuestionQuery = useDeferredValue(questionQuery);
 
@@ -112,32 +116,94 @@ export function BankExplorer({
     }
   }, []);
 
-  const skills = Array.from(new Set(questions.map((question) => question.skill)));
+  useEffect(() => {
+    const controller = new AbortController();
+    const params = new URLSearchParams();
 
-  const filteredBanks = items.filter((bank) => {
-    const matchesType = activeBankType === "الكل" || bank.type === activeBankType;
-    if (!deferredBankQuery.trim()) return matchesType;
+    if (deferredBankQuery.trim()) {
+      params.set("q", deferredBankQuery.trim());
+    }
 
-    const haystack = `${bank.title} ${bank.level} ${bank.type} ${bank.tag}`;
-    return matchesType && fuzzyMatch(haystack, deferredBankQuery);
-  });
+    if (activeBankType !== "الكل") {
+      params.set("type", activeBankType);
+    }
 
-  const filteredQuestions = questions.filter((question) => {
-    const matchesSearch = !deferredQuestionQuery.trim() || fuzzyMatch(question.text, deferredQuestionQuery);
-    const matchesSection =
-      activeQuestionFilter === "الكل" ||
-      question.section === activeQuestionFilter ||
-      question.type === activeQuestionFilter;
-    const matchesState = activeStateFilter === "الكل" || question.state === activeStateFilter;
-    const matchesDifficulty =
-      activeDifficultyFilter === "الكل" || question.difficulty === activeDifficultyFilter;
-    const matchesSkill = activeSkillFilter === "الكل" || question.skill === activeSkillFilter;
+    fetch(buildPublicApiUrl(`/api/question-bank/banks?${params.toString()}`), {
+      signal: controller.signal,
+    })
+      .then(async (response) => {
+        if (!response.ok) throw new Error("Failed to load banks");
+        return response.json() as Promise<{ items?: Bank[] }>;
+      })
+      .then((payload) => {
+        setBankItems(payload.items ?? []);
+      })
+      .catch(() => {
+        setBankItems(items);
+      });
 
-    return matchesSearch && matchesSection && matchesState && matchesDifficulty && matchesSkill;
-  });
+    return () => controller.abort();
+  }, [activeBankType, deferredBankQuery, items]);
 
+  useEffect(() => {
+    const controller = new AbortController();
+    const params = new URLSearchParams();
+
+    if (deferredQuestionQuery.trim()) {
+      params.set("q", deferredQuestionQuery.trim());
+    }
+
+    if (activeQuestionFilter !== "الكل") {
+      if (activeQuestionFilter === "كمي" || activeQuestionFilter === "لفظي" || activeQuestionFilter === "قطع") {
+        params.set("section", activeQuestionFilter);
+      } else {
+        params.set("type", activeQuestionFilter);
+      }
+    }
+
+    if (activeDifficultyFilter !== "الكل") {
+      params.set("difficulty", activeDifficultyFilter);
+    }
+
+    if (activeSkillFilter !== "الكل") {
+      params.set("skill", activeSkillFilter);
+    }
+
+    if (activeStateFilter !== "الكل") {
+      params.set("state", activeStateFilter);
+    }
+
+    params.set("limit", "24");
+
+    fetch(buildPublicApiUrl(`/api/question-bank/search?${params.toString()}`), {
+      signal: controller.signal,
+    })
+      .then(async (response) => {
+        if (!response.ok) throw new Error("Failed to load questions");
+        return response.json() as Promise<{ items?: Question[] }>;
+      })
+      .then((payload) => {
+        setSearchItems(payload.items ?? []);
+      })
+      .catch(() => {
+        setSearchItems(questions);
+      });
+
+    return () => controller.abort();
+  }, [
+    activeDifficultyFilter,
+    activeQuestionFilter,
+    activeSkillFilter,
+    activeStateFilter,
+    deferredQuestionQuery,
+    questions,
+  ]);
+
+  const skills = Array.from(new Set([...questions, ...searchItems].map((question) => question.skill)));
+  const filteredBanks = bankItems;
+  const filteredQuestions = searchItems;
   const suggestions = deferredQuestionQuery.trim()
-    ? questions.filter((question) => fuzzyMatch(question.text, deferredQuestionQuery)).slice(0, 5)
+    ? searchItems.filter((question) => fuzzyMatch(question.text, deferredQuestionQuery)).slice(0, 5)
     : [];
 
   function pushRecentSearch(value: string) {

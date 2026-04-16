@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useDeferredValue, useEffect, useMemo, useState } from "react";
 import { Search, X } from "lucide-react";
 
+import { buildPublicApiUrl } from "@/lib/api-base";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { questionSearchItems } from "@/data/miyaar";
@@ -42,6 +43,7 @@ export function SearchOverlay() {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
+  const [remoteResults, setRemoteResults] = useState(questionSearchItems);
   const deferredQuery = useDeferredValue(query);
 
   useEffect(() => {
@@ -87,15 +89,44 @@ export function SearchOverlay() {
     };
   }, [open]);
 
+  useEffect(() => {
+    if (!open) return;
+
+    const controller = new AbortController();
+    const params = new URLSearchParams();
+
+    if (deferredQuery.trim()) {
+      params.set("q", deferredQuery.trim());
+    }
+
+    params.set("limit", "8");
+
+    fetch(buildPublicApiUrl(`/api/question-bank/search?${params.toString()}`), {
+      signal: controller.signal,
+    })
+      .then(async (response) => {
+        if (!response.ok) throw new Error("Failed to fetch search results");
+        return response.json() as Promise<{ items?: typeof questionSearchItems }>;
+      })
+      .then((payload) => {
+        setRemoteResults(payload.items?.length ? payload.items : questionSearchItems);
+      })
+      .catch(() => {
+        setRemoteResults(questionSearchItems);
+      });
+
+    return () => controller.abort();
+  }, [deferredQuery, open]);
+
   const results = useMemo(() => {
     if (!deferredQuery.trim()) return [];
-    return questionSearchItems.filter((item) => fuzzyMatch(item.text, deferredQuery)).slice(0, 8);
-  }, [deferredQuery]);
+    return remoteResults.filter((item) => fuzzyMatch(item.text, deferredQuery)).slice(0, 8);
+  }, [deferredQuery, remoteResults]);
 
   const suggestions = useMemo(() => {
     if (!deferredQuery.trim()) return [];
-    return questionSearchItems.filter((item) => fuzzyMatch(item.text, deferredQuery)).slice(0, 4);
-  }, [deferredQuery]);
+    return remoteResults.filter((item) => fuzzyMatch(item.text, deferredQuery)).slice(0, 4);
+  }, [deferredQuery, remoteResults]);
 
   function saveRecentSearch(value: string) {
     const trimmed = value.trim();
