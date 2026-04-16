@@ -20,11 +20,16 @@
     --input: 220 25% 88%;
     --ring: 214 74% 28%;
     --font-display: var(--font-heading), "Alexandria", "IBM Plex Sans Arabic", "Tajawal", "Segoe UI", sans-serif;
-    --font-body-fallback: var(--font-heading), var(--font-body), "Alexandria", "IBM Plex Sans Arabic", "Tajawal", "Segoe UI", sans-serif;
+    --font-body-fallback: var(--font-body), "IBM Plex Sans Arabic", "Alexandria", "Tajawal", "Segoe UI", sans-serif;
   }
 
   * {
     @apply border-border;
+  }
+
+  html,
+  body {
+    font-family: var(--font-body-fallback), sans-serif;
   }
 
   html {
@@ -34,7 +39,6 @@
   body {
     @apply min-w-80 bg-[image:var(--bg-page)] text-slate-900 antialiased;
     --bg-page: radial-gradient(circle_at_top_right,rgba(201,161,91,.14),transparent_18%),radial-gradient(circle_at_18%_8%,rgba(18,59,122,.08),transparent_20%),linear-gradient(180deg,#f8f7f4_0%,#fbfaf8_42%,#f3f4f7_100%);
-    font-family: var(--font-body-fallback), sans-serif;
     line-height: 1.9;
     letter-spacing: 0;
     -webkit-font-smoothing: antialiased;
@@ -60,7 +64,7 @@
   input,
   textarea,
   blockquote {
-    font-family: var(--font-body-fallback), sans-serif;
+    font-family: var(--font-body), "IBM Plex Sans Arabic", sans-serif;
     font-weight: 400;
     line-height: 2;
   }
@@ -147,7 +151,7 @@
   .section-copy {
     @apply mt-4 text-base leading-9 text-slate-600 md:text-lg;
     max-width: 65ch;
-    font-family: var(--font-body-fallback), sans-serif;
+    font-family: var(--font-body), "IBM Plex Sans Arabic", sans-serif;
   }
 
   .mini-pill {

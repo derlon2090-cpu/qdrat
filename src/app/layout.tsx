@@ -32,10 +32,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="ar" dir="rtl">
-      <body className={`${alexandria.variable} ${ibmPlexArabic.variable} miyaar-grid`}>
-        {children}
-      </body>
+    <html
+      lang="ar"
+      dir="rtl"
+      className={`${alexandria.variable} ${ibmPlexArabic.variable}`}
+    >
+      <body className="miyaar-grid">{children}</body>
     </html>
   );
 }

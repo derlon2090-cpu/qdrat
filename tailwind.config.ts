@@ -48,8 +48,10 @@ const config: Config = {
           "radial-gradient(circle at top right, rgba(117, 104, 255, 0.14), transparent 24%), radial-gradient(circle at 20% 10%, rgba(210, 168, 90, 0.13), transparent 20%), linear-gradient(180deg, #f7f7fb 0%, #fbfbfe 34%, #f2f4f9 100%)",
       },
       fontFamily: {
+        heading: ["var(--font-heading)"],
+        body: ["var(--font-body)"],
         sans: ["var(--font-body)"],
-        display: ["var(--font-display)"],
+        display: ["var(--font-heading)"],
       },
     },
   },
