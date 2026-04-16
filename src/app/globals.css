@@ -156,6 +156,11 @@
     @apply mx-auto max-w-3xl text-center;
   }
 
+  .section-heading .section-title,
+  .section-heading .section-copy {
+    margin-inline: auto;
+  }
+
   .page-heading {
     @apply text-slate-950;
     font-family: var(--font-display), sans-serif;
