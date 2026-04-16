@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Alexandria, IBM_Plex_Sans_Arabic } from "next/font/google";
 
+import { SearchOverlay } from "@/components/search-overlay";
 import "./globals.css";
 
 const alexandria = Alexandria({
@@ -37,7 +38,10 @@ export default function RootLayout({
       dir="rtl"
       className={`${alexandria.variable} ${ibmPlexArabic.variable}`}
     >
-      <body className="miyaar-grid">{children}</body>
+      <body className="miyaar-grid">
+        {children}
+        <SearchOverlay />
+      </body>
     </html>
   );
 }

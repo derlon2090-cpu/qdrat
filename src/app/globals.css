@@ -223,6 +223,24 @@
     box-shadow: 0 4px 12px rgba(212, 169, 76, 0.3);
   }
 
+  .search-btn {
+    width: 48px;
+    height: 48px;
+    border-radius: 14px;
+    background: #f8fafc;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.08);
+    transition: all 0.2s ease;
+    border: 1px solid rgba(226,232,240,0.95);
+  }
+
+  .search-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.12);
+  }
+
   .section-title {
     @apply text-slate-950;
     font-family: var(--font-display), sans-serif;
