@@ -20,7 +20,7 @@
     --input: 220 25% 88%;
     --ring: 214 74% 28%;
     --font-display: var(--font-heading), "Alexandria", "IBM Plex Sans Arabic", "Tajawal", "Segoe UI", sans-serif;
-    --font-body-fallback: var(--font-body), "IBM Plex Sans Arabic", "Tajawal", "Segoe UI", sans-serif;
+    --font-body-fallback: var(--font-heading), var(--font-body), "Alexandria", "IBM Plex Sans Arabic", "Tajawal", "Segoe UI", sans-serif;
   }
 
   * {
@@ -39,6 +39,7 @@
     letter-spacing: 0;
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
+    font-weight: 400;
   }
 
   h1,
@@ -61,7 +62,7 @@
   blockquote {
     font-family: var(--font-body-fallback), sans-serif;
     font-weight: 400;
-    line-height: 1.9;
+    line-height: 2;
   }
 
   strong,
@@ -140,11 +141,13 @@
     @apply mt-4 text-3xl font-extrabold tracking-tight text-slate-950 md:text-5xl;
     font-family: var(--font-display), sans-serif;
     font-weight: 700;
+    letter-spacing: -0.025em;
   }
 
   .section-copy {
-    @apply mt-4 text-base leading-8 text-slate-600 md:text-lg;
+    @apply mt-4 text-base leading-9 text-slate-600 md:text-lg;
     max-width: 65ch;
+    font-family: var(--font-body-fallback), sans-serif;
   }
 
   .mini-pill {
