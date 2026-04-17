@@ -128,7 +128,7 @@ function getColorHint(item) {
 function getDominantColor(items) {
   const counts = new Map();
   for (const item of items) {
-    const hint = getColorHint(item);
+    const hint = item.colorHint ?? getColorHint(item);
     if (!hint) {
       continue;
     }

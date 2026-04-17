@@ -2,6 +2,7 @@ import {
   countWords,
   ensurePipelineDirs,
   getNormalizedOutputPath,
+  normalizeArabicLine,
   getOptionKeyMap,
   getRawOutputPath,
   listPdfFiles,
@@ -156,6 +157,92 @@ function splitOptionLine(text, colorHint) {
     .filter((segment) => segment.text);
 }
 
+function dominantColor(colors) {
+  const counts = new Map();
+  for (const color of colors.filter(Boolean)) {
+    counts.set(color, (counts.get(color) || 0) + 1);
+  }
+
+  return [...counts.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] ?? null;
+}
+
+function splitOptionLineFromItems(line) {
+  if (!line?.items?.length) {
+    return splitOptionLine(line?.normalized ?? "", line?.dominantColor ?? null);
+  }
+
+  const entries = [];
+  for (const item of [...line.items].reverse()) {
+    const normalized = normalizeArabicLine(item.text);
+    const tokens = normalized.split(/\s+/).filter(Boolean);
+    for (const token of tokens) {
+      entries.push({
+        token,
+        colorHint: item.colorHint ?? null,
+      });
+    }
+  }
+
+  const expectedOrder = new Map([
+    ["A", 0],
+    ["B", 1],
+    ["C", 2],
+    ["D", 3],
+  ]);
+
+  const segments = [];
+  let current = null;
+
+  for (const entry of entries) {
+    const mapped = optionKeyMap.get(entry.token);
+
+    if (!current && mapped) {
+      current = {
+        key: mapped,
+        textParts: [],
+        colors: [],
+      };
+      continue;
+    }
+
+    if (
+      current &&
+      mapped &&
+      expectedOrder.has(mapped) &&
+      expectedOrder.get(mapped) > expectedOrder.get(current.key)
+    ) {
+      if (current.textParts.length) {
+        segments.push(current);
+      }
+
+      current = {
+        key: mapped,
+        textParts: [],
+        colors: [],
+      };
+      continue;
+    }
+
+    if (current) {
+      current.textParts.push(entry.token);
+      current.colors.push(entry.colorHint);
+    }
+  }
+
+  if (current?.textParts.length) {
+    segments.push(current);
+  }
+
+  return segments
+    .map((segment, index) => ({
+      key: segment.key,
+      text: segment.textParts.join(" ").trim(),
+      colorHint: dominantColor(segment.colors),
+      displayOrder: index + 1,
+    }))
+    .filter((segment) => segment.text);
+}
+
 function parseExplicitAnswer(text) {
   const match = text.match(/(?:الإجابة الصحيحة|الإجابة|الجواب الصحيح|الجواب|الحل)\s*[:：-]?\s*([اأبجددABCD])/i);
   if (!match) {
@@ -181,7 +268,19 @@ function inferAnswerByColor(options) {
     return null;
   }
 
-  return options.find((option) => option.colorHint === uniqueColor)?.key ?? null;
+  const candidate = options.find((option) => option.colorHint === uniqueColor);
+  if (!candidate) {
+    return null;
+  }
+
+  const hasFullSet = options.length === 4;
+  const confidence = hasFullSet ? 0.82 : 0.55;
+
+  return {
+    key: candidate.key,
+    confidence,
+    trusted: hasFullSet,
+  };
 }
 
 function finalizeQuestion(question, reviewItems) {
@@ -228,10 +327,11 @@ function finalizeQuestion(question, reviewItems) {
     answerSource = "text";
     answerConfidence = 0.96;
   } else {
-    correctAnswer = inferAnswerByColor(question.options);
-    if (correctAnswer) {
+    const colorAnswer = inferAnswerByColor(question.options);
+    if (colorAnswer) {
+      correctAnswer = colorAnswer.key;
       answerSource = "color";
-      answerConfidence = 0.55;
+      answerConfidence = colorAnswer.confidence;
     }
   }
 
@@ -246,7 +346,7 @@ function finalizeQuestion(question, reviewItems) {
   if (!correctAnswer) {
     issues.push("missing_answer");
   }
-  if (answerSource === "color") {
+  if (answerSource === "color" && answerConfidence < 0.8) {
     issues.push("color_only_answer");
   }
   if (!questionText) {
@@ -456,7 +556,7 @@ function normalizeRawSource(raw) {
         continue;
       }
 
-      const optionCandidates = splitOptionLine(text, line.dominantColor);
+      const optionCandidates = splitOptionLineFromItems(line);
       if (optionCandidates.length) {
         currentPassage.currentQuestion.options.push(...optionCandidates);
         continue;
