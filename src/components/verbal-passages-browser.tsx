@@ -1,12 +1,13 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { Search } from "lucide-react";
+import { Dice5, Search } from "lucide-react";
 
 import { buildPublicApiUrl } from "@/lib/api-base";
 import type { VerbalPassageRecord, VerbalPassageSummary } from "@/lib/verbal-passages";
 import { VerbalPassageViewer } from "@/components/verbal-passage-viewer";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
 const SEARCH_MIN_CHARS = 3;
@@ -70,6 +71,30 @@ export function VerbalPassagesBrowser({ mode = "student" }: { mode?: "student" |
     [navigablePassages, selectedPassageId],
   );
   const nextPassage = selectedResultIndex >= 0 ? navigablePassages[selectedResultIndex + 1] ?? null : null;
+
+  const openRandomPassage = useCallback(
+    (options?: { excludeCurrent?: boolean; clearSearch?: boolean }) => {
+      if (!availablePassages.length) return;
+
+      const candidates =
+        options?.excludeCurrent && availablePassages.length > 1 && selectedPassageId
+          ? availablePassages.filter((item) => item.id !== selectedPassageId)
+          : availablePassages;
+      const randomPassage = candidates[Math.floor(Math.random() * candidates.length)];
+
+      if (!randomPassage) return;
+
+      if (options?.clearSearch) {
+        setQuery("");
+        setDebouncedQuery("");
+        setResults([]);
+      }
+
+      setSelectedPassageId(randomPassage.id);
+      setMessage("تم فتح قطعة عشوائية لتبدأ التدريب مباشرة.");
+    },
+    [availablePassages, selectedPassageId],
+  );
 
   useEffect(() => {
     const timeoutId = window.setTimeout(() => {
@@ -136,13 +161,9 @@ export function VerbalPassagesBrowser({ mode = "student" }: { mode?: "student" |
     }
 
     if (!selectedPassageId && !query.trim()) {
-      const randomPassage = availablePassages[Math.floor(Math.random() * availablePassages.length)];
-      if (randomPassage) {
-        setSelectedPassageId(randomPassage.id);
-        setMessage("تم فتح قطعة عشوائية لتبدأ اختبار القطع اللفظي مباشرة.");
-      }
+      openRandomPassage();
     }
-  }, [availablePassages, query, requestedSlug, selectedPassageId]);
+  }, [availablePassages, openRandomPassage, query, requestedSlug, selectedPassageId]);
 
   useEffect(() => {
     if (!debouncedQuery.trim()) {
@@ -245,14 +266,30 @@ export function VerbalPassagesBrowser({ mode = "student" }: { mode?: "student" |
           إلى القسم. ويبدأ البحث بعد كتابة 3 أحرف فأكثر حتى تبقى النتائج أدق وأسرع.
         </p>
 
-        <div className="relative mt-5">
-          <Search className="pointer-events-none absolute right-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
-          <Input
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
-            placeholder="ابحث عن القطعة"
-            className="h-14 pr-12 text-base"
-          />
+        <div className="mt-5 flex flex-col gap-3 lg:flex-row lg:items-center">
+          <div className="relative flex-1">
+            <Search className="pointer-events-none absolute right-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
+            <Input
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder="ابحث عن القطعة"
+              className="h-14 pr-12 text-base"
+            />
+          </div>
+
+          <Button
+            type="button"
+            onClick={() => openRandomPassage({ excludeCurrent: true, clearSearch: true })}
+            disabled={isLoadingDirectory || !availablePassages.length}
+            className="h-14 rounded-2xl bg-[linear-gradient(135deg,#F5D08A_0%,#E6B85C_40%,#D4A94C_100%)] px-6 text-base font-bold text-slate-950 shadow-[0_12px_30px_rgba(201,154,67,0.28)] transition hover:-translate-y-0.5 hover:shadow-[0_16px_34px_rgba(201,154,67,0.34)] disabled:translate-y-0 disabled:opacity-60"
+          >
+            <Dice5 className="ml-2 h-5 w-5" />
+            {selectedPassageId ? "ابدأ قطعة عشوائية أخرى" : "ابدأ قطعة عشوائية"}
+          </Button>
+        </div>
+
+        <div className="mt-3 text-sm leading-7 text-slate-500">
+          إذا ما تبي تختار يدويًا، اضغط الزر الذهبي وابدأ مباشرة بقطعة عشوائية من بنك القطع اللفظي.
         </div>
       </div>
 
