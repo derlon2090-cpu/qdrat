@@ -184,6 +184,16 @@ function mapReadingQuestionsToSearchItems() {
   );
 }
 
+export function getReadingPassageSummariesSync(): ReadingPassageSummary[] {
+  return readingPassages.map(mapPassageToSummary);
+}
+
+export function getPassageDetailSync(passageId: string | number) {
+  const normalizedId = String(passageId);
+  const passage = readingPassages.find((item) => item.id === normalizedId);
+  return passage ? mapPassageToDetail(passage) : null;
+}
+
 export async function getBankItems(filters: SearchFilters = {}) {
   const query = filters.query?.trim() ?? "";
   const type = filters.type?.trim() ?? "الكل";
@@ -242,11 +252,9 @@ export async function getQuestionItems(filters: SearchFilters = {}) {
 }
 
 export async function getReadingPassageSummaries(): Promise<ReadingPassageSummary[]> {
-  return readingPassages.map(mapPassageToSummary);
+  return getReadingPassageSummariesSync();
 }
 
 export async function getPassageDetail(passageId: string | number) {
-  const normalizedId = String(passageId);
-  const passage = readingPassages.find((item) => item.id === normalizedId);
-  return passage ? mapPassageToDetail(passage) : null;
+  return getPassageDetailSync(passageId);
 }
