@@ -7,15 +7,10 @@ import { Search, X } from "lucide-react";
 import { buildPublicApiUrl } from "@/lib/api-base";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { questionSearchItems } from "@/data/miyaar";
 import type { SearchItem } from "@/lib/question-bank-api";
 
 const RECENT_SEARCHES_KEY = "miyaar-global-searches";
-const fallbackSearchItems: SearchItem[] = questionSearchItems.map((item) => ({
-  ...item,
-  kind: "question",
-  title: item.text,
-}));
+const fallbackSearchItems: SearchItem[] = [];
 
 function normalizeArabic(value: string) {
   return value

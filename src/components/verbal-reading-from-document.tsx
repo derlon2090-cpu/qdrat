@@ -2,61 +2,39 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { AlertTriangle, BookOpen, Bookmark, BookmarkCheck, Flag, Type } from "lucide-react";
 
 import type { PassageDetail, ReadingPassageSummary } from "@/lib/question-bank-api";
-import { cn } from "@/lib/utils";
 
 type VerbalReadingFromDocumentProps = {
-  currentPassage: PassageDetail;
+  currentPassage: PassageDetail | null;
   passages: ReadingPassageSummary[];
   initialQuestionIndex?: number;
 };
 
 type SavedAnswerMap = Record<string, string>;
-type SavedItemMap = Record<string, boolean>;
 
-const SAVED_ANSWERS_KEY = "miyaar-reading-document-answers";
-const SAVED_ITEMS_KEY = "miyaar-reading-document-saved-items";
+const SAVED_ANSWERS_KEY = "miyaar-manual-reading-answers";
 
 function getChoiceLetter(index: number) {
   return ["أ", "ب", "ج", "د"][index] ?? String(index + 1);
 }
 
-function readSessionMap(key: string) {
+function readSavedAnswers() {
   if (typeof window === "undefined") return {};
 
   try {
-    const raw = window.sessionStorage.getItem(key);
+    const raw = window.sessionStorage.getItem(SAVED_ANSWERS_KEY);
     if (!raw) return {};
     const parsed = JSON.parse(raw) as unknown;
-    return parsed && typeof parsed === "object" ? parsed : {};
+    return parsed && typeof parsed === "object" ? (parsed as SavedAnswerMap) : {};
   } catch {
     return {};
   }
 }
 
-function readLocalMap(key: string) {
-  if (typeof window === "undefined") return {};
-
-  try {
-    const raw = window.localStorage.getItem(key);
-    if (!raw) return {};
-    const parsed = JSON.parse(raw) as unknown;
-    return parsed && typeof parsed === "object" ? parsed : {};
-  } catch {
-    return {};
-  }
-}
-
-function persistSessionMap(key: string, value: Record<string, unknown>) {
+function persistSavedAnswers(value: SavedAnswerMap) {
   if (typeof window === "undefined") return;
-  window.sessionStorage.setItem(key, JSON.stringify(value));
-}
-
-function persistLocalMap(key: string, value: Record<string, unknown>) {
-  if (typeof window === "undefined") return;
-  window.localStorage.setItem(key, JSON.stringify(value));
+  window.sessionStorage.setItem(SAVED_ANSWERS_KEY, JSON.stringify(value));
 }
 
 export function VerbalReadingFromDocument({
@@ -65,99 +43,62 @@ export function VerbalReadingFromDocument({
   initialQuestionIndex = 0,
 }: VerbalReadingFromDocumentProps) {
   const router = useRouter();
-  const boundedInitialQuestion = Math.min(
-    Math.max(initialQuestionIndex, 0),
-    Math.max(currentPassage.questions.length - 1, 0),
-  );
-
-  const [questionIndex, setQuestionIndex] = useState(boundedInitialQuestion);
+  const [questionIndex, setQuestionIndex] = useState(initialQuestionIndex);
   const [selectedAnswer, setSelectedAnswer] = useState("");
   const [submitted, setSubmitted] = useState(false);
   const [savedAnswers, setSavedAnswers] = useState<SavedAnswerMap>({});
-  const [savedItems, setSavedItems] = useState<SavedItemMap>({});
-  const [showFullPassage, setShowFullPassage] = useState(false);
-  const [showExplanationPanel, setShowExplanationPanel] = useState(false);
-  const [reportSent, setReportSent] = useState(false);
-  const [fontScale, setFontScale] = useState<"base" | "large" | "xl">("large");
 
   useEffect(() => {
-    setSavedAnswers(readSessionMap(SAVED_ANSWERS_KEY) as SavedAnswerMap);
-    setSavedItems(readLocalMap(SAVED_ITEMS_KEY) as SavedItemMap);
+    setSavedAnswers(readSavedAnswers());
   }, []);
 
   useEffect(() => {
-    setQuestionIndex(boundedInitialQuestion);
-  }, [boundedInitialQuestion, currentPassage.id]);
+    setQuestionIndex(initialQuestionIndex);
+  }, [initialQuestionIndex, currentPassage?.id]);
 
-  const currentPassageIndex = passages.findIndex((passage) => passage.id === currentPassage.id);
-  const currentQuestion = currentPassage.questions[questionIndex];
-
-  if (!currentQuestion) {
+  if (!currentPassage || passages.length === 0 || currentPassage.questions.length === 0) {
     return (
-      <div dir="rtl" className="rounded-[24px] bg-white p-10 text-center shadow-sm ring-1 ring-slate-200">
-        <h1 className="text-3xl font-bold text-slate-800">هذه القطعة لا تحتوي على أسئلة منشورة بعد</h1>
+      <div dir="rtl" className="rounded-[28px] bg-white p-8 shadow-sm ring-1 ring-slate-200">
+        <div className="text-sm font-medium text-slate-500">بنك الأسئلة / القطع اللفظية</div>
+        <h1 className="mt-4 text-3xl font-bold text-slate-900">لا توجد قطع حاليًا، سيتم إضافتها قريبًا</h1>
+        <p className="mt-4 max-w-2xl text-lg leading-9 text-slate-600">
+          تم تفريغ القطع القديمة بالكامل، والواجهة الآن جاهزة لاستقبال القطع اليدوية الجديدة بصيغة
+          ثابتة ومنظمة.
+        </p>
       </div>
     );
   }
 
-  const correctChoice = currentQuestion.choices.find((choice) => choice.isCorrect) ?? null;
-  const correctAnswer = correctChoice?.text ?? "";
+  const currentPassageIndex = passages.findIndex((passage) => passage.id === currentPassage.id);
+  const currentQuestion =
+    currentPassage.questions[
+      Math.min(Math.max(questionIndex, 0), Math.max(currentPassage.questions.length - 1, 0))
+    ];
+
   const questionKey = `${currentPassage.id}-${currentQuestion.id}`;
-  const savedQuestionKey = `question:${questionKey}`;
-  const isQuestionSaved = Boolean(savedItems[savedQuestionKey]);
 
   useEffect(() => {
-    const restored = savedAnswers[questionKey] || "";
-    setSelectedAnswer(restored);
-    setSubmitted(Boolean(restored));
-    setShowExplanationPanel(false);
-    setReportSent(false);
+    const oldAnswer = savedAnswers[questionKey] || "";
+    setSelectedAnswer(oldAnswer);
+    setSubmitted(Boolean(oldAnswer));
   }, [questionKey, savedAnswers]);
 
   const result = useMemo(() => {
     if (!submitted || !selectedAnswer) return null;
 
+    const isCorrect = selectedAnswer === currentQuestion.correctAnswer;
+    const selectedExplanation =
+      currentQuestion.explanations[selectedAnswer] || "لا يوجد شرح لهذا الخيار حاليًا.";
+    const correctExplanation =
+      currentQuestion.explanations[currentQuestion.correctAnswer] || "لا يوجد شرح للإجابة الصحيحة حاليًا.";
+
     return {
-      isCorrect: Boolean(correctAnswer) && selectedAnswer === correctAnswer,
-      correctAnswer,
-      explanation: currentQuestion.explanation,
-      needsReview: currentQuestion.needsReview,
+      isCorrect,
+      selectedExplanation,
+      correctAnswer: currentQuestion.correctAnswer,
+      correctExplanation,
     };
-  }, [correctAnswer, currentQuestion.explanation, currentQuestion.needsReview, selectedAnswer, submitted]);
-
-  const fontTokens = useMemo(() => {
-    switch (fontScale) {
-      case "base":
-        return {
-          question: "text-2xl leading-[1.85]",
-          option: "text-xl",
-          passage: "text-lg leading-[2.15]",
-        };
-      case "xl":
-        return {
-          question: "text-[2.15rem] leading-[1.95]",
-          option: "text-[1.7rem]",
-          passage: "text-[1.35rem] leading-[2.35]",
-        };
-      case "large":
-      default:
-        return {
-          question: "text-3xl leading-[1.9]",
-          option: "text-2xl",
-          passage: "text-xl leading-[2.3]",
-        };
-    }
-  }, [fontScale]);
-
-  const goToQuestion = (newIndex: number) => {
-    setQuestionIndex(newIndex);
-  };
-
-  const goToPassage = (index: number, nextQuestion = 0) => {
-    const targetPassage = passages[index];
-    if (!targetPassage) return;
-    router.push(`/exam?section=verbal_reading&passageId=${targetPassage.id}&question=${nextQuestion}`);
-  };
+  }, [currentQuestion, selectedAnswer, submitted]);
 
   const confirmAnswer = () => {
     if (!selectedAnswer) return;
@@ -168,28 +109,19 @@ export function VerbalReadingFromDocument({
         ...previous,
         [questionKey]: selectedAnswer,
       };
-      persistSessionMap(SAVED_ANSWERS_KEY, next);
+      persistSavedAnswers(next);
       return next;
     });
   };
 
-  const toggleSave = () => {
-    setSavedItems((previous) => {
-      const next = {
-        ...previous,
-        [savedQuestionKey]: !previous[savedQuestionKey],
-      };
-      persistLocalMap(SAVED_ITEMS_KEY, next);
-      return next;
-    });
+  const goToQuestion = (newIndex: number) => {
+    setQuestionIndex(newIndex);
   };
 
-  const cycleFontScale = () => {
-    setFontScale((previous) => {
-      if (previous === "base") return "large";
-      if (previous === "large") return "xl";
-      return "base";
-    });
+  const goToPassage = (index: number) => {
+    const targetPassage = passages[index];
+    if (!targetPassage) return;
+    router.push(`/exam?section=verbal_reading&passageId=${targetPassage.id}`);
   };
 
   const goToNextQuestion = () => {
@@ -199,7 +131,7 @@ export function VerbalReadingFromDocument({
     }
 
     if (currentPassageIndex < passages.length - 1) {
-      goToPassage(currentPassageIndex + 1, 0);
+      goToPassage(currentPassageIndex + 1);
     }
   };
 
@@ -210,10 +142,10 @@ export function VerbalReadingFromDocument({
     }
 
     if (currentPassageIndex > 0) {
-      const previousPassageIndex = currentPassageIndex - 1;
-      const previousPassage = passages[previousPassageIndex];
-      const previousQuestionIndex = Math.max(previousPassage.questionCount - 1, 0);
-      goToPassage(previousPassageIndex, previousQuestionIndex);
+      const previousPassage = passages[currentPassageIndex - 1];
+      router.push(
+        `/exam?section=verbal_reading&passageId=${previousPassage.id}&question=${Math.max(previousPassage.questionCount - 1, 0)}`,
+      );
     }
   };
 
@@ -229,30 +161,7 @@ export function VerbalReadingFromDocument({
 
         <div className="mb-6 rounded-[24px] bg-white p-6 shadow-sm ring-1 ring-slate-200">
           <h1 className="text-3xl font-bold text-slate-800">{currentPassage.title}</h1>
-          <div className="mt-4">
-            <p
-              className={cn("whitespace-pre-wrap text-slate-800 transition-all", fontTokens.passage)}
-              style={
-                showFullPassage
-                  ? undefined
-                  : {
-                      display: "-webkit-box",
-                      WebkitLineClamp: 3,
-                      WebkitBoxOrient: "vertical",
-                      overflow: "hidden",
-                    }
-              }
-            >
-              {currentPassage.text}
-            </p>
-            <button
-              type="button"
-              onClick={() => setShowFullPassage((previous) => !previous)}
-              className="mt-2 text-lg font-semibold text-sky-500 hover:text-sky-700"
-            >
-              {showFullPassage ? "إخفاء" : "المزيد"}
-            </button>
-          </div>
+          <p className="mt-4 whitespace-pre-wrap text-xl leading-[2.3] text-slate-800">{currentPassage.text}</p>
         </div>
 
         <div className="grid gap-6 xl:grid-cols-[420px_1fr]">
@@ -271,14 +180,13 @@ export function VerbalReadingFromDocument({
                     key={question.id}
                     type="button"
                     onClick={() => goToQuestion(index)}
-                    className={cn(
-                      "mb-2 w-full rounded-2xl border px-4 py-4 text-right transition",
+                    className={`mb-2 w-full rounded-2xl border px-4 py-4 text-right transition ${
                       isActive
                         ? "border-sky-400 bg-sky-50 text-sky-900"
                         : saved
                           ? "border-emerald-200 bg-emerald-50 text-emerald-900"
-                          : "border-transparent bg-white text-slate-800 hover:bg-slate-50",
-                    )}
+                          : "border-transparent bg-white text-slate-800 hover:bg-slate-50"
+                    }`}
                   >
                     <div className="line-clamp-2 text-lg leading-8">{question.text}</div>
                   </button>
@@ -288,69 +196,21 @@ export function VerbalReadingFromDocument({
           </aside>
 
           <section className="overflow-hidden rounded-[24px] bg-white shadow-sm ring-1 ring-slate-200">
-            <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-200 px-6 py-5">
+            <div className="border-b border-slate-200 px-6 py-5">
               <div className="text-2xl font-bold text-sky-600">
-                جميع الأسئلة <span className="text-slate-400">({questionIndex + 1} من {currentPassage.questions.length})</span>
-              </div>
-
-              <div className="flex flex-wrap items-center gap-6 text-lg text-sky-500">
-                <button
-                  type="button"
-                  onClick={() => setShowExplanationPanel((previous) => !previous)}
-                  className={cn("flex items-center gap-2 font-medium hover:text-sky-700", showExplanationPanel && "text-sky-700")}
-                >
-                  <BookOpen className="h-5 w-5" />
-                  عرض الشرح
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setReportSent(true)}
-                  className={cn("flex items-center gap-2 font-medium hover:text-sky-700", reportSent && "text-amber-700")}
-                >
-                  <Flag className="h-5 w-5" />
-                  تبليغ عن خطأ
-                </button>
-                <button
-                  type="button"
-                  onClick={toggleSave}
-                  className={cn("flex items-center gap-2 font-medium hover:text-sky-700", isQuestionSaved && "text-emerald-700")}
-                >
-                  {isQuestionSaved ? <BookmarkCheck className="h-5 w-5" /> : <Bookmark className="h-5 w-5" />}
-                  {isQuestionSaved ? "محفوظ" : "حفظ"}
-                </button>
-                <button type="button" onClick={cycleFontScale} className="flex items-center gap-2 font-medium hover:text-sky-700">
-                  <Type className="h-5 w-5" />
-                  الحجم
-                </button>
+                جميع الأسئلة ({questionIndex + 1} من {currentPassage.questions.length})
               </div>
             </div>
 
             <div className="p-6 md:p-8">
-              {reportSent ? (
-                <div className="mb-4 rounded-2xl border border-amber-200 bg-amber-50 px-5 py-4 text-sm text-amber-900">
-                  تم استلام البلاغ لهذا السؤال وسيراجَع ضمن قائمة التحرير.
-                </div>
-              ) : null}
-
-              {showExplanationPanel ? (
-                <div className="mb-4 rounded-2xl border border-sky-100 bg-sky-50 px-5 py-4 text-sm leading-8 text-sky-900">
-                  {currentQuestion.explanation || "سيظهر الشرح المختصر بعد تأكيد الإجابة، أو بعد توفره في بيانات المستند."}
-                </div>
-              ) : null}
-
               <div className="rounded-[24px] border border-slate-200 bg-slate-50 p-6">
-                <div className="relative">
-                  <div className="pointer-events-none absolute inset-0 flex items-center justify-center opacity-[0.05]">
-                    <div className="text-[10rem] font-black text-sky-700">معيار</div>
-                  </div>
-                  <h3 className={cn("relative font-bold text-slate-800", fontTokens.question)}>{currentQuestion.text}</h3>
-                </div>
+                <h3 className="text-3xl font-bold leading-[1.9] text-slate-800">{currentQuestion.text}</h3>
 
                 <div className="mt-8 grid gap-4 md:grid-cols-2">
-                  {currentQuestion.choices.map((choice, index) => {
-                    const isSelected = selectedAnswer === choice.text;
-                    const isCorrect = submitted && choice.text === correctAnswer;
-                    const isWrongSelected = submitted && isSelected && choice.text !== correctAnswer;
+                  {currentQuestion.options.map((option, index) => {
+                    const isSelected = selectedAnswer === option;
+                    const isCorrect = submitted && option === currentQuestion.correctAnswer;
+                    const isWrongSelected = submitted && isSelected && option !== currentQuestion.correctAnswer;
 
                     let classes = "border-slate-200 bg-white text-slate-800 hover:border-sky-300 hover:bg-sky-50";
 
@@ -364,16 +224,16 @@ export function VerbalReadingFromDocument({
 
                     return (
                       <button
-                        key={choice.id}
+                        key={option}
                         type="button"
                         onClick={() => {
-                          setSelectedAnswer(choice.text);
+                          setSelectedAnswer(option);
                           setSubmitted(false);
                         }}
-                        className={`rounded-2xl border px-5 py-5 text-right transition ${classes} ${fontTokens.option}`}
+                        className={`rounded-2xl border px-5 py-5 text-right text-2xl transition ${classes}`}
                       >
                         <div className="flex items-center justify-between gap-4">
-                          <span>{choice.text}</span>
+                          <span>{option}</span>
                           <span className="text-xl font-bold">{getChoiceLetter(index)}-</span>
                         </div>
                       </button>
@@ -417,17 +277,17 @@ export function VerbalReadingFromDocument({
                       {result.isCorrect ? "✅ إجابة صحيحة" : "❌ إجابة خاطئة"}
                     </div>
                     <div className="mt-2">
-                      <span className="font-bold">الإجابة الصحيحة:</span> {result.correctAnswer || "غير متاحة"}
+                      <span className="font-bold">شرح اختيارك:</span> {result.selectedExplanation}
                     </div>
-                    <div className="mt-2">
-                      <span className="font-bold">الشرح المختصر:</span>{" "}
-                      {result.explanation || "الشرح غير متاح في بيانات هذه القطعة بعد."}
-                    </div>
-                    {result.needsReview ? (
-                      <div className="mt-3 flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-                        <AlertTriangle className="mt-1 h-4 w-4 shrink-0" />
-                        <span>هذا السؤال ما زال تحت المراجعة التحريرية، لكن الإجابة المعروضة مأخوذة من بيانات المستند الحالية.</span>
-                      </div>
+                    {!result.isCorrect ? (
+                      <>
+                        <div className="mt-2">
+                          <span className="font-bold">الإجابة الصحيحة:</span> {result.correctAnswer}
+                        </div>
+                        <div className="mt-2">
+                          <span className="font-bold">شرح الإجابة الصحيحة:</span> {result.correctExplanation}
+                        </div>
+                      </>
                     ) : null}
                   </div>
                 ) : null}
@@ -453,7 +313,7 @@ export function VerbalReadingFromDocument({
 
                 <div className="rounded-2xl bg-white p-5 ring-1 ring-slate-200">
                   <div className="mb-3 text-lg font-bold text-slate-800">الانتقال إلى قطعة أخرى</div>
-                  <div className="flex max-h-48 flex-wrap gap-2 overflow-y-auto">
+                  <div className="flex flex-wrap gap-2">
                     {passages.map((passage, index) => (
                       <button
                         key={passage.id}

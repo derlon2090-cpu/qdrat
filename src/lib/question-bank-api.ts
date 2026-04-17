@@ -1,16 +1,21 @@
-import { neon } from "@neondatabase/serverless";
-
-import { banks as fallbackBanks, questionSearchItems as fallbackQuestions } from "@/data/miyaar";
 import {
-  getDocumentReadingPassageById,
-  getDocumentReadingPassages,
-  READING_DOCUMENT_SOURCE_FILE,
-} from "@/data/verbal-reading-document";
+  EMPTY_SECTION_MESSAGE,
+  readingPassages,
+  quantitativeSections,
+  verbalSections,
+} from "@/data/manual-question-bank";
 
-export type BankItem = (typeof fallbackBanks)[number];
+export type BankItem = {
+  id: string;
+  title: string;
+  count: number;
+  level: string;
+  type: string;
+  tag: string;
+};
 
 export type SearchItem = {
-  id: number;
+  id: string;
   text: string;
   section: string;
   type: string;
@@ -26,28 +31,17 @@ export type SearchItem = {
   needsReview?: boolean;
 };
 
-export type PassageChoice = {
-  id: number;
-  key: string;
-  text: string;
-  isCorrect: boolean;
-  sortOrder: number;
-};
-
 export type PassageQuestion = {
-  id: number;
+  id: string;
   order: number;
   text: string;
-  explanation: string | null;
-  correctChoiceKey: string | null;
-  answerSource: string | null;
-  answerConfidence: number;
-  needsReview: boolean;
-  choices: PassageChoice[];
+  options: string[];
+  correctAnswer: string;
+  explanations: Record<string, string>;
 };
 
 export type PassageDetail = {
-  id: number;
+  id: string;
   pieceNumber: number | null;
   title: string;
   text: string;
@@ -61,7 +55,7 @@ export type PassageDetail = {
 };
 
 export type ReadingPassageSummary = {
-  id: number;
+  id: string;
   title: string;
   sourceName: string | null;
   pieceNumber: number | null;
@@ -78,12 +72,6 @@ type SearchFilters = {
   state?: string;
   limit?: number;
 };
-
-const READING_DOCUMENT_LABEL = "المستند / القطع اللفظية";
-
-function getDatabaseUrl() {
-  return process.env.DATABASE_URL?.trim();
-}
 
 function normalizeArabic(value: string) {
   return value
@@ -137,357 +125,128 @@ function createSnippet(text: string, query: string, maxLength = 170) {
   return `${prefix}${cleanText.slice(start, end).trim()}${suffix}`;
 }
 
-function mapDifficulty(value?: string | null) {
-  switch (value) {
-    case "easy":
-      return "سهل";
-    case "hard":
-    case "elite":
-      return "متقدم";
-    case "medium":
-    default:
-      return "متوسط";
-  }
+function getPassagePieceNumber(passageId: string) {
+  const match = passageId.match(/(\d+)$/);
+  return match ? Number(match[1]) : null;
 }
 
-function resolvePassageTitle(pieceTitle?: string | null, title?: string | null, pieceNumber?: number | null, id?: number) {
-  if (pieceTitle?.trim()) return pieceTitle.trim();
-  if (title?.trim()) return title.trim();
-  if (pieceNumber) return `قطعة ${pieceNumber}`;
-  return `قطعة ${id ?? ""}`.trim();
-}
-
-function mapBankType(section?: string | null, kind?: string | null) {
-  if (kind === "passage_bank") return "قطع";
-  if (section === "quantitative") return "كمي";
-  return "لفظي";
-}
-
-function mapQuestionSection(section?: string | null, kind?: string | null) {
-  if (kind === "passage_bank") return "قطع";
-  if (section === "quantitative") return "كمي";
-  return "لفظي";
-}
-
-function mapQuestionType(type?: string | null, kind?: string | null) {
-  if (kind === "passage_bank") return "قطع";
-
-  switch (type) {
-    case "analogy":
-      return "تناظر";
-    case "sentence_completion":
-      return "إكمال";
-    case "contextual_error":
-      return "الخطأ السياقي";
-    case "odd_word":
-      return "المفردة الشاذة";
-    case "reading_passage":
-      return "قطع";
-    case "quantitative_problem":
-      return "أساسيات";
-    default:
-      return "تدريب";
-  }
-}
-
-function mapBankTag(title: string) {
-  if (title.includes("تناظر")) return "إدراك العلاقة";
-  if (title.includes("إكمال")) return "السياق";
-  if (title.includes("الخطأ")) return "تحليل المعنى";
-  if (title.includes("قطعة") || title.includes("القطع")) return "الفكرة العامة";
-  if (title.includes("كمي")) return "تدريب أساسي";
-  return "تدريب مباشر";
-}
-
-async function buildFallbackPassageDetail(passageId: number): Promise<PassageDetail | null> {
-  const passage = await getDocumentReadingPassageById(passageId);
-  if (!passage) return null;
-
+function mapPassageToSummary(passage: (typeof readingPassages)[number]): ReadingPassageSummary {
   return {
     id: passage.id,
-    pieceNumber: passage.pieceNumber,
+    title: passage.title,
+    sourceName: passage.source,
+    pieceNumber: getPassagePieceNumber(passage.id),
+    questionCount: passage.questions.length,
+    href: `/exam?section=verbal_reading&passageId=${passage.id}`,
+  };
+}
+
+function mapPassageToDetail(passage: (typeof readingPassages)[number]): PassageDetail {
+  return {
+    id: passage.id,
+    pieceNumber: getPassagePieceNumber(passage.id),
     title: passage.title,
     text: passage.passage,
-    difficulty: mapDifficulty(passage.difficulty),
-    sourceName: passage.source || READING_DOCUMENT_LABEL,
-    rawPageFrom: passage.rawPageFrom,
-    rawPageTo: passage.rawPageTo,
-    parsingConfidence: passage.parsingConfidence,
-    needsReview: passage.needsReview,
-    questions: passage.questions.map((question, questionIndex) => ({
-      id: Number(`${passage.id}${questionIndex + 1}`),
-      order: question.order,
+    difficulty: "غير محدد",
+    sourceName: passage.source,
+    rawPageFrom: null,
+    rawPageTo: null,
+    parsingConfidence: 1,
+    needsReview: false,
+    questions: passage.questions.map((question, index) => ({
+      id: question.id,
+      order: index + 1,
       text: question.text,
-      explanation: question.explanation,
-      correctChoiceKey: question.correctChoiceKey,
-      answerSource: question.answerSource,
-      answerConfidence: question.answerConfidence,
-      needsReview: question.needsReview,
-      choices: question.choices.map((choice, choiceIndex) => ({
-        id: Number(`${passage.id}${questionIndex + 1}${choiceIndex + 1}`),
-        key: choice.key,
-        text: choice.text,
-        isCorrect: choice.isCorrect,
-        sortOrder: choice.sortOrder,
-      })),
+      options: question.options,
+      correctAnswer: question.correctAnswer,
+      explanations: question.explanations,
     })),
   };
 }
 
-async function getFallbackReadingPassageSummaries(): Promise<ReadingPassageSummary[]> {
-  const passages = await getDocumentReadingPassages();
-
-  return passages
-    .filter((passage) => passage.questions.length > 0)
-    .map((passage) => ({
-      id: passage.id,
-      title: passage.title,
-      sourceName: passage.source || READING_DOCUMENT_LABEL,
-      pieceNumber: passage.pieceNumber,
-      questionCount: passage.questions.length,
-      href: `/exam?section=verbal_reading&passageId=${passage.id}`,
-    }));
-}
-
-async function getFallbackReadingQuestionItems(): Promise<SearchItem[]> {
-  const passages = await getDocumentReadingPassages();
-
-  return passages.flatMap((passage) =>
-    passage.questions.map((question) => ({
-      id: Number(`${passage.id}${question.order}`),
+function mapReadingQuestionsToSearchItems() {
+  return readingPassages.flatMap((passage) =>
+    passage.questions.map((question, index) => ({
+      id: question.id,
       text: question.text,
       title: question.text,
       excerpt: createSnippet(passage.passage, question.text),
       section: "قطع",
-      type: "قطع",
-      difficulty: mapDifficulty(passage.difficulty),
+      type: "قطع لفظي",
+      difficulty: "غير محدد",
       skill: passage.title,
-      state: question.needsReview ? "قيد المراجعة" : "جاهزة",
-      href: `/exam?section=verbal_reading&passageId=${passage.id}&question=${Math.max(question.order - 1, 0)}`,
-      kind: "question",
-      pieceNumber: passage.pieceNumber,
-      needsReview: question.needsReview,
+      state: "جاهزة",
+      href: `/exam?section=verbal_reading&passageId=${passage.id}&question=${index}`,
+      kind: "question" as const,
+      pieceNumber: getPassagePieceNumber(passage.id),
+      needsReview: false,
     })),
   );
 }
 
-async function searchFallbackPassages(query: string, limit: number): Promise<SearchItem[]> {
-  const trimmedQuery = query.trim();
-  if (!trimmedQuery) return [];
-
-  const passages = await getDocumentReadingPassages();
-
-  return passages
-    .filter((passage) =>
-      fuzzyMatch(
-        [
-          passage.title,
-          passage.passage,
-          passage.questions.map((question) => question.text).join(" "),
-        ].join(" "),
-        trimmedQuery,
-      ),
-    )
-    .slice(0, limit)
-    .map((passage) => ({
-      id: passage.id,
-      text: passage.title,
-      title: passage.title,
-      excerpt: createSnippet(passage.passage, trimmedQuery),
-      section: "قطع",
-      type: "قطعة كاملة",
-      difficulty: mapDifficulty(passage.difficulty),
-      skill: passage.pieceNumber ? `قطعة ${passage.pieceNumber}` : "قطعة كاملة",
-      state: passage.needsReview ? "قيد المراجعة" : "جاهزة",
-      href: `/exam?section=verbal_reading&passageId=${passage.id}`,
-      kind: "passage",
-      pieceNumber: passage.pieceNumber,
-      questionCount: passage.questions.length,
-      needsReview: passage.needsReview,
-    }));
-}
-
-function normalizeQuestionState(value?: string | null) {
-  if (!value || value === "الكل") return "غير محلول";
-  return value;
-}
-
-async function loadDatabaseBanks() {
-  const databaseUrl = getDatabaseUrl();
-  if (!databaseUrl) return [];
-
-  try {
-    const sql = neon(databaseUrl);
-    const rows = (await sql.query(`
-      select
-        id,
-        title,
-        section::text as section,
-        kind::text as kind,
-        difficulty::text as difficulty,
-        total_questions,
-        coalesce(subtitle, '') as subtitle
-      from app_question_banks
-      where is_published = true
-      order by search_priority asc, total_questions desc, id asc
-      limit 120
-    `)) as Array<{
-      id: number;
-      title: string;
-      section: string;
-      kind: string;
-      difficulty: string | null;
-      total_questions: number;
-      subtitle: string;
-    }>;
-
-    return rows.map((row) => ({
-      id: row.id,
-      title: row.title,
-      count: Number(row.total_questions ?? 0),
-      level: mapDifficulty(row.difficulty),
-      type: mapBankType(row.section, row.kind),
-      tag: mapBankTag(row.title || row.subtitle),
-    })) satisfies BankItem[];
-  } catch {
-    return [];
-  }
-}
-
-async function loadDatabaseQuestions(): Promise<SearchItem[]> {
-  const databaseUrl = getDatabaseUrl();
-  if (!databaseUrl) return [];
-
-  try {
-    const sql = neon(databaseUrl);
-    const rows = (await sql.query(`
-      select
-        q.id,
-        q.question_text,
-        q.section::text as section,
-        q.question_type::text as question_type,
-        q.difficulty::text as difficulty,
-        coalesce(s.skill_name, '') as skill_name,
-        coalesce(b.kind::text, 'question_bank') as bank_kind,
-        q.passage_id
-      from app_questions q
-      left join app_skills s on s.id = q.skill_id
-      left join app_question_banks b on b.id = q.bank_id
-      where q.is_published = true
-        and q.question_type::text <> 'reading_passage'
-      order by q.usage_count desc, q.created_at desc
-      limit 5000
-    `)) as Array<{
-      id: number;
-      question_text: string;
-      section: string;
-      question_type: string;
-      difficulty: string | null;
-      skill_name: string;
-      bank_kind: string;
-      passage_id: number | null;
-    }>;
-
-    return rows.map((row) => ({
-      id: row.id,
-      text: row.question_text,
-      section: mapQuestionSection(row.section, row.bank_kind),
-      type: mapQuestionType(row.question_type, row.bank_kind),
-      difficulty: mapDifficulty(row.difficulty),
-      skill: row.skill_name || (row.section === "quantitative" ? "التدريب الكمي" : "التدريب اللفظي"),
-      state: "غير محلول",
-      href: row.passage_id ? `/exam?section=verbal_reading&passageId=${row.passage_id}` : "/exam",
-      kind: "question",
-      title: row.question_text,
-    })) satisfies SearchItem[];
-  } catch {
-    return [];
-  }
-}
-
-async function searchDatabasePassages(query: string, limit: number): Promise<SearchItem[]> {
-  const trimmedQuery = query.trim();
-
-  if (!trimmedQuery) return [];
-  return searchFallbackPassages(trimmedQuery, limit);
-}
-
-async function getBanksSource() {
-  const databaseBanks = await loadDatabaseBanks();
-  return databaseBanks.length ? databaseBanks : fallbackBanks;
-}
-
-async function getQuestionsSource(): Promise<SearchItem[]> {
-  const databaseQuestions = await loadDatabaseQuestions();
-  const documentQuestions = await getFallbackReadingQuestionItems();
-  return [
-    ...documentQuestions,
-    ...databaseQuestions,
-    ...(fallbackQuestions.map((item) => ({ ...item, kind: "question", title: item.text })) satisfies SearchItem[]),
-  ];
-}
-
 export async function getBankItems(filters: SearchFilters = {}) {
-  const items = await getBanksSource();
   const query = filters.query?.trim() ?? "";
   const type = filters.type?.trim() ?? "الكل";
-  const normalizedType = type === "verbal" ? "لفظي" : type === "quantitative" ? "كمي" : type;
+
+  const items: BankItem[] = [...verbalSections, ...quantitativeSections].map((section) => ({
+    id: section.id,
+    title: section.title,
+    count: 0,
+    level: EMPTY_SECTION_MESSAGE,
+    type: section.href?.includes("verbal") ? "لفظي" : "كمي",
+    tag: section.description,
+  }));
 
   return items.filter((item) => {
-    const matchesType = normalizedType === "الكل" || item.type === normalizedType;
-
-    if (!query) return matchesType;
-
-    return matchesType && fuzzyMatch(`${item.title} ${item.level} ${item.type} ${item.tag}`, query);
+    const matchesType = type === "الكل" || item.type === type;
+    const matchesQuery = !query || fuzzyMatch(`${item.title} ${item.tag}`, query);
+    return matchesType && matchesQuery;
   });
-}
-
-function shouldIncludePassages(filters: SearchFilters, hasQuery: boolean) {
-  if (!hasQuery) return false;
-
-  const section = filters.section?.trim() ?? "الكل";
-  const type = filters.type?.trim() ?? "الكل";
-
-  if (section === "كمي") return false;
-  if (type !== "الكل" && !["قطع", "لفظي"].includes(type)) return false;
-
-  return true;
 }
 
 export async function getQuestionItems(filters: SearchFilters = {}) {
-  const items = await getQuestionsSource();
   const query = filters.query?.trim() ?? "";
   const section = filters.section?.trim() ?? "الكل";
-  const difficulty = filters.difficulty?.trim() ?? "الكل";
-  const skill = filters.skill?.trim() ?? "الكل";
-  const state = filters.state?.trim() ?? "الكل";
   const type = filters.type?.trim() ?? "الكل";
   const limit = Math.min(Math.max(Number(filters.limit ?? 24), 1), 80);
 
-  const filteredQuestions = items.filter((item) => {
-    const haystack = [item.title ?? item.text, item.text, item.excerpt ?? ""].join(" ");
-    const matchesQuery = !query || fuzzyMatch(haystack, query);
+  const questionItems = mapReadingQuestionsToSearchItems().filter((item) => {
+    const matchesQuery = !query || fuzzyMatch(`${item.text} ${item.skill} ${item.excerpt ?? ""}`, query);
     const matchesSection = section === "الكل" || item.section === section;
-    const matchesDifficulty = difficulty === "الكل" || item.difficulty === difficulty;
-    const matchesSkill = skill === "الكل" || item.skill === skill;
-    const matchesState = state === "الكل" || normalizeQuestionState(item.state) === normalizeQuestionState(state);
     const matchesType = type === "الكل" || item.type === type;
-
-    return matchesQuery && matchesSection && matchesDifficulty && matchesSkill && matchesState && matchesType;
+    return matchesQuery && matchesSection && matchesType;
   });
 
-  const passages = shouldIncludePassages(filters, Boolean(query))
-    ? await searchFallbackPassages(query, Math.max(6, Math.ceil(limit / 2)))
-    : [];
+  const passageItems = !query
+    ? []
+    : readingPassages
+        .filter((passage) => fuzzyMatch(`${passage.title} ${passage.passage}`, query))
+        .map((passage) => ({
+          id: passage.id,
+          text: passage.title,
+          title: passage.title,
+          excerpt: createSnippet(passage.passage, query),
+          section: "قطع",
+          type: "قطعة كاملة",
+          difficulty: "غير محدد",
+          skill: passage.title,
+          state: "جاهزة",
+          href: `/exam?section=verbal_reading&passageId=${passage.id}`,
+          kind: "passage" as const,
+          pieceNumber: getPassagePieceNumber(passage.id),
+          questionCount: passage.questions.length,
+          needsReview: false,
+        }));
 
-  const merged = [...passages, ...filteredQuestions];
-  return merged.slice(0, limit);
+  return [...passageItems, ...questionItems].slice(0, limit);
 }
 
 export async function getReadingPassageSummaries(): Promise<ReadingPassageSummary[]> {
-  return await getFallbackReadingPassageSummaries();
+  return readingPassages.map(mapPassageToSummary);
 }
 
-export async function getPassageDetail(passageId: number) {
-  return await buildFallbackPassageDetail(passageId);
+export async function getPassageDetail(passageId: string | number) {
+  const normalizedId = String(passageId);
+  const passage = readingPassages.find((item) => item.id === normalizedId);
+  return passage ? mapPassageToDetail(passage) : null;
 }
