@@ -10,8 +10,18 @@ export type DatabaseHealth = {
   checkedAt?: string;
 };
 
-function getDatabaseUrl() {
+export function getDatabaseUrl() {
   return process.env.DATABASE_URL?.trim();
+}
+
+export function getSqlClient() {
+  const databaseUrl = getDatabaseUrl();
+
+  if (!databaseUrl) {
+    throw new Error("DATABASE_URL غير موجودة. أضف رابط Neon داخل .env.local لتفعيل هذه الميزة.");
+  }
+
+  return neon(databaseUrl);
 }
 
 export async function getDatabaseHealth(): Promise<DatabaseHealth> {
@@ -26,7 +36,7 @@ export async function getDatabaseHealth(): Promise<DatabaseHealth> {
   }
 
   try {
-    const sql = neon(databaseUrl);
+    const sql = getSqlClient();
     const rows = (await sql`
       select current_database() as database, current_user as db_user, now()::text as checked_at
     `) as Array<{

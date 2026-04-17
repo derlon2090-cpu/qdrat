@@ -230,12 +230,24 @@ export function QuestionBankOrganizer() {
 
         {currentSections.length ? (
           <div className="mt-6 grid gap-4 md:grid-cols-2">
-            {currentSections.map((section) => (
-              <div key={section.id} className="rounded-[1.6rem] border border-slate-200 bg-white p-5 text-right shadow-sm">
-                <div className="display-font text-lg font-bold text-slate-900">{section.title}</div>
-                <div className="mt-2 text-sm leading-7 text-slate-500">{section.description}</div>
-              </div>
-            ))}
+            {currentSections.map((section) =>
+              section.href ? (
+                <Link
+                  key={section.id}
+                  href={section.href}
+                  className="rounded-[1.6rem] border border-slate-200 bg-white p-5 text-right shadow-sm transition hover:-translate-y-0.5 hover:border-[#C99A43]"
+                >
+                  <div className="display-font text-lg font-bold text-slate-900">{section.title}</div>
+                  <div className="mt-2 text-sm leading-7 text-slate-500">{section.description}</div>
+                  <div className="mt-4 text-sm font-semibold text-[#123B7A]">افتح القسم</div>
+                </Link>
+              ) : (
+                <div key={section.id} className="rounded-[1.6rem] border border-slate-200 bg-white p-5 text-right shadow-sm">
+                  <div className="display-font text-lg font-bold text-slate-900">{section.title}</div>
+                  <div className="mt-2 text-sm leading-7 text-slate-500">{section.description}</div>
+                </div>
+              ),
+            )}
           </div>
         ) : (
           <div className="mt-6 rounded-[1.7rem] border border-dashed border-slate-300 bg-white/70 p-8 text-center text-sm text-slate-500">

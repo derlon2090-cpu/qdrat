@@ -97,6 +97,14 @@ begin
 end
 $$;
 
+do $$
+begin
+  if not exists (select 1 from pg_type where typname = 'app_publish_status') then
+    create type app_publish_status as enum ('draft', 'published');
+  end if;
+end
+$$;
+
 create table if not exists app_users (
   id uuid primary key default gen_random_uuid(),
   email varchar(255) not null unique,
@@ -529,6 +537,54 @@ alter table if exists app_questions
 alter table if exists app_question_choices
   add column if not exists color_hint varchar(80);
 
+create table if not exists app_verbal_passages (
+  id uuid primary key default gen_random_uuid(),
+  title varchar(255) not null,
+  normalized_title text not null,
+  keywords text[] not null default '{}'::text[],
+  keyword_search text not null default '',
+  passage_text text not null,
+  normalized_passage_text text not null,
+  title_hash varchar(64) not null,
+  passage_hash varchar(64) not null,
+  status app_publish_status not null default 'draft',
+  external_source_id varchar(160),
+  version integer not null default 1,
+  raw_payload jsonb not null default '{}'::jsonb,
+  created_by uuid references app_users(id),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  unique (title_hash, passage_hash)
+);
+
+create index if not exists idx_app_verbal_passages_status
+  on app_verbal_passages (status, updated_at desc);
+
+create index if not exists idx_app_verbal_passages_title_trgm
+  on app_verbal_passages using gin (normalized_title gin_trgm_ops);
+
+create index if not exists idx_app_verbal_passages_keywords_trgm
+  on app_verbal_passages using gin (keyword_search gin_trgm_ops);
+
+create table if not exists app_verbal_passage_questions (
+  id uuid primary key default gen_random_uuid(),
+  passage_id uuid not null references app_verbal_passages(id) on delete cascade,
+  question_order integer not null default 1,
+  question_text text not null,
+  option_a text not null,
+  option_b text not null,
+  option_c text not null,
+  option_d text not null,
+  correct_option varchar(1) not null,
+  explanation text,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  unique (passage_id, question_order)
+);
+
+create index if not exists idx_app_verbal_passage_questions_passage
+  on app_verbal_passage_questions (passage_id, question_order);
+
 do $$
 begin
   if not exists (select 1 from pg_constraint where conname = 'chk_app_users_email_not_blank') then
@@ -608,6 +664,25 @@ begin
 end
 $$;
 
+do $$
+begin
+  if not exists (select 1 from pg_constraint where conname = 'chk_app_verbal_passages_version_positive') then
+    alter table app_verbal_passages
+      add constraint chk_app_verbal_passages_version_positive check (version > 0);
+  end if;
+
+  if not exists (select 1 from pg_constraint where conname = 'chk_app_verbal_passages_title_not_blank') then
+    alter table app_verbal_passages
+      add constraint chk_app_verbal_passages_title_not_blank check (length(trim(title)) > 0);
+  end if;
+
+  if not exists (select 1 from pg_constraint where conname = 'chk_app_verbal_passage_questions_correct_option') then
+    alter table app_verbal_passage_questions
+      add constraint chk_app_verbal_passage_questions_correct_option check (correct_option in ('A', 'B', 'C', 'D'));
+  end if;
+end
+$$;
+
 create or replace function set_updated_at()
 returns trigger
 language plpgsql
@@ -652,4 +727,12 @@ for each row execute function set_updated_at();
 
 drop trigger if exists trg_app_study_plans_updated_at on app_study_plans;
 create trigger trg_app_study_plans_updated_at before update on app_study_plans
+for each row execute function set_updated_at();
+
+drop trigger if exists trg_app_verbal_passages_updated_at on app_verbal_passages;
+create trigger trg_app_verbal_passages_updated_at before update on app_verbal_passages
+for each row execute function set_updated_at();
+
+drop trigger if exists trg_app_verbal_passage_questions_updated_at on app_verbal_passage_questions;
+create trigger trg_app_verbal_passage_questions_updated_at before update on app_verbal_passage_questions
 for each row execute function set_updated_at();

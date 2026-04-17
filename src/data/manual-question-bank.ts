@@ -158,6 +158,13 @@ export const verbalReadingKeywords: ManualReadingKeyword[] = Array.from(
   title,
 }));
 
-export const verbalSections: ManualSection[] = [];
+export const verbalSections: ManualSection[] = [
+  {
+    id: "verbal_passages",
+    title: "القطع اللفظي",
+    description: "بنك مستقل للقطع اللفظية مع بحث بالكلمات المفتاحية وعرض النص والأسئلة المرتبطة.",
+    href: "/verbal-passages",
+  },
+];
 
 export const quantitativeSections: ManualSection[] = [];

@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { AlertTriangle, CheckCircle2, Database, FileSearch, Layers3 } from "lucide-react";
 
 import { Reveal } from "@/components/reveal";
@@ -57,6 +58,29 @@ export default async function AdminPage() {
                 )}
               </div>
             </div>
+          </Reveal>
+
+          <Reveal delay={0.02}>
+            <Card>
+              <CardContent className="flex flex-wrap items-center justify-between gap-4 p-6">
+                <div className="max-w-2xl">
+                  <p className="text-sm text-slate-500">Verbal Passages</p>
+                  <h2 className="display-font mt-2 text-2xl font-bold text-slate-950">
+                    إدارة بنك القطع اللفظي الجديد
+                  </h2>
+                  <p className="mt-3 text-sm leading-7 text-slate-600">
+                    أضف القطع يدويًا، عدّل الأسئلة، استورد دفعات CSV أو JSON، وراجع المعاينة قبل النشر.
+                  </p>
+                </div>
+
+                <Link
+                  href="/admin/verbal-passages"
+                  className="inline-flex items-center justify-center rounded-2xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white transition hover:opacity-90"
+                >
+                  افتح إدارة القطع اللفظية
+                </Link>
+              </CardContent>
+            </Card>
           </Reveal>
 
           {report ? (
