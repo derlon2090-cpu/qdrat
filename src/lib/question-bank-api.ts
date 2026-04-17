@@ -373,12 +373,8 @@ async function loadDatabaseQuestions(): Promise<SearchItem[]> {
       from app_questions q
       left join app_skills s on s.id = q.skill_id
       left join app_question_banks b on b.id = q.bank_id
-      left join app_passages p on p.id = q.passage_id
       where q.is_published = true
-        and (
-          q.question_type::text <> 'reading_passage'
-          or p.source_name = '${READING_DOCUMENT_SOURCE_FILE}'
-        )
+        and q.question_type::text <> 'reading_passage'
       order by q.usage_count desc, q.created_at desc
       limit 5000
     `)) as Array<{
@@ -410,85 +406,10 @@ async function loadDatabaseQuestions(): Promise<SearchItem[]> {
 }
 
 async function searchDatabasePassages(query: string, limit: number): Promise<SearchItem[]> {
-  const databaseUrl = getDatabaseUrl();
   const trimmedQuery = query.trim();
 
   if (!trimmedQuery) return [];
-  if (!databaseUrl) return searchFallbackPassages(trimmedQuery, limit);
-
-  try {
-    const sql = neon(databaseUrl);
-    const pattern = `%${trimmedQuery}%`;
-
-    const rows = (await sql`
-      select
-        p.id,
-        p.piece_number,
-        case
-          when nullif(p.piece_title, '') is not null then p.piece_title
-          when nullif(p.title, '') is not null then p.title
-          when p.piece_number is not null then concat('قطعة ', p.piece_number::text)
-          else concat('قطعة ', p.id::text)
-        end as piece_title,
-        p.passage_text,
-        p.difficulty::text as difficulty,
-        p.needs_review,
-        (
-          select count(*)::int
-          from app_questions q
-          where q.passage_id = p.id and q.is_published = true
-        ) as question_count
-      from app_passages p
-      inner join app_question_banks b on b.id = p.bank_id
-      where b.is_published = true
-        and p.source_name = ${READING_DOCUMENT_SOURCE_FILE}
-        and (
-          p.piece_title ilike ${pattern}
-          or p.title ilike ${pattern}
-          or p.passage_text ilike ${pattern}
-          or cast(p.piece_number as text) = ${trimmedQuery}
-        )
-      order by
-        case
-          when p.piece_title ilike ${pattern} or p.title ilike ${pattern} then 0
-          else 1
-        end,
-        p.piece_number asc nulls last,
-        p.id asc
-      limit ${limit}
-    `) as Array<{
-      id: number;
-      piece_number: number | null;
-      piece_title: string;
-      passage_text: string;
-      difficulty: string | null;
-      needs_review: boolean;
-      question_count: number;
-    }>;
-
-    const mappedRows = rows
-      .filter((row) => fuzzyMatch(`${row.piece_title} ${row.passage_text}`, trimmedQuery))
-      .map((row) => ({
-        id: row.id,
-        text: row.piece_title,
-        title: row.piece_title,
-        excerpt: createSnippet(row.passage_text, trimmedQuery),
-        section: "قطع",
-        type: "قطعة كاملة",
-        difficulty: mapDifficulty(row.difficulty),
-        skill: row.piece_number ? `قطعة ${row.piece_number}` : "قطعة كاملة",
-        state: row.needs_review ? "قيد المراجعة" : "جاهزة",
-        href: `/exam?section=verbal_reading&passageId=${row.id}`,
-        kind: "passage",
-        pieceNumber: row.piece_number,
-        questionCount: Number(row.question_count ?? 0),
-        needsReview: row.needs_review,
-      })) satisfies SearchItem[];
-
-    return mappedRows.length ? mappedRows : searchFallbackPassages(trimmedQuery, limit);
-  } catch {
-    return searchFallbackPassages(trimmedQuery, limit);
-  }
+  return searchFallbackPassages(trimmedQuery, limit);
 }
 
 async function getBanksSource() {
@@ -498,11 +419,10 @@ async function getBanksSource() {
 
 async function getQuestionsSource(): Promise<SearchItem[]> {
   const databaseQuestions = await loadDatabaseQuestions();
-  if (databaseQuestions.length) return databaseQuestions;
-
   const documentQuestions = await getFallbackReadingQuestionItems();
   return [
     ...documentQuestions,
+    ...databaseQuestions,
     ...(fallbackQuestions.map((item) => ({ ...item, kind: "question", title: item.text })) satisfies SearchItem[]),
   ];
 }
@@ -557,7 +477,7 @@ export async function getQuestionItems(filters: SearchFilters = {}) {
   });
 
   const passages = shouldIncludePassages(filters, Boolean(query))
-    ? await searchDatabasePassages(query, Math.max(6, Math.ceil(limit / 2)))
+    ? await searchFallbackPassages(query, Math.max(6, Math.ceil(limit / 2)))
     : [];
 
   const merged = [...passages, ...filteredQuestions];
@@ -565,183 +485,9 @@ export async function getQuestionItems(filters: SearchFilters = {}) {
 }
 
 export async function getReadingPassageSummaries(): Promise<ReadingPassageSummary[]> {
-  const databaseUrl = getDatabaseUrl();
-  if (!databaseUrl) {
-    return await getFallbackReadingPassageSummaries();
-  }
-
-  try {
-    const sql = neon(databaseUrl);
-    const rows = (await sql`
-      select
-        p.id,
-        p.piece_number,
-        case
-          when nullif(p.piece_title, '') is not null then p.piece_title
-          when nullif(p.title, '') is not null then p.title
-          when p.piece_number is not null then concat('قطعة ', p.piece_number::text)
-          else concat('قطعة ', p.id::text)
-        end as piece_title,
-        p.source_name,
-        count(q.id)::int as question_count
-      from app_passages p
-      inner join app_question_banks b on b.id = p.bank_id
-      left join app_questions q on q.passage_id = p.id and q.is_published = true
-      where b.is_published = true
-        and p.source_name = ${READING_DOCUMENT_SOURCE_FILE}
-      group by p.id, p.piece_number, p.piece_title, p.title, p.source_name
-      order by p.piece_number asc nulls last, p.id asc
-    `) as Array<{
-      id: number;
-      piece_number: number | null;
-      piece_title: string;
-      source_name: string | null;
-      question_count: number;
-    }>;
-
-    const rowsWithQuestions = rows.filter((row) => Number(row.question_count ?? 0) > 0);
-
-    if (!rowsWithQuestions.length) {
-      return await getFallbackReadingPassageSummaries();
-    }
-
-    return rowsWithQuestions.map((row) => ({
-      id: row.id,
-      title: row.piece_title,
-      sourceName: row.source_name,
-      pieceNumber: row.piece_number,
-      questionCount: Number(row.question_count ?? 0),
-      href: `/exam?section=verbal_reading&passageId=${row.id}`,
-    }));
-  } catch {
-    return await getFallbackReadingPassageSummaries();
-  }
+  return await getFallbackReadingPassageSummaries();
 }
 
 export async function getPassageDetail(passageId: number) {
-  const databaseUrl = getDatabaseUrl();
-  if (!databaseUrl) {
-    return await buildFallbackPassageDetail(passageId);
-  }
-
-  try {
-    const sql = neon(databaseUrl);
-
-    const passageRows = (await sql`
-      select
-        id,
-        piece_number,
-        case
-          when nullif(piece_title, '') is not null then piece_title
-          when nullif(title, '') is not null then title
-          when piece_number is not null then concat('قطعة ', piece_number::text)
-          else concat('قطعة ', id::text)
-        end as piece_title,
-        passage_text,
-        difficulty::text as difficulty,
-        source_name,
-        raw_page_from,
-        raw_page_to,
-        coalesce(parsing_confidence, 0) as parsing_confidence,
-        needs_review
-      from app_passages
-      where id = ${passageId}
-        and source_name = ${READING_DOCUMENT_SOURCE_FILE}
-      limit 1
-    `) as Array<{
-      id: number;
-      piece_number: number | null;
-      piece_title: string;
-      passage_text: string;
-      difficulty: string | null;
-      source_name: string | null;
-      raw_page_from: number | null;
-      raw_page_to: number | null;
-      parsing_confidence: string | number | null;
-      needs_review: boolean;
-    }>;
-
-    const passage = passageRows[0];
-    if (!passage) return await buildFallbackPassageDetail(passageId);
-
-    const questionRows = (await sql`
-      select
-        id,
-        question_order,
-        question_text,
-        explanation,
-        correct_choice_key,
-        answer_source,
-        coalesce(answer_confidence, 0) as answer_confidence,
-        needs_review
-      from app_questions
-      where passage_id = ${passageId} and is_published = true
-      order by question_order asc, id asc
-    `) as Array<{
-      id: number;
-      question_order: number;
-      question_text: string;
-      explanation: string | null;
-      correct_choice_key: string | null;
-      answer_source: string | null;
-      answer_confidence: string | number | null;
-      needs_review: boolean;
-    }>;
-
-    const questions = await Promise.all(
-      questionRows.map(async (question) => {
-        const choiceRows = (await sql`
-          select
-            id,
-            choice_key,
-            choice_text,
-            is_correct,
-            sort_order
-          from app_question_choices
-          where question_id = ${question.id}
-          order by sort_order asc, id asc
-        `) as Array<{
-          id: number;
-          choice_key: string;
-          choice_text: string;
-          is_correct: boolean;
-          sort_order: number;
-        }>;
-
-        return {
-          id: question.id,
-          order: question.question_order,
-          text: question.question_text,
-          explanation: question.explanation,
-          correctChoiceKey: question.correct_choice_key,
-          answerSource: question.answer_source,
-          answerConfidence: Number(question.answer_confidence ?? 0),
-          needsReview: question.needs_review,
-          choices: choiceRows.map((choice) => ({
-            id: choice.id,
-            key: choice.choice_key,
-            text: choice.choice_text,
-            isCorrect: choice.is_correct,
-            sortOrder: choice.sort_order,
-          })),
-        } satisfies PassageQuestion;
-      }),
-    );
-
-    return {
-      id: passage.id,
-      pieceNumber: passage.piece_number,
-      title: resolvePassageTitle(passage.piece_title, passage.piece_title, passage.piece_number, passage.id),
-      text: passage.passage_text,
-      difficulty: mapDifficulty(passage.difficulty),
-      sourceName: passage.source_name,
-      rawPageFrom: passage.raw_page_from,
-      rawPageTo: passage.raw_page_to,
-      parsingConfidence: Number(passage.parsing_confidence ?? 0),
-      needsReview: passage.needs_review,
-      questions,
-    } satisfies PassageDetail;
-  } catch {
-    return await buildFallbackPassageDetail(passageId);
-  }
+  return await buildFallbackPassageDetail(passageId);
 }
