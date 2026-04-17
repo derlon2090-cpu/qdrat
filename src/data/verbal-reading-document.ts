@@ -1,9 +1,27 @@
+import { readFile } from "node:fs/promises";
+import path from "node:path";
+
+export const READING_DOCUMENT_SOURCE_SLUG = "bank-4-reading-lamp-2";
+export const READING_DOCUMENT_SOURCE_FILE = "bank-4-reading-lamp-2.pdf";
+
+export type DocumentReadingChoice = {
+  key: string;
+  text: string;
+  isCorrect: boolean;
+  sortOrder: number;
+};
+
 export type DocumentReadingQuestion = {
   id: string;
+  order: number;
   text: string;
-  options: string[];
-  correctAnswer: string;
-  explanation: string;
+  explanation: string | null;
+  correctAnswer: string | null;
+  correctChoiceKey: string | null;
+  answerSource: string | null;
+  answerConfidence: number;
+  needsReview: boolean;
+  choices: DocumentReadingChoice[];
 };
 
 export type DocumentReadingPassage = {
@@ -12,89 +30,145 @@ export type DocumentReadingPassage = {
   title: string;
   pieceNumber: number | null;
   passage: string;
+  difficulty: string | null;
+  rawPageFrom: number | null;
+  rawPageTo: number | null;
+  parsingConfidence: number;
+  needsReview: boolean;
   questions: DocumentReadingQuestion[];
 };
 
-export const fallbackReadingPassages: DocumentReadingPassage[] = [
-  {
-    id: 900001,
-    source: "المستند / القطع اللفظية",
-    title: "أبو حيان أو (أبو حيان التوحيدي)",
-    pieceNumber: 1,
-    passage:
-      "(1) أبو حيان التوحيدي من أشهر أدباء القرن الرابع الهجري ومفكريه. وصفه ياقوت الحموي بقوله: (فيلسوف الأدباء وأديب الفلاسفة)، ومع ذلك فقد تجاهله مؤرخو عصره. عاش التوحيدي حياة شاقة معدمة. فقد ولد في أسرة فقيرة تمتهن بيع التمر، وأمضى باقي طفولته يتيمًا في كفالة عمه. تلقى التوحيدي تعليمه في بغداد على أيدي كبار العلماء والأدباء آنذاك، وأخذ نفسه بثقافة عصره الموسوعية التي استقاها من مصادر متعددة.",
-    questions: [
-      {
-        id: "p1q1",
-        text: 'أفضل عنوان للنص السؤال بصيغة أخرى: "يهدف هذا النص إلى التعريف بـ:"',
-        options: [
-          "شخصية أبي حيان",
-          "حياة أبي حيان",
-          "ظلم المجتمع لأبي حيان",
-          "أبو حيان بين الماضي والحاضر",
-        ],
-        correctAnswer: "شخصية أبي حيان",
-        explanation:
-          "لأن النص يعرّف بأبي حيان من حيث مكانته وحياته ونشأته بشكل عام، لذلك العنوان الأقرب هو التعريف بشخصيته.",
-      },
-      {
-        id: "p1q2",
-        text: "وفقًا للفقرة (1) كان أبو حيان...",
-        options: [
-          "من عامة الناس فقط",
-          "أديبًا ومفكرًا مشهورًا",
-          "تاجر تمر ناجحًا",
-          "مؤرخًا في بغداد",
-        ],
-        correctAnswer: "أديبًا ومفكرًا مشهورًا",
-        explanation: "لأن بداية القطعة نصت صراحة على أنه من أشهر أدباء القرن الرابع الهجري ومفكريه.",
-      },
-      {
-        id: "p1q3",
-        text: "ما السبب في سوء أحوال التوحيدي؟",
-        options: [
-          "لأنه لم يتعلم",
-          "لأنه عاش في أسرة فقيرة ومرّ بظروف صعبة",
-          "لأنه كان يرفض العمل",
-          "لأنه ترك بغداد مبكرًا",
-        ],
-        correctAnswer: "لأنه عاش في أسرة فقيرة ومرّ بظروف صعبة",
-        explanation: "القطعة ذكرت أنه وُلد في أسرة فقيرة وعاش حياة شاقة معدمة وأمضى طفولته يتيمًا.",
-      },
-    ],
-  },
-  {
-    id: 900002,
-    source: "المستند / القطع اللفظية",
-    title: "القراءة اليومية",
-    pieceNumber: 2,
-    passage:
-      "القراءة اليومية من أهم العادات التي توسّع مدارك الإنسان، وتزيد حصيلته اللغوية، وتجعله أقدر على الفهم والتحليل. والقراءة المنتظمة لا تصنع المعرفة فحسب، بل تبني الوعي أيضًا، وتمنح صاحبها قدرة أفضل على التعبير واتخاذ القرار.",
-    questions: [
-      {
-        id: "p2q1",
-        text: "يستفاد من القطعة أن القراءة اليومية:",
-        options: [
-          "تضيّع الوقت غالبًا",
-          "تزيد الوعي والحصيلة اللغوية",
-          "تناسب فئة عمرية واحدة فقط",
-          "لا تؤثر على التحليل",
-        ],
-        correctAnswer: "تزيد الوعي والحصيلة اللغوية",
-        explanation: "لأن النص ذكر بوضوح أنها توسّع المدارك وتزيد الحصيلة اللغوية وتبني الوعي.",
-      },
-      {
-        id: "p2q2",
-        text: "الفكرة الرئيسة في النص هي:",
-        options: [
-          "أن القرار أهم من القراءة",
-          "أن القراءة عادة نافعة تبني المعرفة والوعي",
-          "أن التحليل لا يحتاج إلى قراءة",
-          "أن التعبير مهارة منفصلة عن المعرفة",
-        ],
-        correctAnswer: "أن القراءة عادة نافعة تبني المعرفة والوعي",
-        explanation: "لأن هذا هو المعنى الجامع لكل الجمل الواردة في القطعة.",
-      },
-    ],
-  },
-];
+type NormalizedReadingPayload = {
+  source?: {
+    title?: string;
+    fileName?: string;
+  };
+  passages?: Array<{
+    pieceNumber?: number | null;
+    pieceTitle?: string | null;
+    title?: string | null;
+    passageText: string;
+    difficulty?: string | null;
+    rawPageFrom?: number | null;
+    rawPageTo?: number | null;
+    parsingConfidence?: number | null;
+    needsReview?: boolean;
+    questions?: Array<{
+      questionOrder?: number | null;
+      questionText: string;
+      explanation?: string | null;
+      answerSource?: string | null;
+      answerConfidence?: number | null;
+      needsReview?: boolean;
+      options?: Array<{
+        optionKey?: string | null;
+        optionText: string;
+        isCorrect?: boolean;
+        displayOrder?: number | null;
+      }>;
+    }>;
+  }>;
+};
+
+let cachedReadingPassages: Promise<DocumentReadingPassage[]> | null = null;
+
+function getNormalizedReadingPath() {
+  return path.join(
+    process.cwd(),
+    "data",
+    "parsed",
+    `${READING_DOCUMENT_SOURCE_SLUG}.normalized.json`,
+  );
+}
+
+function resolvePassageTitle(
+  pieceTitle: string | null | undefined,
+  title: string | null | undefined,
+  pieceNumber: number | null | undefined,
+  fallbackIndex: number,
+) {
+  const trimmedPieceTitle = pieceTitle?.trim();
+  if (trimmedPieceTitle) return trimmedPieceTitle;
+
+  const trimmedTitle = title?.trim();
+  if (trimmedTitle) return trimmedTitle;
+
+  if (pieceNumber) return `قطعة ${pieceNumber}`;
+  return `قطعة ${fallbackIndex}`;
+}
+
+async function loadDocumentReadingPassages() {
+  const filePath = getNormalizedReadingPath();
+
+  try {
+    const raw = await readFile(filePath, "utf8");
+    const payload = JSON.parse(raw) as NormalizedReadingPayload;
+    const sourceName =
+      payload.source?.fileName?.trim() || payload.source?.title?.trim() || READING_DOCUMENT_SOURCE_FILE;
+
+    return (payload.passages ?? []).map((passage, passageIndex) => {
+      const id = passageIndex + 1;
+      const title = resolvePassageTitle(
+        passage.pieceTitle,
+        passage.title,
+        passage.pieceNumber ?? null,
+        id,
+      );
+
+      const questions = (passage.questions ?? []).map((question, questionIndex) => {
+        const orderedChoices = [...(question.options ?? [])]
+          .sort((left, right) => (left.displayOrder ?? 0) - (right.displayOrder ?? 0))
+          .map((choice, choiceIndex) => ({
+            key: choice.optionKey?.trim() || ["A", "B", "C", "D"][choiceIndex] || String(choiceIndex + 1),
+            text: choice.optionText,
+            isCorrect: Boolean(choice.isCorrect),
+            sortOrder: choice.displayOrder ?? choiceIndex + 1,
+          }));
+
+        const correctChoice = orderedChoices.find((choice) => choice.isCorrect) ?? null;
+
+        return {
+          id: `${id}-q-${question.questionOrder ?? questionIndex + 1}`,
+          order: question.questionOrder ?? questionIndex + 1,
+          text: question.questionText,
+          explanation: question.explanation ?? null,
+          correctAnswer: correctChoice?.text ?? null,
+          correctChoiceKey: correctChoice?.key ?? null,
+          answerSource: question.answerSource ?? null,
+          answerConfidence: Number(question.answerConfidence ?? 0),
+          needsReview: Boolean(question.needsReview),
+          choices: orderedChoices,
+        } satisfies DocumentReadingQuestion;
+      });
+
+      return {
+        id,
+        source: sourceName,
+        title,
+        pieceNumber: passage.pieceNumber ?? null,
+        passage: passage.passageText,
+        difficulty: passage.difficulty ?? null,
+        rawPageFrom: passage.rawPageFrom ?? null,
+        rawPageTo: passage.rawPageTo ?? null,
+        parsingConfidence: Number(passage.parsingConfidence ?? 0),
+        needsReview: Boolean(passage.needsReview),
+        questions,
+      } satisfies DocumentReadingPassage;
+    });
+  } catch {
+    return [];
+  }
+}
+
+export async function getDocumentReadingPassages() {
+  if (!cachedReadingPassages) {
+    cachedReadingPassages = loadDocumentReadingPassages();
+  }
+
+  return cachedReadingPassages;
+}
+
+export async function getDocumentReadingPassageById(passageId: number) {
+  const passages = await getDocumentReadingPassages();
+  return passages.find((passage) => passage.id === passageId) ?? null;
+}

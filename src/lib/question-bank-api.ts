@@ -1,7 +1,11 @@
 import { neon } from "@neondatabase/serverless";
 
 import { banks as fallbackBanks, questionSearchItems as fallbackQuestions } from "@/data/miyaar";
-import { fallbackReadingPassages } from "@/data/verbal-reading-document";
+import {
+  getDocumentReadingPassageById,
+  getDocumentReadingPassages,
+  READING_DOCUMENT_SOURCE_FILE,
+} from "@/data/verbal-reading-document";
 
 export type BankItem = (typeof fallbackBanks)[number];
 
@@ -74,6 +78,8 @@ type SearchFilters = {
   state?: string;
   limit?: number;
 };
+
+const READING_DOCUMENT_LABEL = "المستند / القطع اللفظية";
 
 function getDatabaseUrl() {
   return process.env.DATABASE_URL?.trim();
@@ -193,8 +199,8 @@ function mapBankTag(title: string) {
   return "تدريب مباشر";
 }
 
-function buildFallbackPassageDetail(passageId: number): PassageDetail | null {
-  const passage = fallbackReadingPassages.find((item) => item.id === passageId);
+async function buildFallbackPassageDetail(passageId: number): Promise<PassageDetail | null> {
+  const passage = await getDocumentReadingPassageById(passageId);
   if (!passage) return null;
 
   return {
@@ -202,41 +208,103 @@ function buildFallbackPassageDetail(passageId: number): PassageDetail | null {
     pieceNumber: passage.pieceNumber,
     title: passage.title,
     text: passage.passage,
-    difficulty: "متوسط",
-    sourceName: passage.source,
-    rawPageFrom: null,
-    rawPageTo: null,
-    parsingConfidence: 1,
-    needsReview: false,
+    difficulty: mapDifficulty(passage.difficulty),
+    sourceName: passage.source || READING_DOCUMENT_LABEL,
+    rawPageFrom: passage.rawPageFrom,
+    rawPageTo: passage.rawPageTo,
+    parsingConfidence: passage.parsingConfidence,
+    needsReview: passage.needsReview,
     questions: passage.questions.map((question, questionIndex) => ({
       id: Number(`${passage.id}${questionIndex + 1}`),
-      order: questionIndex + 1,
+      order: question.order,
       text: question.text,
       explanation: question.explanation,
-      correctChoiceKey: ["A", "B", "C", "D"][question.options.findIndex((option) => option === question.correctAnswer)] ?? null,
-      answerSource: "manual",
-      answerConfidence: 1,
-      needsReview: false,
-      choices: question.options.map((option, optionIndex) => ({
-        id: Number(`${passage.id}${questionIndex + 1}${optionIndex + 1}`),
-        key: ["A", "B", "C", "D"][optionIndex] ?? String(optionIndex + 1),
-        text: option,
-        isCorrect: option === question.correctAnswer,
-        sortOrder: optionIndex + 1,
+      correctChoiceKey: question.correctChoiceKey,
+      answerSource: question.answerSource,
+      answerConfidence: question.answerConfidence,
+      needsReview: question.needsReview,
+      choices: question.choices.map((choice, choiceIndex) => ({
+        id: Number(`${passage.id}${questionIndex + 1}${choiceIndex + 1}`),
+        key: choice.key,
+        text: choice.text,
+        isCorrect: choice.isCorrect,
+        sortOrder: choice.sortOrder,
       })),
     })),
   };
 }
 
-function getFallbackReadingPassageSummaries(): ReadingPassageSummary[] {
-  return fallbackReadingPassages.map((passage) => ({
-    id: passage.id,
-    title: passage.title,
-    sourceName: passage.source,
-    pieceNumber: passage.pieceNumber,
-    questionCount: passage.questions.length,
-    href: `/exam?section=verbal_reading&passageId=${passage.id}`,
-  }));
+async function getFallbackReadingPassageSummaries(): Promise<ReadingPassageSummary[]> {
+  const passages = await getDocumentReadingPassages();
+
+  return passages
+    .filter((passage) => passage.questions.length > 0)
+    .map((passage) => ({
+      id: passage.id,
+      title: passage.title,
+      sourceName: passage.source || READING_DOCUMENT_LABEL,
+      pieceNumber: passage.pieceNumber,
+      questionCount: passage.questions.length,
+      href: `/exam?section=verbal_reading&passageId=${passage.id}`,
+    }));
+}
+
+async function getFallbackReadingQuestionItems(): Promise<SearchItem[]> {
+  const passages = await getDocumentReadingPassages();
+
+  return passages.flatMap((passage) =>
+    passage.questions.map((question) => ({
+      id: Number(`${passage.id}${question.order}`),
+      text: question.text,
+      title: question.text,
+      excerpt: createSnippet(passage.passage, question.text),
+      section: "قطع",
+      type: "قطع",
+      difficulty: mapDifficulty(passage.difficulty),
+      skill: passage.title,
+      state: question.needsReview ? "قيد المراجعة" : "جاهزة",
+      href: `/exam?section=verbal_reading&passageId=${passage.id}&question=${Math.max(question.order - 1, 0)}`,
+      kind: "question",
+      pieceNumber: passage.pieceNumber,
+      needsReview: question.needsReview,
+    })),
+  );
+}
+
+async function searchFallbackPassages(query: string, limit: number): Promise<SearchItem[]> {
+  const trimmedQuery = query.trim();
+  if (!trimmedQuery) return [];
+
+  const passages = await getDocumentReadingPassages();
+
+  return passages
+    .filter((passage) =>
+      fuzzyMatch(
+        [
+          passage.title,
+          passage.passage,
+          passage.questions.map((question) => question.text).join(" "),
+        ].join(" "),
+        trimmedQuery,
+      ),
+    )
+    .slice(0, limit)
+    .map((passage) => ({
+      id: passage.id,
+      text: passage.title,
+      title: passage.title,
+      excerpt: createSnippet(passage.passage, trimmedQuery),
+      section: "قطع",
+      type: "قطعة كاملة",
+      difficulty: mapDifficulty(passage.difficulty),
+      skill: passage.pieceNumber ? `قطعة ${passage.pieceNumber}` : "قطعة كاملة",
+      state: passage.needsReview ? "قيد المراجعة" : "جاهزة",
+      href: `/exam?section=verbal_reading&passageId=${passage.id}`,
+      kind: "passage",
+      pieceNumber: passage.pieceNumber,
+      questionCount: passage.questions.length,
+      needsReview: passage.needsReview,
+    }));
 }
 
 function normalizeQuestionState(value?: string | null) {
@@ -305,7 +373,12 @@ async function loadDatabaseQuestions(): Promise<SearchItem[]> {
       from app_questions q
       left join app_skills s on s.id = q.skill_id
       left join app_question_banks b on b.id = q.bank_id
+      left join app_passages p on p.id = q.passage_id
       where q.is_published = true
+        and (
+          q.question_type::text <> 'reading_passage'
+          or p.source_name = '${READING_DOCUMENT_SOURCE_FILE}'
+        )
       order by q.usage_count desc, q.created_at desc
       limit 5000
     `)) as Array<{
@@ -340,7 +413,8 @@ async function searchDatabasePassages(query: string, limit: number): Promise<Sea
   const databaseUrl = getDatabaseUrl();
   const trimmedQuery = query.trim();
 
-  if (!databaseUrl || !trimmedQuery) return [];
+  if (!trimmedQuery) return [];
+  if (!databaseUrl) return searchFallbackPassages(trimmedQuery, limit);
 
   try {
     const sql = neon(databaseUrl);
@@ -367,6 +441,7 @@ async function searchDatabasePassages(query: string, limit: number): Promise<Sea
       from app_passages p
       inner join app_question_banks b on b.id = p.bank_id
       where b.is_published = true
+        and p.source_name = ${READING_DOCUMENT_SOURCE_FILE}
         and (
           p.piece_title ilike ${pattern}
           or p.title ilike ${pattern}
@@ -391,7 +466,7 @@ async function searchDatabasePassages(query: string, limit: number): Promise<Sea
       question_count: number;
     }>;
 
-    return rows
+    const mappedRows = rows
       .filter((row) => fuzzyMatch(`${row.piece_title} ${row.passage_text}`, trimmedQuery))
       .map((row) => ({
         id: row.id,
@@ -409,8 +484,10 @@ async function searchDatabasePassages(query: string, limit: number): Promise<Sea
         questionCount: Number(row.question_count ?? 0),
         needsReview: row.needs_review,
       })) satisfies SearchItem[];
+
+    return mappedRows.length ? mappedRows : searchFallbackPassages(trimmedQuery, limit);
   } catch {
-    return [];
+    return searchFallbackPassages(trimmedQuery, limit);
   }
 }
 
@@ -421,9 +498,13 @@ async function getBanksSource() {
 
 async function getQuestionsSource(): Promise<SearchItem[]> {
   const databaseQuestions = await loadDatabaseQuestions();
-  return databaseQuestions.length
-    ? databaseQuestions
-    : (fallbackQuestions.map((item) => ({ ...item, kind: "question", title: item.text })) satisfies SearchItem[]);
+  if (databaseQuestions.length) return databaseQuestions;
+
+  const documentQuestions = await getFallbackReadingQuestionItems();
+  return [
+    ...documentQuestions,
+    ...(fallbackQuestions.map((item) => ({ ...item, kind: "question", title: item.text })) satisfies SearchItem[]),
+  ];
 }
 
 export async function getBankItems(filters: SearchFilters = {}) {
@@ -486,7 +567,7 @@ export async function getQuestionItems(filters: SearchFilters = {}) {
 export async function getReadingPassageSummaries(): Promise<ReadingPassageSummary[]> {
   const databaseUrl = getDatabaseUrl();
   if (!databaseUrl) {
-    return getFallbackReadingPassageSummaries();
+    return await getFallbackReadingPassageSummaries();
   }
 
   try {
@@ -507,6 +588,7 @@ export async function getReadingPassageSummaries(): Promise<ReadingPassageSummar
       inner join app_question_banks b on b.id = p.bank_id
       left join app_questions q on q.passage_id = p.id and q.is_published = true
       where b.is_published = true
+        and p.source_name = ${READING_DOCUMENT_SOURCE_FILE}
       group by p.id, p.piece_number, p.piece_title, p.title, p.source_name
       order by p.piece_number asc nulls last, p.id asc
     `) as Array<{
@@ -520,7 +602,7 @@ export async function getReadingPassageSummaries(): Promise<ReadingPassageSummar
     const rowsWithQuestions = rows.filter((row) => Number(row.question_count ?? 0) > 0);
 
     if (!rowsWithQuestions.length) {
-      return getFallbackReadingPassageSummaries();
+      return await getFallbackReadingPassageSummaries();
     }
 
     return rowsWithQuestions.map((row) => ({
@@ -532,14 +614,14 @@ export async function getReadingPassageSummaries(): Promise<ReadingPassageSummar
       href: `/exam?section=verbal_reading&passageId=${row.id}`,
     }));
   } catch {
-    return getFallbackReadingPassageSummaries();
+    return await getFallbackReadingPassageSummaries();
   }
 }
 
 export async function getPassageDetail(passageId: number) {
   const databaseUrl = getDatabaseUrl();
   if (!databaseUrl) {
-    return buildFallbackPassageDetail(passageId);
+    return await buildFallbackPassageDetail(passageId);
   }
 
   try {
@@ -564,6 +646,7 @@ export async function getPassageDetail(passageId: number) {
         needs_review
       from app_passages
       where id = ${passageId}
+        and source_name = ${READING_DOCUMENT_SOURCE_FILE}
       limit 1
     `) as Array<{
       id: number;
@@ -579,7 +662,7 @@ export async function getPassageDetail(passageId: number) {
     }>;
 
     const passage = passageRows[0];
-    if (!passage) return buildFallbackPassageDetail(passageId);
+    if (!passage) return await buildFallbackPassageDetail(passageId);
 
     const questionRows = (await sql`
       select
@@ -645,20 +728,20 @@ export async function getPassageDetail(passageId: number) {
       }),
     );
 
-      return {
-        id: passage.id,
-        pieceNumber: passage.piece_number,
-        title: resolvePassageTitle(passage.piece_title, passage.piece_title, passage.piece_number, passage.id),
-        text: passage.passage_text,
-        difficulty: mapDifficulty(passage.difficulty),
-        sourceName: passage.source_name,
+    return {
+      id: passage.id,
+      pieceNumber: passage.piece_number,
+      title: resolvePassageTitle(passage.piece_title, passage.piece_title, passage.piece_number, passage.id),
+      text: passage.passage_text,
+      difficulty: mapDifficulty(passage.difficulty),
+      sourceName: passage.source_name,
       rawPageFrom: passage.raw_page_from,
       rawPageTo: passage.raw_page_to,
       parsingConfidence: Number(passage.parsing_confidence ?? 0),
       needsReview: passage.needs_review,
       questions,
-      } satisfies PassageDetail;
+    } satisfies PassageDetail;
   } catch {
-    return buildFallbackPassageDetail(passageId);
+    return await buildFallbackPassageDetail(passageId);
   }
 }
