@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { BookOpenText, Calculator, Search } from "lucide-react";
 
+import samplePassagesData from "../../data/verbal-passages.sample.json";
 import { Input } from "@/components/ui/input";
 import {
   EMPTY_SECTION_MESSAGE,
@@ -13,7 +14,7 @@ import {
   verbalSections,
 } from "@/data/manual-question-bank";
 import { buildPublicApiUrl } from "@/lib/api-base";
-import type { VerbalPassageRecord } from "@/lib/verbal-passages";
+import type { VerbalPassageQuestionRecord, VerbalPassageRecord } from "@/lib/verbal-passages";
 
 type TrackId = "verbal" | "quant";
 
@@ -29,6 +30,26 @@ type KeywordDirectoryItem = {
   questionCount: number;
   passageText: string | null;
   questionTitles: string[];
+};
+
+type SampleQuestionRow = {
+  question_text: string;
+  option_a: string;
+  option_b: string;
+  option_c: string;
+  option_d: string;
+  correct_option: "A" | "B" | "C" | "D";
+  explanation?: string | null;
+};
+
+type SamplePassageRow = {
+  title: string;
+  slug: string;
+  keywords?: string[];
+  passage_text: string;
+  status?: string;
+  external_source_id?: string | null;
+  questions?: SampleQuestionRow[];
 };
 
 function normalizeArabic(value: string) {
@@ -150,6 +171,51 @@ function mapKeywordToDirectoryItem(
   };
 }
 
+function mapSampleQuestion(question: SampleQuestionRow, index: number): VerbalPassageQuestionRecord {
+  return {
+    id: `sample-question-${index + 1}-${question.correct_option}`,
+    questionOrder: index + 1,
+    questionText: question.question_text,
+    optionA: question.option_a,
+    optionB: question.option_b,
+    optionC: question.option_c,
+    optionD: question.option_d,
+    correctOption: question.correct_option,
+    explanation: question.explanation ?? null,
+  };
+}
+
+function mapSamplePassage(row: SamplePassageRow, index: number): VerbalPassageRecord {
+  return {
+    id: `sample-passage-${index + 1}-${row.slug}`,
+    slug: row.slug,
+    title: row.title,
+    keywords: row.keywords ?? [],
+    passageText: row.passage_text,
+    status: row.status === "draft" ? "draft" : "published",
+    version: 1,
+    externalSourceId: row.external_source_id ?? `sample-json-${row.slug}`,
+    createdAt: "",
+    updatedAt: "",
+    questions: (row.questions ?? []).map(mapSampleQuestion),
+  };
+}
+
+const fallbackVerbalPassages = (samplePassagesData as SamplePassageRow[]).map(mapSamplePassage);
+
+function mergePassageSources(primary: VerbalPassageRecord[], fallback: VerbalPassageRecord[]) {
+  const unique = new Map<string, VerbalPassageRecord>();
+
+  for (const passage of [...primary, ...fallback]) {
+    const key = normalizeArabic([passage.slug, passage.title, ...(passage.keywords ?? [])].join(" "));
+    if (!unique.has(key)) {
+      unique.set(key, passage);
+    }
+  }
+
+  return Array.from(unique.values());
+}
+
 function EmptySectionCard({
   title,
   description,
@@ -191,7 +257,7 @@ export function QuestionBankOrganizer() {
   const [track, setTrack] = useState<TrackId>(searchParams.get("track") === "quant" ? "quant" : "verbal");
   const [keywordQuery, setKeywordQuery] = useState(searchParams.get("keyword") ?? "");
   const [debouncedKeywordQuery, setDebouncedKeywordQuery] = useState(searchParams.get("keyword") ?? "");
-  const [verbalPassages, setVerbalPassages] = useState<VerbalPassageRecord[]>([]);
+  const [verbalPassages, setVerbalPassages] = useState<VerbalPassageRecord[]>(fallbackVerbalPassages);
   const [isLoadingVerbalPassages, setIsLoadingVerbalPassages] = useState(false);
 
   useEffect(() => {
@@ -226,11 +292,12 @@ export function QuestionBankOrganizer() {
         return response.json() as Promise<{ items?: VerbalPassageRecord[] }>;
       })
       .then((payload) => {
-        setVerbalPassages(payload.items ?? []);
+        const items = Array.isArray(payload.items) ? payload.items : [];
+        setVerbalPassages(mergePassageSources(items, fallbackVerbalPassages));
       })
       .catch(() => {
         if (controller.signal.aborted) return;
-        setVerbalPassages([]);
+        setVerbalPassages(fallbackVerbalPassages);
       })
       .finally(() => {
         if (!controller.signal.aborted) {
