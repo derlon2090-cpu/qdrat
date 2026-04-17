@@ -1,9 +1,13 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { BookOpenText, Calculator } from "lucide-react";
+import Link from "next/link";
+import { useDeferredValue, useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { BookOpenText, Calculator, Search } from "lucide-react";
 
+import { Input } from "@/components/ui/input";
 import { EMPTY_SECTION_MESSAGE, quantitativeSections, verbalSections } from "@/data/manual-question-bank";
+import { getReadingKeywordDirectory } from "@/lib/question-bank-api";
 
 type TrackId = "verbal" | "quant";
 
@@ -44,11 +48,28 @@ function EmptySectionCard({
 }
 
 export function QuestionBankOrganizer() {
-  const [track, setTrack] = useState<TrackId>("verbal");
+  const searchParams = useSearchParams();
+  const [track, setTrack] = useState<TrackId>(searchParams.get("track") === "quant" ? "quant" : "verbal");
+  const [keywordQuery, setKeywordQuery] = useState(searchParams.get("keyword") ?? "");
+  const deferredKeywordQuery = useDeferredValue(keywordQuery);
+
+  useEffect(() => {
+    setTrack(searchParams.get("track") === "quant" ? "quant" : "verbal");
+    setKeywordQuery(searchParams.get("keyword") ?? "");
+  }, [searchParams]);
 
   const currentSections = useMemo(
     () => (track === "verbal" ? verbalSections : quantitativeSections),
     [track],
+  );
+
+  const verbalKeywordResults = useMemo(
+    () =>
+      getReadingKeywordDirectory({
+        query: deferredKeywordQuery,
+        limit: deferredKeywordQuery.trim() ? 18 : 12,
+      }),
+    [deferredKeywordQuery],
   );
 
   return (
@@ -56,7 +77,7 @@ export function QuestionBankOrganizer() {
       <div className="grid gap-4 md:grid-cols-2">
         <EmptySectionCard
           title="اللفظي"
-          description="تم تفريغ الأقسام القديمة، وسيتم إدخال القطع والأسئلة اللفظية يدويًا واحدة واحدة."
+          description="تم تفريغ الأقسام القديمة، وسيتم إدخال القطع والأسئلة اللفظية يدويًا واحدة واحدة مع دعم البحث بالكلمات المفتاحية."
           active={track === "verbal"}
           onClick={() => setTrack("verbal")}
           icon={BookOpenText}
@@ -75,8 +96,83 @@ export function QuestionBankOrganizer() {
           {track === "verbal" ? "القسم اللفظي" : "القسم الكمي"}
         </div>
         <p className="mt-3 max-w-3xl text-sm leading-8 text-slate-600">
-          {EMPTY_SECTION_MESSAGE}. تم تجهيز النظام الآن ليقرأ من بيانات يدوية ثابتة فقط، وعند إضافة أي قسم أو قطعة جديدة ستظهر مباشرة بدون PDF أو استخراج تلقائي.
+          {EMPTY_SECTION_MESSAGE}. تم تجهيز النظام الآن ليقرأ من بيانات يدوية ثابتة فقط، وعند إضافة أي قسم أو قطعة
+          جديدة ستظهر مباشرة بدون PDF أو استخراج تلقائي.
         </p>
+
+        {track === "verbal" ? (
+          <div id="verbal-reading-search" className="mt-8 space-y-5 rounded-[1.9rem] border border-slate-200 bg-white p-6 shadow-sm">
+            <div className="flex flex-wrap items-center justify-between gap-4">
+              <div>
+                <div className="display-font text-xl font-bold text-slate-950">بحث القطع اللفظية بالكلمات المفتاحية</div>
+                <p className="mt-2 max-w-2xl text-sm leading-7 text-slate-500">
+                  أدخل اسم القطعة أو جزءًا منه، وسيظهر لك عنوان القطعة مباشرة. عند ربط القطعة لاحقًا بنصها وأسئلتها
+                  ستفتح مباشرة من نفس النتيجة.
+                </p>
+              </div>
+              <div className="rounded-full bg-[#123B7A]/8 px-4 py-2 text-sm font-semibold text-[#123B7A]">
+                {getReadingKeywordDirectory({ limit: 200 }).length} عنوانًا مسجلًا
+              </div>
+            </div>
+
+            <div className="relative">
+              <Search className="pointer-events-none absolute right-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
+              <Input
+                value={keywordQuery}
+                onChange={(event) => setKeywordQuery(event.target.value)}
+                placeholder="ابحث بعنوان القطعة، مثل: التوحد، التواضع، الإمام مالك..."
+                className="h-14 pr-12 text-base"
+              />
+            </div>
+
+            {verbalKeywordResults.length ? (
+              <div className="grid gap-3 lg:grid-cols-2">
+                {verbalKeywordResults.map((item) => (
+                  <div
+                    key={item.id}
+                    className="rounded-[1.5rem] border border-slate-200 bg-slate-50/70 p-5 transition hover:border-[#C99A43]"
+                  >
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                      <div className="display-font text-lg font-bold text-slate-950">{item.title}</div>
+                      <span
+                        className={`rounded-full px-3 py-1 text-xs font-semibold ${
+                          item.status === "linked"
+                            ? "bg-emerald-50 text-emerald-700"
+                            : "bg-amber-50 text-amber-700"
+                        }`}
+                      >
+                        {item.status === "linked" ? "مرتبطة بقطعة كاملة" : "عنوان محفوظ بانتظار الإضافة"}
+                      </span>
+                    </div>
+                    <p className="mt-3 text-sm leading-7 text-slate-500">{item.excerpt}</p>
+
+                    <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+                      <div className="text-xs text-slate-500">
+                        {item.questionCount ? `${item.questionCount} أسئلة مرتبطة` : "سيظهر النص والأسئلة عند إضافتها"}
+                      </div>
+                      {item.href ? (
+                        <Link
+                          href={item.href}
+                          className="rounded-2xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#123B7A]"
+                        >
+                          افتح القطعة
+                        </Link>
+                      ) : (
+                        <span className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-500">
+                          بانتظار ربط القطعة
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="rounded-[1.5rem] border border-dashed border-slate-300 bg-slate-50/80 p-6 text-center text-sm text-slate-500">
+                لا توجد عناوين مطابقة الآن. جرّب جزءًا أقصر من اسم القطعة.
+              </div>
+            )}
+          </div>
+        ) : null}
 
         {currentSections.length ? (
           <div className="mt-6 grid gap-4 md:grid-cols-2">
@@ -89,7 +185,9 @@ export function QuestionBankOrganizer() {
           </div>
         ) : (
           <div className="mt-6 rounded-[1.7rem] border border-dashed border-slate-300 bg-white/70 p-8 text-center text-sm text-slate-500">
-            لا يوجد محتوى معروض حاليًا داخل هذا القسم.
+            {track === "verbal"
+              ? "لا يوجد محتوى أسئلة ظاهر الآن داخل القسم اللفظي، لكن دليل العناوين الجاهز للبحث أصبح متاحًا بالأعلى."
+              : "لا يوجد محتوى معروض حاليًا داخل هذا القسم."}
           </div>
         )}
       </div>

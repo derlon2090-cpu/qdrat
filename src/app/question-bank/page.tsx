@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { BriefcaseBusiness } from "lucide-react";
 
 import { PageShell } from "@/components/page-shell";
@@ -16,7 +17,15 @@ export default function QuestionBankPage() {
       ctaLabel="ابدأ الآن"
       ctaHref="/diagnostic"
     >
-      <QuestionBankOrganizer />
+      <Suspense
+        fallback={
+          <div className="rounded-[1.7rem] border border-dashed border-slate-300 bg-white/70 p-8 text-center text-sm text-slate-500">
+            جارٍ تجهيز دليل بنك الأسئلة...
+          </div>
+        }
+      >
+        <QuestionBankOrganizer />
+      </Suspense>
     </PageShell>
   );
 }

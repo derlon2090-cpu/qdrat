@@ -2,6 +2,7 @@ import {
   EMPTY_SECTION_MESSAGE,
   readingPassages,
   quantitativeSections,
+  verbalReadingKeywords,
   verbalSections,
 } from "@/data/manual-question-bank";
 
@@ -23,7 +24,7 @@ export type SearchItem = {
   skill: string;
   state: string;
   href: string;
-  kind?: "question" | "passage";
+  kind?: "question" | "passage" | "keyword";
   title?: string;
   excerpt?: string;
   pieceNumber?: number | null;
@@ -61,6 +62,16 @@ export type ReadingPassageSummary = {
   pieceNumber: number | null;
   questionCount: number;
   href: string;
+};
+
+export type ReadingKeywordDirectoryItem = {
+  id: string;
+  title: string;
+  href: string | null;
+  excerpt: string;
+  kind: "passage" | "keyword";
+  status: "linked" | "pending";
+  questionCount: number;
 };
 
 type SearchFilters = {
@@ -164,6 +175,46 @@ function mapPassageToDetail(passage: (typeof readingPassages)[number]): PassageD
   };
 }
 
+function getKeywordHaystack(keyword: (typeof verbalReadingKeywords)[number]) {
+  return [keyword.title, ...(keyword.aliases ?? [])].join(" ");
+}
+
+function resolveKeywordPassage(keyword: (typeof verbalReadingKeywords)[number]) {
+  if (keyword.passageId) {
+    return readingPassages.find((passage) => passage.id === keyword.passageId) ?? null;
+  }
+
+  const keywordTerms = [keyword.title, ...(keyword.aliases ?? [])].map(normalizeArabic);
+
+  return (
+    readingPassages.find((passage) => {
+      const normalizedTitle = normalizeArabic(passage.title);
+      return keywordTerms.some(
+        (term) => term && (term === normalizedTitle || term.includes(normalizedTitle) || normalizedTitle.includes(term)),
+      );
+    }) ?? null
+  );
+}
+
+function mapKeywordToDirectoryItem(
+  keyword: (typeof verbalReadingKeywords)[number],
+  query = "",
+): ReadingKeywordDirectoryItem {
+  const linkedPassage = resolveKeywordPassage(keyword);
+
+  return {
+    id: keyword.id,
+    title: keyword.title,
+    href: linkedPassage ? `/exam?section=verbal_reading&passageId=${linkedPassage.id}` : null,
+    excerpt: linkedPassage
+      ? createSnippet(linkedPassage.passage, query || keyword.title)
+      : "عنوان محفوظ داخل دليل القطع اللفظية، وسيتم ربط نص القطعة وأسئلتها به عند إضافته يدويًا.",
+    kind: linkedPassage ? "passage" : "keyword",
+    status: linkedPassage ? "linked" : "pending",
+    questionCount: linkedPassage?.questions.length ?? 0,
+  };
+}
+
 function mapReadingQuestionsToSearchItems() {
   return readingPassages.flatMap((passage) =>
     passage.questions.map((question, index) => ({
@@ -192,6 +243,16 @@ export function getPassageDetailSync(passageId: string | number) {
   const normalizedId = String(passageId);
   const passage = readingPassages.find((item) => item.id === normalizedId);
   return passage ? mapPassageToDetail(passage) : null;
+}
+
+export function getReadingKeywordDirectory(filters: { query?: string; limit?: number } = {}) {
+  const query = filters.query?.trim() ?? "";
+  const limit = Math.min(Math.max(Number(filters.limit ?? 24), 1), 200);
+
+  return verbalReadingKeywords
+    .filter((keyword) => !query || fuzzyMatch(getKeywordHaystack(keyword), query))
+    .map((keyword) => mapKeywordToDirectoryItem(keyword, query))
+    .slice(0, limit);
 }
 
 export async function getBankItems(filters: SearchFilters = {}) {
@@ -248,7 +309,37 @@ export async function getQuestionItems(filters: SearchFilters = {}) {
           needsReview: false,
         }));
 
-  return [...passageItems, ...questionItems].slice(0, limit);
+  const passageHrefSet = new Set(passageItems.map((item) => item.href));
+  const keywordItems = !query
+    ? []
+    : getReadingKeywordDirectory({ query, limit }).flatMap((item) => {
+        if (item.href && passageHrefSet.has(item.href)) {
+          return [];
+        }
+
+        return [
+          {
+            id: item.id,
+            text: item.title,
+            title: item.title,
+            excerpt: item.excerpt,
+            section: "قطع",
+            type: item.kind === "passage" ? "قطعة لفظية" : "عنوان قطعة",
+            difficulty: item.status === "linked" ? "جاهزة" : "بانتظار الإضافة",
+            skill: item.title,
+            state: item.status === "linked" ? "مرتبطة" : "كلمة مفتاحية",
+            href:
+              item.href ??
+              `/question-bank?track=verbal&keyword=${encodeURIComponent(item.title)}#verbal-reading-search`,
+            kind: item.kind,
+            pieceNumber: null,
+            questionCount: item.questionCount || undefined,
+            needsReview: false,
+          },
+        ];
+      });
+
+  return [...passageItems, ...keywordItems, ...questionItems].slice(0, limit);
 }
 
 export async function getReadingPassageSummaries(): Promise<ReadingPassageSummary[]> {
