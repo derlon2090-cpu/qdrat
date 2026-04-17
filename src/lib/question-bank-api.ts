@@ -72,6 +72,8 @@ export type ReadingKeywordDirectoryItem = {
   kind: "passage" | "keyword";
   status: "linked" | "pending";
   questionCount: number;
+  passageText: string | null;
+  questionTitles: string[];
 };
 
 type SearchFilters = {
@@ -212,6 +214,8 @@ function mapKeywordToDirectoryItem(
     kind: linkedPassage ? "passage" : "keyword",
     status: linkedPassage ? "linked" : "pending",
     questionCount: linkedPassage?.questions.length ?? 0,
+    passageText: linkedPassage?.passage ?? null,
+    questionTitles: linkedPassage?.questions.map((question) => question.text) ?? [],
   };
 }
 
@@ -245,9 +249,19 @@ export function getPassageDetailSync(passageId: string | number) {
   return passage ? mapPassageToDetail(passage) : null;
 }
 
-export function getReadingKeywordDirectory(filters: { query?: string; limit?: number } = {}) {
+export function getReadingKeywordDirectory(filters: {
+  query?: string;
+  limit?: number;
+  minQueryLength?: number;
+} = {}) {
   const query = filters.query?.trim() ?? "";
   const limit = Math.min(Math.max(Number(filters.limit ?? 24), 1), 200);
+  const minQueryLength = Math.max(Number(filters.minQueryLength ?? 0), 0);
+  const normalizedQueryLength = normalizeArabic(query).replace(/\s+/g, "").length;
+
+  if (query && normalizedQueryLength < minQueryLength) {
+    return [];
+  }
 
   return verbalReadingKeywords
     .filter((keyword) => !query || fuzzyMatch(getKeywordHaystack(keyword), query))

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useDeferredValue, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { BookOpenText, Calculator, Search } from "lucide-react";
 
@@ -10,6 +10,8 @@ import { EMPTY_SECTION_MESSAGE, quantitativeSections, verbalSections } from "@/d
 import { getReadingKeywordDirectory } from "@/lib/question-bank-api";
 
 type TrackId = "verbal" | "quant";
+const MIN_VERBAL_SEARCH_CHARS = 3;
+const VERBAL_SEARCH_DEBOUNCE_MS = 350;
 
 function EmptySectionCard({
   title,
@@ -51,25 +53,42 @@ export function QuestionBankOrganizer() {
   const searchParams = useSearchParams();
   const [track, setTrack] = useState<TrackId>(searchParams.get("track") === "quant" ? "quant" : "verbal");
   const [keywordQuery, setKeywordQuery] = useState(searchParams.get("keyword") ?? "");
-  const deferredKeywordQuery = useDeferredValue(keywordQuery);
+  const [debouncedKeywordQuery, setDebouncedKeywordQuery] = useState(searchParams.get("keyword") ?? "");
 
   useEffect(() => {
     setTrack(searchParams.get("track") === "quant" ? "quant" : "verbal");
     setKeywordQuery(searchParams.get("keyword") ?? "");
+    setDebouncedKeywordQuery(searchParams.get("keyword") ?? "");
   }, [searchParams]);
+
+  useEffect(() => {
+    const timeoutId = window.setTimeout(() => {
+      setDebouncedKeywordQuery(keywordQuery);
+    }, VERBAL_SEARCH_DEBOUNCE_MS);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [keywordQuery]);
 
   const currentSections = useMemo(
     () => (track === "verbal" ? verbalSections : quantitativeSections),
     [track],
   );
 
+  const normalizedKeywordLength = useMemo(
+    () => keywordQuery.replace(/\s+/g, "").length,
+    [keywordQuery],
+  );
+  const canSearchVerbalKeywords = normalizedKeywordLength >= MIN_VERBAL_SEARCH_CHARS;
+  const isDebouncingKeywordQuery = keywordQuery !== debouncedKeywordQuery;
+
   const verbalKeywordResults = useMemo(
     () =>
       getReadingKeywordDirectory({
-        query: deferredKeywordQuery,
-        limit: deferredKeywordQuery.trim() ? 18 : 12,
+        query: debouncedKeywordQuery,
+        limit: 18,
+        minQueryLength: MIN_VERBAL_SEARCH_CHARS,
       }),
-    [deferredKeywordQuery],
+    [debouncedKeywordQuery],
   );
 
   return (
@@ -106,8 +125,8 @@ export function QuestionBankOrganizer() {
               <div>
                 <div className="display-font text-xl font-bold text-slate-950">بحث القطع اللفظية بالكلمات المفتاحية</div>
                 <p className="mt-2 max-w-2xl text-sm leading-7 text-slate-500">
-                  أدخل اسم القطعة أو جزءًا منه، وسيظهر لك عنوان القطعة مباشرة. عند ربط القطعة لاحقًا بنصها وأسئلتها
-                  ستفتح مباشرة من نفس النتيجة.
+                  أدخل 3 أحرف فأكثر من اسم القطعة أو من كلمة مفتاحية مرتبطة بها. عند ربط القطعة بنصها وأسئلتها ستظهر
+                  تفاصيلها داخل النتيجة نفسها وتفتح مباشرة من نفس البطاقة.
                 </p>
               </div>
               <div className="rounded-full bg-[#123B7A]/8 px-4 py-2 text-sm font-semibold text-[#123B7A]">
@@ -125,7 +144,19 @@ export function QuestionBankOrganizer() {
               />
             </div>
 
-            {verbalKeywordResults.length ? (
+            {!keywordQuery.trim() ? (
+              <div className="rounded-[1.5rem] border border-dashed border-slate-300 bg-slate-50/80 p-6 text-center text-sm text-slate-500">
+                اكتب 3 أحرف فأكثر ليبدأ البحث داخل عناوين القطع والكلمات المفتاحية المرتبطة بها.
+              </div>
+            ) : !canSearchVerbalKeywords ? (
+              <div className="rounded-[1.5rem] border border-dashed border-amber-200 bg-amber-50/70 p-6 text-center text-sm text-amber-800">
+                لا تظهر النتائج قبل الوصول إلى 3 أحرف. أكمل الكتابة ليصبح البحث أدق وأسرع.
+              </div>
+            ) : isDebouncingKeywordQuery ? (
+              <div className="rounded-[1.5rem] border border-dashed border-slate-300 bg-slate-50/80 p-6 text-center text-sm text-slate-500">
+                جاري البحث في عناوين القطع والكلمات المفتاحية...
+              </div>
+            ) : verbalKeywordResults.length ? (
               <div className="grid gap-3 lg:grid-cols-2">
                 {verbalKeywordResults.map((item) => (
                   <div
@@ -145,6 +176,29 @@ export function QuestionBankOrganizer() {
                       </span>
                     </div>
                     <p className="mt-3 text-sm leading-7 text-slate-500">{item.excerpt}</p>
+
+                    {item.passageText ? (
+                      <div className="mt-4 rounded-[1.2rem] border border-slate-200 bg-white p-4">
+                        <div className="mb-2 text-xs font-semibold text-slate-500">نص القطعة</div>
+                        <p className="text-sm leading-8 text-slate-700">{item.passageText}</p>
+                      </div>
+                    ) : null}
+
+                    {item.questionTitles.length ? (
+                      <div className="mt-4 rounded-[1.2rem] border border-slate-200 bg-white p-4">
+                        <div className="mb-2 text-xs font-semibold text-slate-500">الأسئلة المرتبطة</div>
+                        <div className="space-y-2">
+                          {item.questionTitles.map((questionTitle, index) => (
+                            <div
+                              key={`${item.id}-question-${index + 1}`}
+                              className="rounded-xl bg-slate-50 px-3 py-2 text-sm leading-7 text-slate-700"
+                            >
+                              سؤال {index + 1}: {questionTitle}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ) : null}
 
                     <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
                       <div className="text-xs text-slate-500">
@@ -168,7 +222,7 @@ export function QuestionBankOrganizer() {
               </div>
             ) : (
               <div className="rounded-[1.5rem] border border-dashed border-slate-300 bg-slate-50/80 p-6 text-center text-sm text-slate-500">
-                لا توجد عناوين مطابقة الآن. جرّب جزءًا أقصر من اسم القطعة.
+                لا توجد عناوين مطابقة الآن. جرّب كلمة مفتاحية أخرى أو جزءًا أوضح من اسم القطعة.
               </div>
             )}
           </div>
