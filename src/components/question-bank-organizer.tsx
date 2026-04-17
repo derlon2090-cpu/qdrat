@@ -24,6 +24,15 @@ import { cn } from "@/lib/utils";
 
 type TrackId = "verbal" | "quant";
 type ChoiceKey = "A" | "B" | "C" | "D";
+type ExamSectionKey =
+  | "verbal_reading"
+  | "verbal_analogy"
+  | "verbal_completion"
+  | "verbal_context"
+  | "verbal_odd"
+  | "quant_algebra"
+  | "quant_ratios"
+  | "quant_geometry";
 
 const journeySteps = [
   {
@@ -46,6 +55,7 @@ const journeySteps = [
 const verbalSections = [
   {
     id: "reading",
+    examSection: "verbal_reading" as ExamSectionKey,
     title: "القطع اللفظية",
     description: "ابدأ من استيعاب المقروء بأسئلة الفكرة العامة، الاستنتاج، وتحليل العلاقات داخل النص.",
     metrics: ["741 قطعة", "استيعاب + استنتاج", "تدريب تدريجي"],
@@ -53,6 +63,7 @@ const verbalSections = [
   },
   {
     id: "analogies",
+    examSection: "verbal_analogy" as ExamSectionKey,
     title: "التناظر اللفظي",
     description: "تدريب على العلاقات اللفظية بشكل منظم: ترادف، تضاد، جزء وكل، وسبب ونتيجة.",
     metrics: ["1,840 سؤال", "العلاقات اللفظية", "سرعة + دقة"],
@@ -60,6 +71,7 @@ const verbalSections = [
   },
   {
     id: "completion",
+    examSection: "verbal_completion" as ExamSectionKey,
     title: "إكمال الجمل",
     description: "يركز على فهم السياق وربط المعنى المناسب داخل الجملة دون تشتيت.",
     metrics: ["1,260 سؤال", "فهم السياق", "تدرج ذكي"],
@@ -67,6 +79,7 @@ const verbalSections = [
   },
   {
     id: "contextual-error",
+    examSection: "verbal_context" as ExamSectionKey,
     title: "الخطأ السياقي",
     description: "اعرف الكلمة أو العبارة التي تخل بتوازن الجملة أو المعنى المقصود.",
     metrics: ["780 سؤال", "تحليل المعنى", "مراجعة مركزة"],
@@ -74,6 +87,7 @@ const verbalSections = [
   },
   {
     id: "odd-word",
+    examSection: "verbal_odd" as ExamSectionKey,
     title: "المفردة الشاذة",
     description: "تصنيف المجموعات واكتشاف العنصر المختلف بسرعة وبصيرة أوضح.",
     metrics: ["1,110 سؤال", "تصنيف دقيق", "إحماء سريع"],
@@ -84,6 +98,7 @@ const verbalSections = [
 const quantSections = [
   {
     id: "algebra",
+    examSection: "quant_algebra" as ExamSectionKey,
     title: "الجبر",
     icon: Sigma,
     law: "باب الجبر يبدأ من تبسيط التعابير والمعادلات الأساسية ثم ينتقل إلى مسائل المتغيرات خطوة بخطوة.",
@@ -92,6 +107,7 @@ const quantSections = [
   },
   {
     id: "ratios",
+    examSection: "quant_ratios" as ExamSectionKey,
     title: "النسب والتناسب",
     icon: Scale,
     law: "هذا الباب يعتمد على قراءة العلاقة بين القيم بسرعة، ثم تحويلها إلى نسبة أو تناسب مباشر.",
@@ -100,6 +116,7 @@ const quantSections = [
   },
   {
     id: "geometry",
+    examSection: "quant_geometry" as ExamSectionKey,
     title: "الهندسة",
     icon: Calculator,
     law: "المطلوب هنا حفظ القوانين الأساسية فقط ثم تطبيقها مباشرة على الأشكال المعتادة في القدرات.",
@@ -151,6 +168,10 @@ const trackMeta = {
     stats: ["قوانين أساسية", "تطبيق فوري", "أبواب واضحة"],
   },
 };
+
+function examHref(section: ExamSectionKey) {
+  return `/exam?section=${section}`;
+}
 
 function toArabicChoice(key: ChoiceKey) {
   switch (key) {
@@ -324,7 +345,7 @@ export function QuestionBankOrganizer() {
 
                   <div className="mt-5 flex items-center justify-between gap-3">
                     <Link
-                      href="/exam"
+                      href={examHref(section.examSection)}
                       className={cn(buttonVariants({ variant: "default" }), "h-11 px-5 text-sm")}
                     >
                       ابدأ التدريب
@@ -380,7 +401,7 @@ export function QuestionBankOrganizer() {
                             >
                               <span className="text-sm font-medium text-slate-700">{drill}</span>
                               <Link
-                                href="/exam"
+                                href={examHref(section.examSection)}
                                 className={cn(buttonVariants({ variant: "default", size: "sm" }), "h-10 rounded-xl px-4")}
                               >
                                 ابدأ
@@ -390,7 +411,7 @@ export function QuestionBankOrganizer() {
                         </div>
 
                         <Link
-                          href="/exam"
+                          href={examHref(section.examSection)}
                           className={cn(buttonVariants({ variant: "outline" }), "mt-5 flex w-full justify-center")}
                         >
                           عرض جميع تدريبات {section.title}
@@ -499,7 +520,10 @@ export function QuestionBankOrganizer() {
                 ))}
               </div>
 
-              <Link href="/exam" className={cn(buttonVariants({ variant: "default" }), "mt-5 flex gap-2")}>
+              <Link
+                href={examHref(track === "verbal" ? "verbal_reading" : "quant_algebra")}
+                className={cn(buttonVariants({ variant: "default" }), "mt-5 flex gap-2")}
+              >
                 ابدأ أول تدريب
                 <ArrowLeft className="h-4 w-4" />
               </Link>

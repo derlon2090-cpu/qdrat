@@ -14,7 +14,7 @@ export default function QuestionBankPage() {
       iconColor="text-[#d97706]"
       accentClass="shadow-[0_20px_45px_rgba(217,119,6,0.16)]"
       ctaLabel="ابدأ من اللفظي"
-      ctaHref="/question-bank"
+      ctaHref="/exam?section=verbal_reading"
     >
       <QuestionBankOrganizer />
     </PageShell>
