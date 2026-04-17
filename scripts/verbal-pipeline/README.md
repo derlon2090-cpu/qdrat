@@ -21,8 +21,8 @@ This pipeline processes large Arabic verbal reading-comprehension banks in five 
    - Publishes normalized passages/questions/options/reviews into Neon PostgreSQL
    - Requires `DATABASE_URL` in `.env.local`
 
-The current default parses the first `20` passages per source.
-Override it per run:
+The current default parses all detected passages in the source file.
+If you want to limit a test run, override it per run:
 
 ```powershell
 $env:MAX_PASSAGES='12'; npm run parse
