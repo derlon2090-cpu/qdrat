@@ -9,6 +9,7 @@ import type { VerbalPassageImportInput } from "@/lib/verbal-passages-core";
 
 function mapRequestBodyToPassageInput(payload: Record<string, unknown>): VerbalPassageImportInput {
   return {
+    slug: payload.slug ? String(payload.slug).trim() : null,
     title: String(payload.title ?? "").trim(),
     keywords: Array.isArray(payload.keywords)
       ? payload.keywords.map((item) => String(item ?? "").trim()).filter(Boolean)

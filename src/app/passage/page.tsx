@@ -18,7 +18,7 @@ const navLinks = [
 export default function PassagePage() {
   return (
     <div className="min-h-screen">
-      <SiteHeader links={navLinks} ctaHref="/exam" ctaLabel="ابدأ اختبار القطع" />
+      <SiteHeader links={navLinks} ctaHref="/verbal/reading" ctaLabel="ابدأ اختبار القطع" />
       <main className="section-shell pt-10 md:pt-14">
         <div className="mx-auto grid w-[min(calc(100%-2rem),1180px)] gap-8 lg:grid-cols-[1.08fr,0.92fr]">
           <Reveal>
@@ -33,7 +33,7 @@ export default function PassagePage() {
                 لا على التشتت.
               </p>
               <div className="mt-7 flex flex-wrap gap-3">
-                <Link href="/exam">
+                <Link href="/verbal/reading">
                   <Button>ابدأ اختبار القطع</Button>
                 </Link>
                 <Link href="/banks">

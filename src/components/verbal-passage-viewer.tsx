@@ -67,6 +67,7 @@ export function VerbalPassageViewer({
           <div>
             <div className="text-sm text-slate-500">القطع اللفظي / {mode === "admin" ? "وضع الإدارة" : "وضع الطالب"}</div>
             <h1 className="display-font mt-3 text-3xl font-bold text-slate-950">{passage.title}</h1>
+            <div className="mt-2 text-xs font-semibold text-[#123B7A]">/{passage.slug}</div>
           </div>
           <div className="flex flex-wrap gap-2 text-xs">
             <span className="rounded-full bg-[#123B7A]/8 px-3 py-1 font-semibold text-[#123B7A]">

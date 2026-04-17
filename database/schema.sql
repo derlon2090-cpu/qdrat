@@ -539,6 +539,7 @@ alter table if exists app_question_choices
 
 create table if not exists app_verbal_passages (
   id uuid primary key default gen_random_uuid(),
+  slug varchar(180),
   title varchar(255) not null,
   normalized_title text not null,
   keywords text[] not null default '{}'::text[],
@@ -557,8 +558,23 @@ create table if not exists app_verbal_passages (
   unique (title_hash, passage_hash)
 );
 
+alter table app_verbal_passages
+  add column if not exists slug varchar(180);
+
+update app_verbal_passages
+set slug = coalesce(
+  nullif(trim(slug), ''),
+  nullif(lower(regexp_replace(coalesce(external_source_id, ''), '[^a-z0-9]+', '-', 'g')), ''),
+  'passage-' || substr(id::text, 1, 8)
+)
+where slug is null
+   or length(trim(slug)) = 0;
+
 create index if not exists idx_app_verbal_passages_status
   on app_verbal_passages (status, updated_at desc);
+
+create unique index if not exists idx_app_verbal_passages_slug_unique
+  on app_verbal_passages (slug);
 
 create index if not exists idx_app_verbal_passages_title_trgm
   on app_verbal_passages using gin (normalized_title gin_trgm_ops);
@@ -674,6 +690,11 @@ begin
   if not exists (select 1 from pg_constraint where conname = 'chk_app_verbal_passages_title_not_blank') then
     alter table app_verbal_passages
       add constraint chk_app_verbal_passages_title_not_blank check (length(trim(title)) > 0);
+  end if;
+
+  if not exists (select 1 from pg_constraint where conname = 'chk_app_verbal_passages_slug_not_blank') then
+    alter table app_verbal_passages
+      add constraint chk_app_verbal_passages_slug_not_blank check (length(trim(slug)) > 0);
   end if;
 
   if not exists (select 1 from pg_constraint where conname = 'chk_app_verbal_passage_questions_correct_option') then

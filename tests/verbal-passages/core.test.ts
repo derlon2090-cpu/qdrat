@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 
 import {
+  generatePassageSlug,
   parsePassageImportFile,
   planImportActions,
   searchPassagesLocal,
@@ -122,6 +123,25 @@ runTest("should avoid duplicate insertions", () => {
 
   assert.equal(actions.length, 1);
   assert.equal(actions[0]?.action, "skip");
+});
+
+runTest("should preserve an explicit slug when provided", () => {
+  const slug = generatePassageSlug({
+    slug: "abu-hayyan",
+    title: "قطعة أبو حيان",
+    externalSourceId: "seed-abu-hayyan",
+  });
+
+  assert.equal(slug, "abu-hayyan");
+});
+
+runTest("should fall back to source-based slug when explicit slug is missing", () => {
+  const slug = generatePassageSlug({
+    title: "قطعة الزيت",
+    externalSourceId: "sample-json-oil",
+  });
+
+  assert.equal(slug, "oil");
 });
 
 console.log("All verbal passage unit checks passed.");

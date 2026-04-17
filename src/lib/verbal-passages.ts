@@ -2,6 +2,7 @@ import { createHash } from "node:crypto";
 
 import { getSqlClient } from "@/lib/db";
 import {
+  generatePassageSlug,
   normalizeArabicText,
   parsePassageImportFile,
   planImportActions,
@@ -28,6 +29,7 @@ export type VerbalPassageQuestionRecord = {
 
 export type VerbalPassageRecord = {
   id: string;
+  slug: string;
   title: string;
   keywords: string[];
   passageText: string;
@@ -41,6 +43,7 @@ export type VerbalPassageRecord = {
 
 export type VerbalPassageSummary = {
   id: string;
+  slug: string;
   title: string;
   keywords: string[];
   status: VerbalPassageStatus;
@@ -68,6 +71,7 @@ export type PassageImportSummary = {
 
 type PassageDbRow = {
   id: string;
+  slug: string;
   title: string;
   keywords: string[] | null;
   passage_text: string;
@@ -126,6 +130,7 @@ function mapQuestions(rows: QuestionDbRow[]) {
 function mapPassageRecord(row: PassageDbRow, questionRows: QuestionDbRow[]): VerbalPassageRecord {
   return {
     id: row.id,
+    slug: row.slug,
     title: row.title,
     keywords: row.keywords ?? [],
     passageText: row.passage_text,
@@ -162,6 +167,37 @@ async function fetchQuestionsForPassages(passageIds: string[]) {
   )) as QuestionDbRow[];
 }
 
+async function resolveUniquePassageSlug(
+  candidateSlug: string,
+  options: { excludeId?: string | null; version?: number | null } = {},
+) {
+  const sql = getSql();
+  const baseSlug = candidateSlug.trim() || "passage";
+  const versionSuffix = options.version && options.version > 1 ? `-v${options.version}` : "";
+  let nextSlug = `${baseSlug}${versionSuffix}`;
+  let duplicateCounter = 2;
+
+  while (true) {
+    const rows = (await sql.query(
+      `
+        select id::text
+        from app_verbal_passages
+        where slug = $1
+          and ($2::uuid is null or id <> $2::uuid)
+        limit 1
+      `,
+      [nextSlug, options.excludeId ?? null],
+    )) as Array<{ id: string }>;
+
+    if (!rows[0]) {
+      return nextSlug;
+    }
+
+    nextSlug = `${baseSlug}${versionSuffix ? `${versionSuffix}-${duplicateCounter}` : `-${duplicateCounter}`}`;
+    duplicateCounter += 1;
+  }
+}
+
 export async function listVerbalPassages(filters: {
   status?: VerbalPassageStatus | "all";
   search?: string;
@@ -176,6 +212,7 @@ export async function listVerbalPassages(filters: {
     `
       select
         id::text,
+        slug,
         title,
         keywords,
         passage_text,
@@ -215,6 +252,7 @@ export async function getVerbalPassageById(id: string) {
     `
       select
         id::text,
+        slug,
         title,
         keywords,
         passage_text,
@@ -239,6 +277,41 @@ export async function getVerbalPassageById(id: string) {
   return mapPassageRecord(row, questionRows);
 }
 
+export async function getVerbalPassageBySlug(slug: string, options: { includeDraft?: boolean } = {}) {
+  const normalizedSlug = slug.trim().toLowerCase();
+  if (!normalizedSlug) return null;
+
+  const sql = getSql();
+  const rows = (await sql.query(
+    `
+      select
+        id::text,
+        slug,
+        title,
+        keywords,
+        passage_text,
+        status,
+        version,
+        external_source_id,
+        created_at::text,
+        updated_at::text,
+        normalized_title,
+        normalized_passage_text
+      from app_verbal_passages
+      where slug = $1
+        and ($2::boolean = true or status = 'published')
+      limit 1
+    `,
+    [normalizedSlug, options.includeDraft ?? false],
+  )) as PassageDbRow[];
+
+  const row = rows[0];
+  if (!row) return null;
+
+  const questionRows = await fetchQuestionsForPassages([row.id]);
+  return mapPassageRecord(row, questionRows);
+}
+
 export async function searchPassages(query: string, options: { limit?: number; includeDraft?: boolean } = {}) {
   const normalizedQuery = normalizeArabicText(query).replace(/\s+/g, "");
   const minChars = 3;
@@ -253,6 +326,7 @@ export async function searchPassages(query: string, options: { limit?: number; i
     `
       select
         id::text,
+        slug,
         title,
         keywords,
         passage_text,
@@ -277,6 +351,7 @@ export async function searchPassages(query: string, options: { limit?: number; i
   const ranked = searchPassagesLocal(
     rows.map((row) => ({
       id: row.id,
+      slug: row.slug,
       title: row.title,
       keywords: row.keywords ?? [],
       passageText: row.passage_text,
@@ -313,6 +388,7 @@ async function fetchExistingFingerprints(normalizedTitles: string[]) {
     `
       select
         id::text,
+        slug,
         title,
         keywords,
         passage_text,
@@ -333,6 +409,7 @@ async function fetchExistingFingerprints(normalizedTitles: string[]) {
 
   return passageRows.map((row) => ({
     id: row.id,
+    slug: row.slug,
     title: row.title,
     keywords: row.keywords ?? [],
     passageText: row.passage_text,
@@ -390,28 +467,39 @@ async function savePassageRecord(record: ValidatedVerbalPassage, existingId?: st
   const sql = getSql();
   const titleHash = sha256(record.normalizedTitle);
   const passageHash = sha256(record.normalizedPassageText);
+  const uniqueSlug = await resolveUniquePassageSlug(
+    generatePassageSlug({
+      slug: record.slug,
+      title: record.title,
+      externalSourceId: record.externalSourceId,
+      version: record.version,
+    }),
+    { excludeId: existingId ?? null, version: record.version },
+  );
 
   if (existingId) {
     const rows = (await sql.query(
       `
         update app_verbal_passages
         set
-          title = $2,
-          normalized_title = $3,
-          keywords = $4::text[],
-          keyword_search = $5,
-          passage_text = $6,
-          normalized_passage_text = $7,
-          title_hash = $8,
-          passage_hash = $9,
-          status = $10::app_publish_status,
-          external_source_id = $11,
-          version = $12
+          slug = $2,
+          title = $3,
+          normalized_title = $4,
+          keywords = $5::text[],
+          keyword_search = $6,
+          passage_text = $7,
+          normalized_passage_text = $8,
+          title_hash = $9,
+          passage_hash = $10,
+          status = $11::app_publish_status,
+          external_source_id = $12,
+          version = $13
         where id = $1::uuid
         returning id::text
       `,
       [
         existingId,
+        uniqueSlug,
         record.title,
         record.normalizedTitle,
         record.keywords,
@@ -438,6 +526,7 @@ async function savePassageRecord(record: ValidatedVerbalPassage, existingId?: st
   const rows = (await sql.query(
     `
       insert into app_verbal_passages (
+        slug,
         title,
         normalized_title,
         keywords,
@@ -450,9 +539,10 @@ async function savePassageRecord(record: ValidatedVerbalPassage, existingId?: st
         external_source_id,
         version
       )
-      values ($1, $2, $3::text[], $4, $5, $6, $7, $8, $9::app_publish_status, $10, $11)
+      values ($1, $2, $3, $4::text[], $5, $6, $7, $8, $9, $10::app_publish_status, $11, $12)
       on conflict (title_hash, passage_hash)
       do update set
+        slug = excluded.slug,
         keywords = excluded.keywords,
         keyword_search = excluded.keyword_search,
         status = excluded.status,
@@ -461,6 +551,7 @@ async function savePassageRecord(record: ValidatedVerbalPassage, existingId?: st
       returning id::text
     `,
     [
+      uniqueSlug,
       record.title,
       record.normalizedTitle,
       record.keywords,
@@ -500,6 +591,7 @@ export async function updateVerbalPassage(id: string, input: VerbalPassageImport
     [
       {
         id: existing.id,
+        slug: existing.slug,
         title: existing.title,
         keywords: existing.keywords,
         passageText: existing.passageText,

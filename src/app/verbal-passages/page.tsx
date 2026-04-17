@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { BookOpenText } from "lucide-react";
 
 import { PageShell } from "@/components/page-shell";
@@ -8,7 +9,7 @@ export default function VerbalPassagesPage() {
     <PageShell
       eyebrow="verbal_passages"
       title="بنك القطع اللفظي"
-      description="ابحث بعنوان القطعة أو بالكلمات المفتاحية، ثم افتح النص الكامل والأسئلة المرتبطة به داخل واجهة الطالب."
+      description="افتح القطعة مباشرة باسمها المفتاحي، أو ابدأ بقطعة عشوائية تلقائيًا، ثم ابحث بعنوانها أو بكلماتها المفتاحية."
       icon={BookOpenText}
       iconWrap="bg-[#eef4ff]"
       iconColor="text-[#123B7A]"
@@ -16,7 +17,15 @@ export default function VerbalPassagesPage() {
       ctaLabel="افتح بنك الأسئلة"
       ctaHref="/question-bank"
     >
-      <VerbalPassagesBrowser mode="student" />
+      <Suspense
+        fallback={
+          <div className="rounded-[1.8rem] border border-slate-200 bg-white p-8 text-center text-sm text-slate-500 shadow-sm">
+            جاري تجهيز بنك القطع اللفظي...
+          </div>
+        }
+      >
+        <VerbalPassagesBrowser mode="student" />
+      </Suspense>
     </PageShell>
   );
 }

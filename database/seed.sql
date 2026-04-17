@@ -929,3 +929,41 @@ union all
 select id, 2, '(80) طول النهار يشعر بـ ... التعرض للضوء يسبب:', 'الحزن', 'الكآبة', 'الإضاءة', 'الانطفاء', 'C', 'لأن التعرض للضوء يقترن بالإضاءة والإنارة لا بالحزن أو الانطفاء.' from upserted
 union all
 select id, 3, '(81) يُستنتج أن حجب أشعة الشمس في الشتاء سببها:', 'قصر النهار', 'البرودة', 'كثرة الأمطار', 'الغيوم', 'D', 'لأن الغيوم هي التي تحجب أشعة الشمس مباشرة.' from upserted;
+update app_verbal_passages
+set slug = case title
+  when 'قطعة الزيت' then 'oil'
+  when 'قطعة الأشجار' then 'trees'
+  when 'قطعة التصحر' then 'desertification'
+  when 'قطعة السمنة في الدول المتقدمة' then 'obesity-developed-countries'
+  when 'قطعة القمر' then 'moon'
+  when 'قطعة إنفلونزا (2)' then 'influenza-2'
+  when 'قطعة حمض الخليك' then 'acetic-acid'
+  when 'قطعة النجاح (1)' then 'success-1'
+  when 'قطعة فيتش وأينبه' then 'fitch-aynabah'
+  when 'قطعة دودة القز وصناعة الحرير' then 'silkworm-and-silk'
+  when 'قطعة التمركز' then 'tamarkuz'
+  when 'قطعة قصيرة' then 'short-text'
+  when 'قطعة المجموعة الشمسية' then 'solar-system'
+  when 'قطعة التسامح' then 'tolerance'
+  when 'قطعة الطالب والمذاكرة' then 'student-and-study'
+  when 'قطعة الليل والنهار' then 'day-and-night'
+  else slug
+end
+where title in (
+  'قطعة الزيت',
+  'قطعة الأشجار',
+  'قطعة التصحر',
+  'قطعة السمنة في الدول المتقدمة',
+  'قطعة القمر',
+  'قطعة إنفلونزا (2)',
+  'قطعة حمض الخليك',
+  'قطعة النجاح (1)',
+  'قطعة فيتش وأينبه',
+  'قطعة دودة القز وصناعة الحرير',
+  'قطعة التمركز',
+  'قطعة قصيرة',
+  'قطعة المجموعة الشمسية',
+  'قطعة التسامح',
+  'قطعة الطالب والمذاكرة',
+  'قطعة الليل والنهار'
+);

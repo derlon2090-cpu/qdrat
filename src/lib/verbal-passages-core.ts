@@ -12,6 +12,7 @@ export type VerbalPassageQuestionInput = {
 };
 
 export type VerbalPassageImportInput = {
+  slug?: string | null;
   title: string;
   keywords: string[];
   passageText: string;
@@ -22,6 +23,7 @@ export type VerbalPassageImportInput = {
 };
 
 export type ValidatedVerbalPassage = VerbalPassageImportInput & {
+  slug: string;
   normalizedTitle: string;
   normalizedPassageText: string;
   normalizedKeywords: string[];
@@ -43,6 +45,7 @@ export type ParsedImportResult = {
 
 export type ExistingPassageFingerprint = {
   id: string;
+  slug?: string | null;
   title: string;
   keywords: string[];
   passageText: string;
@@ -62,6 +65,7 @@ export type ImportAction = {
 
 export type SearchableVerbalPassage = {
   id: string;
+  slug?: string | null;
   title: string;
   keywords: string[];
   passageText: string;
@@ -75,6 +79,7 @@ export type VerbalPassageSearchResult = SearchableVerbalPassage & {
 
 const HARAKAT_PATTERN = /[\u064b-\u065f\u0670]/g;
 const NON_ARABIC_SEARCH_PATTERN = /[^\p{L}\p{N}\s]/gu;
+const SLUG_SANITIZE_PATTERN = /[^a-z0-9\u0600-\u06ff\s-]/giu;
 
 function toTrimmedString(value: unknown) {
   return typeof value === "string" ? value.trim() : "";
@@ -115,6 +120,39 @@ export function generatePassageKeywords(title: string, keywords: string[] = []) 
   }
 
   return Array.from(unique.values());
+}
+
+export function normalizeSlugPart(value: string) {
+  return value
+    .trim()
+    .toLowerCase()
+    .replace(/[_/\\|]+/g, "-")
+    .replace(SLUG_SANITIZE_PATTERN, " ")
+    .replace(/\s+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "");
+}
+
+export function generatePassageSlug(input: {
+  slug?: string | null;
+  title: string;
+  externalSourceId?: string | null;
+  version?: number | null;
+}) {
+  const explicitSlug = normalizeSlugPart(toTrimmedString(input.slug));
+  if (explicitSlug) return explicitSlug;
+
+  const sourceBasedSlug = normalizeSlugPart(toTrimmedString(input.externalSourceId).replace(/^sample-json-/i, ""));
+  if (sourceBasedSlug) return sourceBasedSlug;
+
+  const titleBasedSlug = normalizeSlugPart(input.title);
+  if (titleBasedSlug) return titleBasedSlug;
+
+  if (input.version && input.version > 1) {
+    return `passage-v${input.version}`;
+  }
+
+  return "passage";
 }
 
 export function normalizeOptionKey(value: unknown): VerbalQuestionOptionKey | null {
@@ -163,6 +201,12 @@ function normalizeQuestion(rawQuestion: unknown, rowLabel: number | string) {
 
 export function validatePassageRecord(rawRecord: unknown, rowLabel: number | string) {
   const record = rawRecord as Record<string, unknown>;
+  const slug = generatePassageSlug({
+    slug: toTrimmedString(record.slug),
+    title: toTrimmedString(record.title),
+    externalSourceId: toTrimmedString(record.external_source_id ?? record.externalSourceId) || null,
+    version: Number(record.version),
+  });
   const title = toTrimmedString(record.title);
   const passageText = toTrimmedString(record.passage_text ?? record.passageText);
   const status = toTrimmedString(record.status).toLowerCase() === "published" ? "published" : "draft";
@@ -201,6 +245,7 @@ export function validatePassageRecord(rawRecord: unknown, rowLabel: number | str
   const keywordSearch = Array.from(new Set(normalizedKeywords)).join(" ");
   const exactSignature = `${normalizedTitle}::${normalizedPassageText}`;
   const payloadSignature = JSON.stringify({
+    slug,
     title: normalizedTitle,
     passageText: normalizedPassageText,
     keywords: Array.from(new Set(normalizedKeywords)).sort(),
@@ -218,6 +263,7 @@ export function validatePassageRecord(rawRecord: unknown, rowLabel: number | str
   });
 
   return {
+    slug,
     title,
     keywords: generatedKeywords,
     passageText,
@@ -332,6 +378,7 @@ function parseCsvImport(content: string) {
 
     if (!grouped.has(groupKey)) {
       grouped.set(groupKey, {
+        slug: data.slug || null,
         title,
         keywords: splitKeywords(data.keywords ?? ""),
         passage_text: passageText,
@@ -360,6 +407,7 @@ function parseCsvImport(content: string) {
     try {
       const validated = validatePassageRecord(rawRecord, `csv-${index + 1}`);
       records.push({
+        slug: validated.slug,
         title: validated.title,
         keywords: validated.keywords,
         passageText: validated.passageText,
@@ -412,6 +460,7 @@ function parseJsonImport(content: string) {
     try {
       const validated = validatePassageRecord(record, index + 1);
       records.push({
+        slug: validated.slug,
         title: validated.title,
         keywords: validated.keywords,
         passageText: validated.passageText,
@@ -452,6 +501,7 @@ export function planImportActions(
     ...validatePassageRecord(
       {
         title: record.title,
+        slug: record.slug ?? null,
         keywords: record.keywords,
         passage_text: record.passageText,
         questions: record.questions.map((question) => ({
@@ -483,6 +533,7 @@ export function planImportActions(
     const validated = validatePassageRecord(
       {
         title: record.title,
+        slug: record.slug ?? null,
         keywords: record.keywords,
         passage_text: record.passageText,
         questions: record.questions.map((question) => ({

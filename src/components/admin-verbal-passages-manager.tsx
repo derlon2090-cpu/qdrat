@@ -20,6 +20,7 @@ type PassageFormQuestion = {
 
 type PassageFormState = {
   id?: string;
+  slug: string;
   title: string;
   keywords: string;
   passageText: string;
@@ -40,6 +41,7 @@ const emptyQuestion = (): PassageFormQuestion => ({
 });
 
 const emptyForm = (): PassageFormState => ({
+  slug: "",
   title: "",
   keywords: "",
   passageText: "",
@@ -52,6 +54,7 @@ const emptyForm = (): PassageFormState => ({
 function toFormState(passage: VerbalPassageRecord): PassageFormState {
   return {
     id: passage.id,
+    slug: passage.slug,
     title: passage.title,
     keywords: passage.keywords.join(", "),
     passageText: passage.passageText,
@@ -72,6 +75,7 @@ function toFormState(passage: VerbalPassageRecord): PassageFormState {
 
 function toPayload(form: PassageFormState) {
   return {
+    slug: form.slug || null,
     title: form.title,
     keywords: form.keywords
       .split(/[,،;\n|]+/g)
@@ -142,6 +146,7 @@ export function AdminVerbalPassagesManager() {
 
     return {
       id: form.id ?? "draft-preview",
+      slug: form.slug.trim() || "draft-preview",
       title: form.title,
       keywords: form.keywords
         .split(/[,،;\n|]+/g)
@@ -311,6 +316,11 @@ export function AdminVerbalPassagesManager() {
               {form.id ? "تعديل القطعة" : "إضافة قطعة جديدة"}
             </div>
             <div className="mt-5 grid gap-4 md:grid-cols-2">
+              <Input
+                value={form.slug}
+                onChange={(event) => setForm((previous) => ({ ...previous, slug: event.target.value }))}
+                placeholder="slug المفتاحي للرابط"
+              />
               <Input
                 value={form.title}
                 onChange={(event) => setForm((previous) => ({ ...previous, title: event.target.value }))}

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Search } from "lucide-react";
 
 import { buildPublicApiUrl } from "@/lib/api-base";
@@ -11,22 +12,64 @@ import { Input } from "@/components/ui/input";
 const SEARCH_MIN_CHARS = 3;
 const SEARCH_DEBOUNCE_MS = 400;
 
+type PassageDirectoryItem = Pick<
+  VerbalPassageSummary,
+  "id" | "slug" | "title" | "status" | "version" | "externalSourceId" | "excerpt"
+>;
+
+type ListedPassageItem = VerbalPassageRecord & {
+  questionCount?: number;
+};
+
+function createExcerpt(text: string, maxLength = 220) {
+  const cleanText = text.replace(/\s+/g, " ").trim();
+  if (cleanText.length <= maxLength) return cleanText;
+  return `${cleanText.slice(0, maxLength).trim()}...`;
+}
+
+function mapListedItems(items: ListedPassageItem[]) {
+  return items.map(
+    (item) =>
+      ({
+        id: item.id,
+        slug: item.slug,
+        title: item.title,
+        status: item.status,
+        version: item.version,
+        externalSourceId: item.externalSourceId,
+        excerpt: createExcerpt(item.passageText),
+      }) satisfies PassageDirectoryItem,
+  );
+}
+
 export function VerbalPassagesBrowser({ mode = "student" }: { mode?: "student" | "admin" }) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+
   const [query, setQuery] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
   const [results, setResults] = useState<VerbalPassageSummary[]>([]);
+  const [availablePassages, setAvailablePassages] = useState<PassageDirectoryItem[]>([]);
   const [selectedPassage, setSelectedPassage] = useState<VerbalPassageRecord | null>(null);
   const [selectedPassageId, setSelectedPassageId] = useState<string | null>(null);
   const [isSearching, setIsSearching] = useState(false);
+  const [isLoadingDirectory, setIsLoadingDirectory] = useState(false);
   const [isLoadingPassage, setIsLoadingPassage] = useState(false);
   const [message, setMessage] = useState("اكتب 3 أحرف فأكثر ليبدأ البحث في عنوان القطعة والكلمات المفتاحية.");
 
+  const requestedSlug = searchParams.get("passage")?.trim().toLowerCase() ?? "";
+
   const normalizedLength = useMemo(() => query.replace(/\s+/g, "").length, [query]);
-  const selectedResultIndex = useMemo(
-    () => results.findIndex((item) => item.id === selectedPassageId),
-    [results, selectedPassageId],
+  const navigablePassages = useMemo(
+    () => (results.length ? results : availablePassages),
+    [availablePassages, results],
   );
-  const nextPassage = selectedResultIndex >= 0 ? results[selectedResultIndex + 1] ?? null : null;
+  const selectedResultIndex = useMemo(
+    () => navigablePassages.findIndex((item) => item.id === selectedPassageId),
+    [navigablePassages, selectedPassageId],
+  );
+  const nextPassage = selectedResultIndex >= 0 ? navigablePassages[selectedResultIndex + 1] ?? null : null;
 
   useEffect(() => {
     const timeoutId = window.setTimeout(() => {
@@ -37,9 +80,76 @@ export function VerbalPassagesBrowser({ mode = "student" }: { mode?: "student" |
   }, [query]);
 
   useEffect(() => {
+    const controller = new AbortController();
+    setIsLoadingDirectory(true);
+
+    fetch(
+      buildPublicApiUrl(`/api/verbal-passages?status=${mode === "admin" ? "all" : "published"}&limit=200`),
+      {
+        cache: "no-store",
+        signal: controller.signal,
+      },
+    )
+      .then(async (response) => {
+        if (!response.ok) {
+          throw new Error("تعذر تحميل دليل القطع اللفظية.");
+        }
+        return response.json() as Promise<{ items?: ListedPassageItem[] }>;
+      })
+      .then((payload) => {
+        const items = mapListedItems(payload.items ?? []);
+        setAvailablePassages(items);
+      })
+      .catch((error) => {
+        if (controller.signal.aborted) return;
+        setAvailablePassages([]);
+        setMessage(error instanceof Error ? error.message : "تعذر تحميل دليل القطع اللفظية.");
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) {
+          setIsLoadingDirectory(false);
+        }
+      });
+
+    return () => controller.abort();
+  }, [mode]);
+
+  useEffect(() => {
+    if (!availablePassages.length) return;
+
+    if (requestedSlug) {
+      const matchedPassage = availablePassages.find((item) => item.slug === requestedSlug);
+      if (matchedPassage) {
+        if (matchedPassage.id !== selectedPassageId) {
+          setSelectedPassageId(matchedPassage.id);
+          setMessage("");
+        }
+        return;
+      }
+
+      const randomPassage = availablePassages[Math.floor(Math.random() * availablePassages.length)];
+      if (randomPassage && randomPassage.id !== selectedPassageId) {
+        setSelectedPassageId(randomPassage.id);
+        setMessage("لم نجد القطعة المطلوبة بهذا المفتاح، فتم فتح قطعة عشوائية بدلًا منها.");
+      }
+      return;
+    }
+
+    if (!selectedPassageId && !query.trim()) {
+      const randomPassage = availablePassages[Math.floor(Math.random() * availablePassages.length)];
+      if (randomPassage) {
+        setSelectedPassageId(randomPassage.id);
+        setMessage("تم فتح قطعة عشوائية لتبدأ اختبار القطع اللفظي مباشرة.");
+      }
+    }
+  }, [availablePassages, query, requestedSlug, selectedPassageId]);
+
+  useEffect(() => {
     if (!debouncedQuery.trim()) {
       setResults([]);
-      setMessage("اكتب 3 أحرف فأكثر ليبدأ البحث في عنوان القطعة والكلمات المفتاحية.");
+      if (!selectedPassageId) {
+        setMessage("اكتب 3 أحرف فأكثر ليبدأ البحث في عنوان القطعة والكلمات المفتاحية.");
+      }
       return;
     }
 
@@ -82,7 +192,7 @@ export function VerbalPassagesBrowser({ mode = "student" }: { mode?: "student" |
       });
 
     return () => controller.abort();
-  }, [debouncedQuery, mode]);
+  }, [debouncedQuery, mode, selectedPassageId]);
 
   useEffect(() => {
     if (!selectedPassageId) return;
@@ -91,6 +201,7 @@ export function VerbalPassagesBrowser({ mode = "student" }: { mode?: "student" |
     setIsLoadingPassage(true);
 
     fetch(buildPublicApiUrl(`/api/verbal-passages/${selectedPassageId}`), {
+      cache: "no-store",
       signal: controller.signal,
     })
       .then(async (response) => {
@@ -116,12 +227,22 @@ export function VerbalPassagesBrowser({ mode = "student" }: { mode?: "student" |
     return () => controller.abort();
   }, [selectedPassageId]);
 
+  useEffect(() => {
+    if (!selectedPassage?.slug) return;
+    if (requestedSlug === selectedPassage.slug) return;
+
+    const nextParams = new URLSearchParams(searchParams.toString());
+    nextParams.set("passage", selectedPassage.slug);
+    router.replace(`${pathname}?${nextParams.toString()}`, { scroll: false });
+  }, [pathname, requestedSlug, router, searchParams, selectedPassage?.slug]);
+
   return (
     <div dir="rtl" className="space-y-6">
       <div className="rounded-[2rem] border border-[#E8D8B3] bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(248,247,244,0.96))] p-7 shadow-soft">
         <div className="display-font text-3xl font-bold text-slate-950">بنك القطع اللفظي</div>
         <p className="mt-3 max-w-3xl text-sm leading-8 text-slate-600">
-          ابحث عن القطعة بعنوانها أو بالكلمات المفتاحية المرتبطة بها. لا تبدأ النتائج إلا بعد كتابة 3 أحرف فأكثر حتى يبقى البحث أدق وأسرع.
+          كل قطعة مرتبطة باسم مفتاحي ثابت، ويمكن فتحها مباشرة من الرابط أو بدء قطعة عشوائية تلقائيًا عند الدخول
+          إلى القسم. ويبدأ البحث بعد كتابة 3 أحرف فأكثر حتى تبقى النتائج أدق وأسرع.
         </p>
 
         <div className="relative mt-5">
@@ -139,11 +260,13 @@ export function VerbalPassagesBrowser({ mode = "student" }: { mode?: "student" |
         <aside className="rounded-[1.8rem] border border-slate-200 bg-white p-5 shadow-sm">
           <div className="display-font text-xl font-bold text-slate-950">نتائج البحث</div>
           <div className="mt-2 text-sm leading-7 text-slate-500">
-            {isSearching
-              ? "جاري البحث..."
-              : normalizedLength < SEARCH_MIN_CHARS
-                ? "لا تظهر النتائج قبل 3 أحرف."
-                : `${results.length} نتيجة`}
+            {isLoadingDirectory
+              ? "جاري تحميل دليل القطع..."
+              : isSearching
+                ? "جاري البحث..."
+                : normalizedLength < SEARCH_MIN_CHARS
+                  ? "لا تظهر النتائج قبل 3 أحرف."
+                  : `${results.length} نتيجة`}
           </div>
 
           <div className="mt-5 space-y-3">
@@ -159,6 +282,7 @@ export function VerbalPassagesBrowser({ mode = "student" }: { mode?: "student" |
                 }`}
               >
                 <div className="display-font text-base font-bold text-slate-950">{item.title}</div>
+                <div className="mt-1 text-xs font-semibold text-[#123B7A]">/{item.slug}</div>
                 <div className="mt-2 text-sm leading-7 text-slate-500">{item.excerpt}</div>
                 <div className="mt-3 flex flex-wrap gap-2 text-xs">
                   <span className="rounded-full bg-[#123B7A]/8 px-3 py-1 font-semibold text-[#123B7A]">
@@ -195,13 +319,20 @@ export function VerbalPassagesBrowser({ mode = "student" }: { mode?: "student" |
               nextPassageTitle={nextPassage?.title ?? null}
               onOpenNextPassage={nextPassage ? () => setSelectedPassageId(nextPassage.id) : null}
               onBackToResults={() => {
+                const nextParams = new URLSearchParams(searchParams.toString());
+                nextParams.delete("passage");
+                router.replace(
+                  nextParams.toString() ? `${pathname}?${nextParams.toString()}` : pathname,
+                  { scroll: false },
+                );
                 setSelectedPassageId(null);
                 setSelectedPassage(null);
               }}
             />
           ) : (
             <div className="rounded-[1.8rem] border border-dashed border-slate-300 bg-white p-8 text-center text-sm text-slate-500 shadow-sm">
-              اختر قطعة من النتائج لتظهر هنا مع النص والأسئلة والخيارات.
+              اختر قطعة من النتائج لتظهر هنا مع النص والأسئلة والخيارات، أو ابدأ من الرابط المباشر باستخدام
+              المفتاح الخاص بالقطعة.
             </div>
           )}
         </section>
