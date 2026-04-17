@@ -161,6 +161,10 @@ const verbalReadingKeywordTitles = [
   "قطعة فيتش وأينبه",
   "دودة القز وصناعة الحرير",
   "قطعة دودة القز وصناعة الحرير",
+  "التمركز",
+  "قطعة التمركز",
+  "قطعة قصيرة",
+  "النص القصير",
 ];
 
 export const verbalReadingKeywords: ManualReadingKeyword[] = Array.from(
