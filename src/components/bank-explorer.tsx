@@ -10,9 +10,10 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import type { banks, questionSearchItems } from "@/data/miyaar";
+import type { SearchItem } from "@/lib/question-bank-api";
 
 type Bank = (typeof banks)[number];
-type Question = (typeof questionSearchItems)[number];
+type Question = SearchItem;
 
 const RECENT_SEARCHES_KEY = "miyaar-recent-question-searches";
 
@@ -78,6 +79,14 @@ function createSnippet(text: string, query: string) {
   const suffix = end < text.length ? "..." : "";
 
   return `${prefix}${text.slice(start, end).trim()}${suffix}`;
+}
+
+function getResultLabel(item: Question) {
+  return item.title?.trim() || item.text;
+}
+
+function getResultHaystack(item: Question) {
+  return [getResultLabel(item), item.text, item.excerpt ?? "", item.skill].join(" ");
 }
 
 export function BankExplorer({
@@ -203,7 +212,7 @@ export function BankExplorer({
   const filteredBanks = bankItems;
   const filteredQuestions = searchItems;
   const suggestions = deferredQuestionQuery.trim()
-    ? searchItems.filter((question) => fuzzyMatch(question.text, deferredQuestionQuery)).slice(0, 5)
+    ? searchItems.filter((question) => fuzzyMatch(getResultHaystack(question), deferredQuestionQuery)).slice(0, 5)
     : [];
 
   function pushRecentSearch(value: string) {
@@ -276,12 +285,12 @@ export function BankExplorer({
                     {suggestions.length ? (
                       suggestions.map((item) => (
                         <button
-                          key={item.id}
+                          key={`${item.kind ?? "question"}-${item.id}`}
                           type="button"
-                          onMouseDown={() => applySuggestedSearch(item.text)}
+                          onMouseDown={() => applySuggestedSearch(getResultLabel(item))}
                           className="rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-[#C99A43] hover:text-[#123B7A]"
                         >
-                          {item.text}
+                          {getResultLabel(item)}
                         </button>
                       ))
                     ) : (
@@ -384,7 +393,7 @@ export function BankExplorer({
               <div className="grid gap-3">
                 {filteredQuestions.slice(0, 8).map((question) => (
                   <div
-                    key={question.id}
+                    key={`${question.kind ?? "question"}-${question.id}`}
                   className="flex flex-col gap-5 rounded-[1.7rem] border border-slate-200/80 bg-white/90 p-6 lg:flex-row lg:items-center lg:justify-between"
                 >
                   <div className="space-y-3">
@@ -395,14 +404,26 @@ export function BankExplorer({
                         <Badge className="bg-amber-50 text-amber-700">{question.type}</Badge>
                         <Badge className="bg-slate-100 text-slate-700">{question.difficulty}</Badge>
                         <Badge className="bg-emerald-50 text-emerald-700">{question.state}</Badge>
+                        {question.questionCount ? (
+                          <Badge className="bg-emerald-50 text-emerald-700">
+                            {question.questionCount} أسئلة
+                          </Badge>
+                        ) : null}
                       </div>
                       <h3 className="display-font card-title mb-0 text-xl font-bold leading-9 text-slate-950">
-                        {createSnippet(question.text, deferredQuestionQuery)}
+                        {createSnippet(getResultLabel(question), deferredQuestionQuery)}
                       </h3>
-                      <div className="text-sm text-slate-500">المهارة: {question.skill}</div>
+                      {question.excerpt ? (
+                        <div className="text-sm leading-7 text-slate-500">{question.excerpt}</div>
+                      ) : null}
+                      <div className="text-sm text-slate-500">
+                        {question.kind === "passage"
+                          ? `عنوان القطعة${question.pieceNumber ? ` • قطعة ${question.pieceNumber}` : ""}`
+                          : `المهارة: ${question.skill}`}
+                      </div>
                     </div>
                     <Link href={question.href}>
-                      <Button>افتح السؤال</Button>
+                      <Button>{question.kind === "passage" ? "افتح القطعة" : "افتح السؤال"}</Button>
                     </Link>
                   </div>
                 ))}

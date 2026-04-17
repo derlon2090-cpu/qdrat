@@ -3,7 +3,57 @@ import { neon } from "@neondatabase/serverless";
 import { banks as fallbackBanks, questionSearchItems as fallbackQuestions } from "@/data/miyaar";
 
 export type BankItem = (typeof fallbackBanks)[number];
-export type QuestionItem = (typeof fallbackQuestions)[number];
+
+export type SearchItem = {
+  id: number;
+  text: string;
+  section: string;
+  type: string;
+  difficulty: string;
+  skill: string;
+  state: string;
+  href: string;
+  kind?: "question" | "passage";
+  title?: string;
+  excerpt?: string;
+  pieceNumber?: number | null;
+  questionCount?: number;
+  needsReview?: boolean;
+};
+
+export type PassageChoice = {
+  id: number;
+  key: string;
+  text: string;
+  isCorrect: boolean;
+  sortOrder: number;
+};
+
+export type PassageQuestion = {
+  id: number;
+  order: number;
+  text: string;
+  explanation: string | null;
+  correctChoiceKey: string | null;
+  answerSource: string | null;
+  answerConfidence: number;
+  needsReview: boolean;
+  choices: PassageChoice[];
+};
+
+export type PassageDetail = {
+  id: number;
+  pieceNumber: number | null;
+  title: string;
+  text: string;
+  difficulty: string;
+  sourceName: string | null;
+  rawPageFrom: number | null;
+  rawPageTo: number | null;
+  parsingConfidence: number;
+  needsReview: boolean;
+  questions: PassageQuestion[];
+};
 
 type SearchFilters = {
   query?: string;
@@ -47,12 +97,35 @@ function fuzzyMatch(text: string, query: string) {
   return false;
 }
 
+function createSnippet(text: string, query: string, maxLength = 170) {
+  const cleanText = text.replace(/\s+/g, " ").trim();
+  if (!cleanText) return "";
+
+  if (!query.trim()) {
+    return cleanText.length > maxLength ? `${cleanText.slice(0, maxLength).trim()}...` : cleanText;
+  }
+
+  const normalizedText = normalizeArabic(cleanText);
+  const normalizedQuery = normalizeArabic(query);
+  const matchIndex = normalizedText.indexOf(normalizedQuery);
+
+  if (matchIndex === -1) {
+    return cleanText.length > maxLength ? `${cleanText.slice(0, maxLength).trim()}...` : cleanText;
+  }
+
+  const start = Math.max(matchIndex - 36, 0);
+  const end = Math.min(matchIndex + normalizedQuery.length + 90, cleanText.length);
+  const prefix = start > 0 ? "..." : "";
+  const suffix = end < cleanText.length ? "..." : "";
+
+  return `${prefix}${cleanText.slice(start, end).trim()}${suffix}`;
+}
+
 function mapDifficulty(value?: string | null) {
   switch (value) {
     case "easy":
       return "سهل";
     case "hard":
-      return "متقدم";
     case "elite":
       return "متقدم";
     case "medium":
@@ -110,7 +183,6 @@ function normalizeQuestionState(value?: string | null) {
 
 async function loadDatabaseBanks() {
   const databaseUrl = getDatabaseUrl();
-
   if (!databaseUrl) return [];
 
   try {
@@ -151,9 +223,8 @@ async function loadDatabaseBanks() {
   }
 }
 
-async function loadDatabaseQuestions() {
+async function loadDatabaseQuestions(): Promise<SearchItem[]> {
   const databaseUrl = getDatabaseUrl();
-
   if (!databaseUrl) return [];
 
   try {
@@ -173,7 +244,7 @@ async function loadDatabaseQuestions() {
       left join app_question_banks b on b.id = q.bank_id
       where q.is_published = true
       order by q.usage_count desc, q.created_at desc
-      limit 300
+      limit 5000
     `)) as Array<{
       id: number;
       question_text: string;
@@ -193,8 +264,88 @@ async function loadDatabaseQuestions() {
       difficulty: mapDifficulty(row.difficulty),
       skill: row.skill_name || (row.section === "quantitative" ? "التدريب الكمي" : "التدريب اللفظي"),
       state: "غير محلول",
-      href: row.passage_id ? "/passage" : "/exam",
-    })) satisfies QuestionItem[];
+      href: row.passage_id ? `/passage/${row.passage_id}` : "/exam",
+      kind: "question",
+      title: row.question_text,
+    })) satisfies SearchItem[];
+  } catch {
+    return [];
+  }
+}
+
+async function searchDatabasePassages(query: string, limit: number): Promise<SearchItem[]> {
+  const databaseUrl = getDatabaseUrl();
+  const trimmedQuery = query.trim();
+
+  if (!databaseUrl || !trimmedQuery) return [];
+
+  try {
+    const sql = neon(databaseUrl);
+    const pattern = `%${trimmedQuery}%`;
+
+    const rows = (await sql`
+      select
+        p.id,
+        p.piece_number,
+        case
+          when nullif(p.piece_title, '') is not null then p.piece_title
+          when nullif(p.title, '') is not null then p.title
+          when p.piece_number is not null then concat('قطعة ', p.piece_number::text)
+          else concat('قطعة ', p.id::text)
+        end as piece_title,
+        p.passage_text,
+        p.difficulty::text as difficulty,
+        p.needs_review,
+        (
+          select count(*)::int
+          from app_questions q
+          where q.passage_id = p.id and q.is_published = true
+        ) as question_count
+      from app_passages p
+      inner join app_question_banks b on b.id = p.bank_id
+      where b.is_published = true
+        and (
+          p.piece_title ilike ${pattern}
+          or p.title ilike ${pattern}
+          or p.passage_text ilike ${pattern}
+          or cast(p.piece_number as text) = ${trimmedQuery}
+        )
+      order by
+        case
+          when p.piece_title ilike ${pattern} or p.title ilike ${pattern} then 0
+          else 1
+        end,
+        p.piece_number asc nulls last,
+        p.id asc
+      limit ${limit}
+    `) as Array<{
+      id: number;
+      piece_number: number | null;
+      piece_title: string;
+      passage_text: string;
+      difficulty: string | null;
+      needs_review: boolean;
+      question_count: number;
+    }>;
+
+    return rows
+      .filter((row) => fuzzyMatch(`${row.piece_title} ${row.passage_text}`, trimmedQuery))
+      .map((row) => ({
+        id: row.id,
+        text: row.piece_title,
+        title: row.piece_title,
+        excerpt: createSnippet(row.passage_text, trimmedQuery),
+        section: "قطع",
+        type: "قطعة كاملة",
+        difficulty: mapDifficulty(row.difficulty),
+        skill: row.piece_number ? `قطعة ${row.piece_number}` : "قطعة كاملة",
+        state: row.needs_review ? "قيد المراجعة" : "جاهزة",
+        href: `/passage/${row.id}`,
+        kind: "passage",
+        pieceNumber: row.piece_number,
+        questionCount: Number(row.question_count ?? 0),
+        needsReview: row.needs_review,
+      })) satisfies SearchItem[];
   } catch {
     return [];
   }
@@ -205,9 +356,11 @@ async function getBanksSource() {
   return databaseBanks.length ? databaseBanks : fallbackBanks;
 }
 
-async function getQuestionsSource() {
+async function getQuestionsSource(): Promise<SearchItem[]> {
   const databaseQuestions = await loadDatabaseQuestions();
-  return databaseQuestions.length ? databaseQuestions : fallbackQuestions;
+  return databaseQuestions.length
+    ? databaseQuestions
+    : (fallbackQuestions.map((item) => ({ ...item, kind: "question", title: item.text })) satisfies SearchItem[]);
 }
 
 export async function getBankItems(filters: SearchFilters = {}) {
@@ -225,6 +378,18 @@ export async function getBankItems(filters: SearchFilters = {}) {
   });
 }
 
+function shouldIncludePassages(filters: SearchFilters, hasQuery: boolean) {
+  if (!hasQuery) return false;
+
+  const section = filters.section?.trim() ?? "الكل";
+  const type = filters.type?.trim() ?? "الكل";
+
+  if (section === "كمي") return false;
+  if (type !== "الكل" && !["قطع", "لفظي"].includes(type)) return false;
+
+  return true;
+}
+
 export async function getQuestionItems(filters: SearchFilters = {}) {
   const items = await getQuestionsSource();
   const query = filters.query?.trim() ?? "";
@@ -235,16 +400,149 @@ export async function getQuestionItems(filters: SearchFilters = {}) {
   const type = filters.type?.trim() ?? "الكل";
   const limit = Math.min(Math.max(Number(filters.limit ?? 24), 1), 80);
 
-  return items
-    .filter((item) => {
-      const matchesQuery = !query || fuzzyMatch(item.text, query);
-      const matchesSection = section === "الكل" || item.section === section;
-      const matchesDifficulty = difficulty === "الكل" || item.difficulty === difficulty;
-      const matchesSkill = skill === "الكل" || item.skill === skill;
-      const matchesState = state === "الكل" || normalizeQuestionState(item.state) === normalizeQuestionState(state);
-      const matchesType = type === "الكل" || item.type === type;
+  const filteredQuestions = items.filter((item) => {
+    const haystack = [item.title ?? item.text, item.text, item.excerpt ?? ""].join(" ");
+    const matchesQuery = !query || fuzzyMatch(haystack, query);
+    const matchesSection = section === "الكل" || item.section === section;
+    const matchesDifficulty = difficulty === "الكل" || item.difficulty === difficulty;
+    const matchesSkill = skill === "الكل" || item.skill === skill;
+    const matchesState = state === "الكل" || normalizeQuestionState(item.state) === normalizeQuestionState(state);
+    const matchesType = type === "الكل" || item.type === type;
 
-      return matchesQuery && matchesSection && matchesDifficulty && matchesSkill && matchesState && matchesType;
-    })
-    .slice(0, limit);
+    return matchesQuery && matchesSection && matchesDifficulty && matchesSkill && matchesState && matchesType;
+  });
+
+  const passages = shouldIncludePassages(filters, Boolean(query))
+    ? await searchDatabasePassages(query, Math.max(6, Math.ceil(limit / 2)))
+    : [];
+
+  const merged = [...passages, ...filteredQuestions];
+  return merged.slice(0, limit);
+}
+
+export async function getPassageDetail(passageId: number) {
+  const databaseUrl = getDatabaseUrl();
+  if (!databaseUrl) {
+    return null;
+  }
+
+  try {
+    const sql = neon(databaseUrl);
+
+    const passageRows = (await sql`
+      select
+        id,
+        piece_number,
+        case
+          when nullif(piece_title, '') is not null then piece_title
+          when nullif(title, '') is not null then title
+          when piece_number is not null then concat('قطعة ', piece_number::text)
+          else concat('قطعة ', id::text)
+        end as piece_title,
+        passage_text,
+        difficulty::text as difficulty,
+        source_name,
+        raw_page_from,
+        raw_page_to,
+        coalesce(parsing_confidence, 0) as parsing_confidence,
+        needs_review
+      from app_passages
+      where id = ${passageId}
+      limit 1
+    `) as Array<{
+      id: number;
+      piece_number: number | null;
+      piece_title: string;
+      passage_text: string;
+      difficulty: string | null;
+      source_name: string | null;
+      raw_page_from: number | null;
+      raw_page_to: number | null;
+      parsing_confidence: string | number | null;
+      needs_review: boolean;
+    }>;
+
+    const passage = passageRows[0];
+    if (!passage) return null;
+
+    const questionRows = (await sql`
+      select
+        id,
+        question_order,
+        question_text,
+        explanation,
+        correct_choice_key,
+        answer_source,
+        coalesce(answer_confidence, 0) as answer_confidence,
+        needs_review
+      from app_questions
+      where passage_id = ${passageId} and is_published = true
+      order by question_order asc, id asc
+    `) as Array<{
+      id: number;
+      question_order: number;
+      question_text: string;
+      explanation: string | null;
+      correct_choice_key: string | null;
+      answer_source: string | null;
+      answer_confidence: string | number | null;
+      needs_review: boolean;
+    }>;
+
+    const questions = await Promise.all(
+      questionRows.map(async (question) => {
+        const choiceRows = (await sql`
+          select
+            id,
+            choice_key,
+            choice_text,
+            is_correct,
+            sort_order
+          from app_question_choices
+          where question_id = ${question.id}
+          order by sort_order asc, id asc
+        `) as Array<{
+          id: number;
+          choice_key: string;
+          choice_text: string;
+          is_correct: boolean;
+          sort_order: number;
+        }>;
+
+        return {
+          id: question.id,
+          order: question.question_order,
+          text: question.question_text,
+          explanation: question.explanation,
+          correctChoiceKey: question.correct_choice_key,
+          answerSource: question.answer_source,
+          answerConfidence: Number(question.answer_confidence ?? 0),
+          needsReview: question.needs_review,
+          choices: choiceRows.map((choice) => ({
+            id: choice.id,
+            key: choice.choice_key,
+            text: choice.choice_text,
+            isCorrect: choice.is_correct,
+            sortOrder: choice.sort_order,
+          })),
+        } satisfies PassageQuestion;
+      }),
+    );
+
+    return {
+      id: passage.id,
+      pieceNumber: passage.piece_number,
+      title: passage.piece_title,
+      text: passage.passage_text,
+      difficulty: mapDifficulty(passage.difficulty),
+      sourceName: passage.source_name,
+      rawPageFrom: passage.raw_page_from,
+      rawPageTo: passage.raw_page_to,
+      parsingConfidence: Number(passage.parsing_confidence ?? 0),
+      needsReview: passage.needs_review,
+      questions,
+    } satisfies PassageDetail;
+  } catch {
+    return null;
+  }
 }

@@ -8,8 +8,14 @@ import { buildPublicApiUrl } from "@/lib/api-base";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { questionSearchItems } from "@/data/miyaar";
+import type { SearchItem } from "@/lib/question-bank-api";
 
 const RECENT_SEARCHES_KEY = "miyaar-global-searches";
+const fallbackSearchItems: SearchItem[] = questionSearchItems.map((item) => ({
+  ...item,
+  kind: "question",
+  title: item.text,
+}));
 
 function normalizeArabic(value: string) {
   return value
@@ -39,11 +45,19 @@ function fuzzyMatch(text: string, query: string) {
   return false;
 }
 
+function getItemLabel(item: SearchItem) {
+  return item.title?.trim() || item.text;
+}
+
+function getItemHaystack(item: SearchItem) {
+  return [getItemLabel(item), item.text, item.excerpt ?? "", item.skill].join(" ");
+}
+
 export function SearchOverlay() {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
-  const [remoteResults, setRemoteResults] = useState(questionSearchItems);
+  const [remoteResults, setRemoteResults] = useState<SearchItem[]>(fallbackSearchItems);
   const deferredQuery = useDeferredValue(query);
 
   useEffect(() => {
@@ -106,13 +120,13 @@ export function SearchOverlay() {
     })
       .then(async (response) => {
         if (!response.ok) throw new Error("Failed to fetch search results");
-        return response.json() as Promise<{ items?: typeof questionSearchItems }>;
+        return response.json() as Promise<{ items?: SearchItem[] }>;
       })
       .then((payload) => {
-        setRemoteResults(payload.items?.length ? payload.items : questionSearchItems);
+        setRemoteResults(payload.items?.length ? payload.items : fallbackSearchItems);
       })
       .catch(() => {
-        setRemoteResults(questionSearchItems);
+        setRemoteResults(fallbackSearchItems);
       });
 
     return () => controller.abort();
@@ -120,12 +134,12 @@ export function SearchOverlay() {
 
   const results = useMemo(() => {
     if (!deferredQuery.trim()) return [];
-    return remoteResults.filter((item) => fuzzyMatch(item.text, deferredQuery)).slice(0, 8);
+    return remoteResults.filter((item) => fuzzyMatch(getItemHaystack(item), deferredQuery)).slice(0, 8);
   }, [deferredQuery, remoteResults]);
 
   const suggestions = useMemo(() => {
     if (!deferredQuery.trim()) return [];
-    return remoteResults.filter((item) => fuzzyMatch(item.text, deferredQuery)).slice(0, 4);
+    return remoteResults.filter((item) => fuzzyMatch(getItemHaystack(item), deferredQuery)).slice(0, 4);
   }, [deferredQuery, remoteResults]);
 
   function saveRecentSearch(value: string) {
@@ -149,9 +163,9 @@ export function SearchOverlay() {
             <div className="w-full rounded-[1.8rem] border border-white/60 bg-white/96 p-4 shadow-[0_24px_80px_rgba(0,0,0,0.18)]">
               <div className="mb-4 flex items-center justify-between gap-4">
                 <div>
-                  <div className="display-font text-2xl font-bold text-slate-950">ابحث عن أي سؤال مباشرة</div>
+                  <div className="display-font text-2xl font-bold text-slate-950">ابحث عن سؤال أو قطعة كاملة</div>
                   <div className="mt-1 text-sm text-slate-500">
-                    مثال: النسبة والتناسب، القطع، التناظر...
+                    مثال: التصحر، الزيت، الفكرة العامة، النسبة والتناسب...
                   </div>
                 </div>
                 <button
@@ -171,7 +185,7 @@ export function SearchOverlay() {
                   value={query}
                   onChange={(event) => setQuery(event.target.value)}
                   onBlur={() => saveRecentSearch(query)}
-                  placeholder="ابحث عن سؤال..."
+                  placeholder="ابحث عن سؤال أو عن عنوان القطعة..."
                   className="h-14 pr-12 text-base"
                 />
               </div>
@@ -202,15 +216,16 @@ export function SearchOverlay() {
                       {suggestions.length ? (
                         suggestions.map((item) => (
                           <button
-                            key={item.id}
+                            key={`${item.kind ?? "question"}-${item.id}`}
                             type="button"
                             onMouseDown={() => {
-                              setQuery(item.text);
-                              saveRecentSearch(item.text);
+                              const label = getItemLabel(item);
+                              setQuery(label);
+                              saveRecentSearch(label);
                             }}
                             className="rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-[#C99A43] hover:text-[#123B7A]"
                           >
-                            {item.text}
+                            {getItemLabel(item)}
                           </button>
                         ))
                       ) : (
@@ -224,7 +239,7 @@ export function SearchOverlay() {
                     {results.length ? (
                       results.map((item) => (
                         <div
-                          key={item.id}
+                          key={`${item.kind ?? "question"}-${item.id}`}
                           className="flex flex-col gap-4 rounded-[1.4rem] border border-slate-200 bg-white p-4 md:flex-row md:items-center md:justify-between"
                         >
                           <div className="space-y-2">
@@ -238,23 +253,31 @@ export function SearchOverlay() {
                               <span className="rounded-full bg-slate-100 px-3 py-1 font-semibold text-slate-700">
                                 {item.difficulty}
                               </span>
+                              {item.questionCount ? (
+                                <span className="rounded-full bg-emerald-50 px-3 py-1 font-semibold text-emerald-700">
+                                  {item.questionCount} أسئلة
+                                </span>
+                              ) : null}
                             </div>
-                            <div className="text-base leading-8 text-slate-900">{item.text}</div>
+                            <div className="text-base leading-8 text-slate-900">{getItemLabel(item)}</div>
+                            {item.excerpt ? (
+                              <div className="text-sm leading-7 text-slate-500">{item.excerpt}</div>
+                            ) : null}
                           </div>
                           <Link
                             href={item.href}
                             onClick={() => {
-                              saveRecentSearch(query || item.text);
+                              saveRecentSearch(query || getItemLabel(item));
                               closeSearch();
                             }}
                           >
-                            <Button>افتح السؤال</Button>
+                            <Button>{item.kind === "passage" ? "افتح القطعة" : "افتح السؤال"}</Button>
                           </Link>
                         </div>
                       ))
                     ) : (
                       <div className="rounded-[1.4rem] border border-dashed border-slate-300 bg-slate-50/80 p-6 text-center text-sm text-slate-500">
-                        لا توجد نتائج مطابقة الآن. جرّب كلمة أقصر أو صياغة مختلفة.
+                        لا توجد نتائج مطابقة الآن. جرّب كلمة أقصر أو عنوان قطعة أدق.
                       </div>
                     )}
                   </div>
