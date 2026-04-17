@@ -178,7 +178,7 @@ async function main() {
     );
     const pendingReviews = [];
 
-    for (const passage of normalized.passages) {
+    for (const [passageIndex, passage] of normalized.passages.entries()) {
       const passageRows = await withRetry(() => sql`
         insert into app_passages (
           bank_id,
@@ -220,7 +220,7 @@ async function main() {
 
       for (const [questionIndex, question] of passage.questions.entries()) {
         const correctChoice = question.options.find((option) => option.isCorrect)?.optionKey ?? null;
-        const questionCode = `${slug}-p${passage.pieceNumber ?? "x"}-q${questionIndex + 1}`;
+        const questionCode = `${slug}-px${passageIndex + 1}-q${questionIndex + 1}`;
 
         const questionRows = await withRetry(() => sql`
           insert into app_questions (
