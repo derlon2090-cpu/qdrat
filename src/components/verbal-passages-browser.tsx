@@ -22,6 +22,11 @@ export function VerbalPassagesBrowser({ mode = "student" }: { mode?: "student" |
   const [message, setMessage] = useState("اكتب 3 أحرف فأكثر ليبدأ البحث في عنوان القطعة والكلمات المفتاحية.");
 
   const normalizedLength = useMemo(() => query.replace(/\s+/g, "").length, [query]);
+  const selectedResultIndex = useMemo(
+    () => results.findIndex((item) => item.id === selectedPassageId),
+    [results, selectedPassageId],
+  );
+  const nextPassage = selectedResultIndex >= 0 ? results[selectedResultIndex + 1] ?? null : null;
 
   useEffect(() => {
     const timeoutId = window.setTimeout(() => {
@@ -184,7 +189,16 @@ export function VerbalPassagesBrowser({ mode = "student" }: { mode?: "student" |
               جاري تحميل القطعة...
             </div>
           ) : selectedPassage ? (
-            <VerbalPassageViewer passage={selectedPassage} mode={mode} />
+            <VerbalPassageViewer
+              passage={selectedPassage}
+              mode={mode}
+              nextPassageTitle={nextPassage?.title ?? null}
+              onOpenNextPassage={nextPassage ? () => setSelectedPassageId(nextPassage.id) : null}
+              onBackToResults={() => {
+                setSelectedPassageId(null);
+                setSelectedPassage(null);
+              }}
+            />
           ) : (
             <div className="rounded-[1.8rem] border border-dashed border-slate-300 bg-white p-8 text-center text-sm text-slate-500 shadow-sm">
               اختر قطعة من النتائج لتظهر هنا مع النص والأسئلة والخيارات.

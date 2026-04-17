@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import type { VerbalPassageRecord } from "@/lib/verbal-passages";
 
@@ -22,9 +22,15 @@ function getQuestionOptions(question: VerbalPassageRecord["questions"][number]) 
 export function VerbalPassageViewer({
   passage,
   mode = "student",
+  nextPassageTitle,
+  onOpenNextPassage,
+  onBackToResults,
 }: {
   passage: VerbalPassageRecord;
   mode?: ViewerMode;
+  nextPassageTitle?: string | null;
+  onOpenNextPassage?: (() => void) | null;
+  onBackToResults?: (() => void) | null;
 }) {
   const [selectedAnswers, setSelectedAnswers] = useState<Record<string, "A" | "B" | "C" | "D" | undefined>>({});
   const [submittedAnswers, setSubmittedAnswers] = useState<Record<string, boolean>>({});
@@ -41,6 +47,18 @@ export function VerbalPassageViewer({
       ),
     [passage.questions],
   );
+
+  useEffect(() => {
+    setSelectedAnswers({});
+    setSubmittedAnswers({});
+  }, [passage.id]);
+
+  const submittedCount = useMemo(
+    () => passage.questions.filter((question) => submittedAnswers[question.id]).length,
+    [passage.questions, submittedAnswers],
+  );
+
+  const isPassageCompleted = mode === "student" && passage.questions.length > 0 && submittedCount === passage.questions.length;
 
   return (
     <div className="space-y-6" dir="rtl">
@@ -156,24 +174,25 @@ export function VerbalPassageViewer({
                   <div className="font-bold">{isCorrect ? "✅ إجابة صحيحة" : "❌ إجابة خاطئة"}</div>
                   {selected ? (
                     <div className="mt-2">
-                      <span className="font-semibold">شرح اختيارك:</span>{" "}
-                      {selected === "A"
-                        ? question.optionA
-                        : selected === "B"
-                          ? question.optionB
-                          : selected === "C"
-                            ? question.optionC
-                            : question.optionD}
+                      <span className="font-semibold">اختيارك:</span>{" "}
+                      {selected === "A" ? question.optionA : selected === "B" ? question.optionB : selected === "C" ? question.optionC : question.optionD}
                     </div>
                   ) : null}
                   {question.explanation ? (
                     <div className="mt-2">
-                      <span className="font-semibold">الشرح:</span> {question.explanation}
+                      <span className="font-semibold">الشرح المختصر:</span> {question.explanation}
                     </div>
                   ) : null}
                   {!isCorrect ? (
                     <div className="mt-2">
-                      <span className="font-semibold">الإجابة الصحيحة:</span> {question.correctOption}
+                      <span className="font-semibold">الإجابة الصحيحة:</span>{" "}
+                      {question.correctOption === "A"
+                        ? question.optionA
+                        : question.correctOption === "B"
+                          ? question.optionB
+                          : question.correctOption === "C"
+                            ? question.optionC
+                            : question.optionD}
                     </div>
                   ) : null}
                 </div>
@@ -188,6 +207,37 @@ export function VerbalPassageViewer({
           );
         })}
       </div>
+
+      {isPassageCompleted ? (
+        <div className="rounded-[1.8rem] border border-[#E8D8B3] bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(248,247,244,0.96))] p-6 shadow-sm">
+          <div className="display-font text-2xl font-bold text-slate-950">أنهيت أسئلة هذه القطعة</div>
+          <p className="mt-3 text-sm leading-8 text-slate-600">
+            يمكنك الآن الانتقال مباشرة إلى القطعة التالية أو الرجوع إلى نتائج البحث لاختيار قطعة أخرى بعنوانها.
+          </p>
+
+          <div className="mt-5 flex flex-wrap gap-3">
+            {onOpenNextPassage ? (
+              <button
+                type="button"
+                onClick={onOpenNextPassage}
+                className="rounded-2xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white"
+              >
+                {nextPassageTitle ? `انتقل إلى ${nextPassageTitle}` : "الانتقال إلى القطعة التالية"}
+              </button>
+            ) : null}
+
+            {onBackToResults ? (
+              <button
+                type="button"
+                onClick={onBackToResults}
+                className="rounded-2xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700"
+              >
+                اختر قطعة أخرى
+              </button>
+            ) : null}
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

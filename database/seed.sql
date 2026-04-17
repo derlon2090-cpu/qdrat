@@ -144,15 +144,15 @@ deleted as (
 insert into app_verbal_passage_questions (
   passage_id, question_order, question_text, option_a, option_b, option_c, option_d, correct_option, explanation
 )
-select id, 1, 'أفضل عنوان لعموم النص هو:', 'مشتقات الزيت', 'أنواع الزيوت', 'اكتشاف الزيت وخواصه', 'صناعة الزيت وآثارها', 'C', null from upserted
+select id, 1, 'أفضل عنوان لعموم النص هو:', 'مشتقات الزيت', 'أنواع الزيوت', 'اكتشاف الزيت وخواصه', 'صناعة الزيت وآثارها', 'C', 'لأن النص يعرض اكتشاف الزيت وخصائصه وأثره في الصناعة والحياة الحديثة بشكل عام.' from upserted
 union all
-select id, 2, 'تعتبر كلمة "بترول" في الفقرة (4):', 'اسم لبعض مشتقات الزيت الثقيلة', 'أشمل من كلمة زيت', 'مرادفة لكلمة زيت', 'اسم لمشتق من مشتقات الزيت', 'C', null from upserted
+select id, 2, 'تعتبر كلمة "بترول" في الفقرة (4):', 'اسم لبعض مشتقات الزيت الثقيلة', 'أشمل من كلمة زيت', 'مرادفة لكلمة زيت', 'اسم لمشتق من مشتقات الزيت', 'C', 'لأن النص استعمل البترول بوصفه مرادفًا للزيت عند الحديث عن استخراجه ومشتقاته.' from upserted
 union all
-select id, 3, 'معنى كلمة "سمة" الواردة في الفقرة (2) هي:', 'نظرة', 'حاجة', 'أساس', 'خاصية', 'C', null from upserted
+select id, 3, 'معنى كلمة "سمة" الواردة في الفقرة (2) هي:', 'نظرة', 'حاجة', 'أساس', 'خاصية', 'C', 'لأن المقصود أن الزيت صار علامة أساسية يقوم عليها هذا العصر.' from upserted
 union all
-select id, 4, 'وفقًا لمنطوق الفقرة (1)، أي التواريخ الآتية أقرب لتاريخ حفر أول بئر للزيت؟', '1920', '1900', '1851', '1820', 'C', null from upserted
+select id, 4, 'وفقًا لمنطوق الفقرة (1)، أي التواريخ الآتية أقرب لتاريخ حفر أول بئر للزيت؟', '1920', '1900', '1851', '1820', 'C', 'لأن النص ذكر أن الحفر كان قبل نهاية النصف الأول من القرن التاسع عشر، وأقرب اختيار لذلك هو 1851.' from upserted
 union all
-select id, 5, 'المقصود بـ "الأساليب الاقتصادية" في الفقرة (1) هو:', 'الأسهل استعمالًا', 'المتوفرة اقتصاديًا', 'المجدية ماليًا', 'المتقدمة تقنيًا', 'D', null from upserted;
+select id, 5, 'المقصود بـ "الأساليب الاقتصادية" في الفقرة (1) هو:', 'الأسهل استعمالًا', 'المتوفرة اقتصاديًا', 'المجدية ماليًا', 'المتقدمة تقنيًا', 'D', 'لأن المقصود وسائل الاستخراج التي تجعل الانتفاع بالزيت واسعًا وممكنًا على مستوى عملي وتقني.' from upserted;
 
 with upserted as (
   insert into app_verbal_passages (
@@ -196,7 +196,7 @@ deleted as (
 insert into app_verbal_passage_questions (
   passage_id, question_order, question_text, option_a, option_b, option_c, option_d, correct_option, explanation
 )
-select id, 1, 'كم عدد فوائد الأشجار التي ذكرت في النص؟', '5 فوائد', '4 فوائد', '3 فوائد', 'فائدتين', 'B', null from upserted;
+select id, 1, 'كم عدد فوائد الأشجار التي ذكرت في النص؟', '5 فوائد', '4 فوائد', '3 فوائد', 'فائدتين', 'B', 'لأن النص ذكر الغذاء والألياف والعقاقير والأخشاب، وهي أربع فوائد صريحة.' from upserted;
 
 with upserted as (
   insert into app_verbal_passages (
@@ -242,15 +242,15 @@ deleted as (
 insert into app_verbal_passage_questions (
   passage_id, question_order, question_text, option_a, option_b, option_c, option_d, correct_option, explanation
 )
-select id, 1, 'يتنقل سكان القرى إلى المدن بسبب / سبب هجرة الفقراء إلى المدن هو:', 'تدني حالة الأراضي الزراعية', 'ارتفاع أجور المدن', 'زيادة الأمطار', 'كثرة الأشجار', 'A', null from upserted
+select id, 1, 'يتنقل سكان القرى إلى المدن بسبب / سبب هجرة الفقراء إلى المدن هو:', 'تدني حالة الأراضي الزراعية', 'ارتفاع أجور المدن', 'زيادة الأمطار', 'كثرة الأشجار', 'A', 'لأن تدهور الأراضي الزراعية يقلل الإنتاجية ويدفع السكان إلى مغادرتها.' from upserted
 union all
-select id, 2, 'تحدثت الفقرة (2) بشكل مفصل عن:', 'الأسباب التي أدت إلى التصحر', 'العوامل الطبيعية التي أدت للتصحر', 'طرق علاج التصحر', 'فوائد الأراضي الجافة', 'A', null from upserted
+select id, 2, 'تحدثت الفقرة (2) بشكل مفصل عن:', 'الأسباب التي أدت إلى التصحر', 'العوامل الطبيعية التي أدت للتصحر', 'طرق علاج التصحر', 'فوائد الأراضي الجافة', 'A', 'لأن الفقرة الثانية فصلت الرعي الجائر والزراعة الخاطئة والتحضر بوصفها أسبابًا مباشرة.' from upserted
 union all
-select id, 3, 'كم سببًا للتصحر ورد بالنص؟', '4 أسباب', '3 أسباب', 'سببين', '5 أسباب', 'B', null from upserted
+select id, 3, 'كم سببًا للتصحر ورد بالنص؟', '4 أسباب', '3 أسباب', 'سببين', '5 أسباب', 'B', 'لأن النص ذكر ثلاثة أسباب واضحة: الرعي الجائر، والزراعة الخاطئة، والتحضر.' from upserted
 union all
-select id, 4, 'أسباب حدوث التصحر:', 'عوامل اجتماعية', 'عوامل مناخية وجزئية', 'استنزاف الموارد الطبيعية', 'أسباب غير معروفة', 'C', null from upserted
+select id, 4, 'أسباب حدوث التصحر:', 'عوامل اجتماعية', 'عوامل مناخية وجزئية', 'استنزاف الموارد الطبيعية', 'أسباب غير معروفة', 'C', 'لأن الأسباب المذكورة كلها تؤدي إلى إنهاك الأرض واستنزاف عناصرها الطبيعية.' from upserted
 union all
-select id, 5, 'أي من الآتي يمكن أن يعتبر عاملًا مسببًا للتصحر؟', 'استثمار المزارع', 'تدهور الأراضي', 'المدن الجديدة', 'زيادة الغابات', 'B', null from upserted;
+select id, 5, 'أي من الآتي يمكن أن يعتبر عاملًا مسببًا للتصحر؟', 'استثمار المزارع', 'تدهور الأراضي', 'المدن الجديدة', 'زيادة الغابات', 'B', 'لأن تدهور الأراضي يؤدي مباشرة إلى انخفاض الإنتاجية وظهور التصحر.' from upserted;
 
 with upserted as (
   insert into app_verbal_passages (
@@ -294,14 +294,314 @@ deleted as (
 insert into app_verbal_passage_questions (
   passage_id, question_order, question_text, option_a, option_b, option_c, option_d, correct_option, explanation
 )
-select id, 1, 'وفقًا للنص فإن السبب في زيادة السمنة؟', 'الفقر', 'التقنية', 'غلاء الأسعار', 'قلة النوم', 'B', null from upserted
+select id, 1, 'وفقًا للنص فإن السبب في زيادة السمنة؟', 'الفقر', 'التقنية', 'غلاء الأسعار', 'قلة النوم', 'B', 'لأن النص ربط السمنة بالجلوس الطويل أمام التلفاز والحاسب، وهو من آثار التطور التقني.' from upserted
 union all
-select id, 2, 'عدد غير المصابين بالسمنة في أمريكا؟', '77%', '66%', '25%', '50%', 'B', null from upserted
+select id, 2, 'عدد غير المصابين بالسمنة في أمريكا؟', '77%', '66%', '25%', '50%', 'B', 'لأن ثلث السكان مصابون، وبالتالي يكون غير المصابين قرابة الثلثين أي 66%.' from upserted
 union all
-select id, 3, 'الطاقة المستهلكة تعني:', 'السعرات الحرارية', 'المشي فقط', 'الفيتامينات', 'الأطعمة الجاهزة', 'A', null from upserted
+select id, 3, 'الطاقة المستهلكة تعني:', 'السعرات الحرارية', 'المشي فقط', 'الفيتامينات', 'الأطعمة الجاهزة', 'A', 'لأن النص يقصد بالطاقة المستهلكة ما يحرقه الجسم من سعرات نتيجة النشاط.' from upserted
 union all
-select id, 4, 'السمنة لدى الشباب:', 'متوازنة', 'متنامية', 'متناقصة', 'ثابتة', 'B', null from upserted
+select id, 4, 'السمنة لدى الشباب:', 'متوازنة', 'متنامية', 'متناقصة', 'ثابتة', 'B', 'لأن النص صرح بأن السمنة لدى الشباب متزايدة.' from upserted
 union all
-select id, 5, 'يرجع النص أسباب الإصابة بالسمنة في الدول المتقدمة إلى:', 'التطور التقني', 'العوامل الوراثية', 'المناخ', 'التعليم', 'A', null from upserted
+select id, 5, 'يرجع النص أسباب الإصابة بالسمنة في الدول المتقدمة إلى:', 'التطور التقني', 'العوامل الوراثية', 'المناخ', 'التعليم', 'A', 'لأن السبب المذكور هو الجلوس الطويل أمام التلفاز والحاسب، وهو أثر مباشر للتقنية.' from upserted
 union all
-select id, 6, 'العلاقة بين (السمنة) و(زيادة الوزن):', 'إطنابية', 'ترادف', 'تتابعية', 'من العموم إلى الخصوص', 'B', null from upserted;
+select id, 6, 'العلاقة بين (السمنة) و(زيادة الوزن):', 'إطنابية', 'ترادف', 'تتابعية', 'من العموم إلى الخصوص', 'B', 'لأن النص جمع بين المصطلحين في سياق متقارب يدل على علاقة ترادف في هذا الموضع.' from upserted;
+
+with upserted as (
+  insert into app_verbal_passages (
+    title,
+    normalized_title,
+    keywords,
+    keyword_search,
+    passage_text,
+    normalized_passage_text,
+    title_hash,
+    passage_hash,
+    status,
+    external_source_id,
+    version
+  )
+  values (
+    'قطعة القمر',
+    'قطعه القمر',
+    array['قطعة القمر', 'القمر'],
+    'قطعه القمر القمر',
+    $$القمر هو الجرم السماوي الأقرب إلى الأرض، وهو تابع لها، يدور حولها دورة كاملة كل 27 يومًا تقريبًا، كما يدور حول نفسه في المدة نفسها، ولذلك نرى وجهًا واحدًا منه دائمًا. ويُعد القمر مصدرًا مهمًا للضوء ليلًا، حيث يعكس ضوء الشمس الساقط عليه.
+
+وقد حاول الإنسان منذ القدم معرفة طبيعة القمر، حتى تمكن في العصر الحديث من الوصول إليه، حيث أرسلت المركبات الفضائية ورواد الفضاء لاستكشاف سطحه، فتبين أنه يخلو من الهواء والماء، وأن سطحه مليء بالفوهات والحفر.$$,
+    $$القمر هو الجرم السماوي الاقرب الى الارض وهو تابع لها يدور حولها دوره كامله كل 27 يوما تقريبا كما يدور حول نفسه في المده نفسها ولذلك نرى وجها واحدا منه دائما ويعد القمر مصدرا مهما للضوء ليلا حيث يعكس ضوء الشمس الساقط عليه وقد حاول الانسان منذ القدم معرفه طبيعه القمر حتى تمكن في العصر الحديث من الوصول اليه حيث ارسلت المركبات الفضائيه ورواد الفضاء لاستكشاف سطحه فتبين انه يخلو من الهواء والماء وان سطحه مليء بالفوهات والحفر$$,
+    encode(digest('قطعه القمر', 'sha256'), 'hex'),
+    encode(digest($$القمر هو الجرم السماوي الاقرب الى الارض وهو تابع لها يدور حولها دوره كامله كل 27 يوما تقريبا كما يدور حول نفسه في المده نفسها ولذلك نرى وجها واحدا منه دائما ويعد القمر مصدرا مهما للضوء ليلا حيث يعكس ضوء الشمس الساقط عليه وقد حاول الانسان منذ القدم معرفه طبيعه القمر حتى تمكن في العصر الحديث من الوصول اليه حيث ارسلت المركبات الفضائيه ورواد الفضاء لاستكشاف سطحه فتبين انه يخلو من الهواء والماء وان سطحه مليء بالفوهات والحفر$$, 'sha256'), 'hex'),
+    'published',
+    'seed-moon',
+    1
+  )
+  on conflict (title_hash, passage_hash) do update set
+    keywords = excluded.keywords,
+    keyword_search = excluded.keyword_search,
+    status = excluded.status,
+    external_source_id = excluded.external_source_id,
+    version = excluded.version,
+    updated_at = now()
+  returning id
+),
+deleted as (
+  delete from app_verbal_passage_questions where passage_id in (select id from upserted)
+)
+insert into app_verbal_passage_questions (
+  passage_id, question_order, question_text, option_a, option_b, option_c, option_d, correct_option, explanation
+)
+select id, 1, 'القمر:', 'نجم', 'كوكب', 'تابع للأرض', 'جرم مستقل', 'C', 'لأن النص ذكر صراحة أن القمر تابع للأرض ويدور حولها.' from upserted
+union all
+select id, 2, 'لماذا نرى وجهًا واحدًا للقمر؟', 'لأنه لا يدور', 'لأنه يدور حول نفسه فقط', 'لأن مدة دورانه حول نفسه تساوي دورانه حول الأرض', 'لأنه قريب من الأرض', 'C', 'لأن القمر يتم دورته حول نفسه في المدة نفسها التي يتم فيها دورته حول الأرض، لذلك يظهر لنا الوجه نفسه دائمًا.' from upserted
+union all
+select id, 3, 'سطح القمر:', 'مليء بالماء', 'مليء بالأشجار', 'مليء بالفوهات', 'أملس', 'C', 'لأن النص أوضح أن سطح القمر مليء بالفوهات والحفر.' from upserted;
+
+with upserted as (
+  insert into app_verbal_passages (
+    title,
+    normalized_title,
+    keywords,
+    keyword_search,
+    passage_text,
+    normalized_passage_text,
+    title_hash,
+    passage_hash,
+    status,
+    external_source_id,
+    version
+  )
+  values (
+    'قطعة إنفلونزا (2)',
+    'قطعه انفلونزا 2',
+    array['قطعة إنفلونزا (2)', 'إنفلونزا (2)', 'إنفلونزا'],
+    'قطعه انفلونزا 2 انفلونزا 2 انفلونزا',
+    $$الإنفلونزا مرض فيروسي يصيب الجهاز التنفسي، وينتقل من شخص إلى آخر عن طريق الرذاذ المتطاير أثناء السعال أو العطاس. وتظهر أعراضه في صورة ارتفاع في درجة الحرارة، وسعال، وآلام في الجسم.
+
+وتكمن خطورة المرض في سرعة انتشاره، خاصة في الأماكن المزدحمة، ولذلك ينصح الأطباء باتباع وسائل الوقاية مثل غسل اليدين، وتغطية الفم عند العطاس، والابتعاد عن المصابين.$$,
+    $$الانفلونزا مرض فيروسي يصيب الجهاز التنفسي وينتقل من شخص الى اخر عن طريق الرذاذ المتطاير اثناء السعال او العطاس وتظهر اعراضه في صوره ارتفاع في درجه الحراره وسعال والام في الجسم وتكمن خطوره المرض في سرعه انتشاره خاصه في الاماكن المزدحمه ولذلك ينصح الاطباء باتباع وسائل الوقايه مثل غسل اليدين وتغطيه الفم عند العطاس والابتعاد عن المصابين$$,
+    encode(digest('قطعه انفلونزا 2', 'sha256'), 'hex'),
+    encode(digest($$الانفلونزا مرض فيروسي يصيب الجهاز التنفسي وينتقل من شخص الى اخر عن طريق الرذاذ المتطاير اثناء السعال او العطاس وتظهر اعراضه في صوره ارتفاع في درجه الحراره وسعال والام في الجسم وتكمن خطوره المرض في سرعه انتشاره خاصه في الاماكن المزدحمه ولذلك ينصح الاطباء باتباع وسائل الوقايه مثل غسل اليدين وتغطيه الفم عند العطاس والابتعاد عن المصابين$$, 'sha256'), 'hex'),
+    'published',
+    'seed-influenza-2',
+    1
+  )
+  on conflict (title_hash, passage_hash) do update set
+    keywords = excluded.keywords,
+    keyword_search = excluded.keyword_search,
+    status = excluded.status,
+    external_source_id = excluded.external_source_id,
+    version = excluded.version,
+    updated_at = now()
+  returning id
+),
+deleted as (
+  delete from app_verbal_passage_questions where passage_id in (select id from upserted)
+)
+insert into app_verbal_passage_questions (
+  passage_id, question_order, question_text, option_a, option_b, option_c, option_d, correct_option, explanation
+)
+select id, 1, 'تنتقل الإنفلونزا عن طريق:', 'الطعام', 'الماء', 'الرذاذ', 'الهواء فقط', 'C', 'لأن النص ذكر أنها تنتقل عن طريق الرذاذ المتطاير أثناء السعال أو العطاس.' from upserted
+union all
+select id, 2, 'من أعراض الإنفلونزا:', 'ألم في الأسنان', 'ارتفاع الحرارة', 'تساقط الشعر', 'فقدان البصر', 'B', 'لأن النص عدّ ارتفاع درجة الحرارة من الأعراض الأساسية للإنفلونزا.' from upserted
+union all
+select id, 3, 'الوقاية تكون:', 'النوم فقط', 'الأكل', 'غسل اليدين', 'اللعب', 'C', 'لأن الأطباء ينصحون بغسل اليدين ضمن وسائل الوقاية الواردة في النص.' from upserted;
+
+with upserted as (
+  insert into app_verbal_passages (
+    title,
+    normalized_title,
+    keywords,
+    keyword_search,
+    passage_text,
+    normalized_passage_text,
+    title_hash,
+    passage_hash,
+    status,
+    external_source_id,
+    version
+  )
+  values (
+    'قطعة حمض الخليك',
+    'قطعه حمض الخليك',
+    array['قطعة حمض الخليك', 'حمض الخليك'],
+    'قطعه حمض الخليك حمض الخليك',
+    $$يُعد حمض الخليك من الأحماض العضوية المعروفة، وهو المكوّن الأساسي للخل، ويستخدم في العديد من الصناعات الغذائية، كما يدخل في بعض التفاعلات الكيميائية المهمة.
+
+ويتميز هذا الحمض برائحته النفاذة، وقدرته على إذابة بعض المواد، ويُستخدم أيضًا في حفظ الأطعمة، لما له من خصائص مضادة للبكتيريا.$$,
+    $$يعد حمض الخليك من الاحماض العضويه المعروفه وهو المكون الاساسي للخل ويستخدم في العديد من الصناعات الغذائيه كما يدخل في بعض التفاعلات الكيميائيه المهمه ويتميز هذا الحمض برائحته النفاذه وقدرته على اذابه بعض المواد ويستخدم ايضا في حفظ الاطعمه لما له من خصائص مضاده للبكتيريا$$,
+    encode(digest('قطعه حمض الخليك', 'sha256'), 'hex'),
+    encode(digest($$يعد حمض الخليك من الاحماض العضويه المعروفه وهو المكون الاساسي للخل ويستخدم في العديد من الصناعات الغذائيه كما يدخل في بعض التفاعلات الكيميائيه المهمه ويتميز هذا الحمض برائحته النفاذه وقدرته على اذابه بعض المواد ويستخدم ايضا في حفظ الاطعمه لما له من خصائص مضاده للبكتيريا$$, 'sha256'), 'hex'),
+    'published',
+    'seed-acetic-acid',
+    1
+  )
+  on conflict (title_hash, passage_hash) do update set
+    keywords = excluded.keywords,
+    keyword_search = excluded.keyword_search,
+    status = excluded.status,
+    external_source_id = excluded.external_source_id,
+    version = excluded.version,
+    updated_at = now()
+  returning id
+),
+deleted as (
+  delete from app_verbal_passage_questions where passage_id in (select id from upserted)
+)
+insert into app_verbal_passage_questions (
+  passage_id, question_order, question_text, option_a, option_b, option_c, option_d, correct_option, explanation
+)
+select id, 1, 'حمض الخليك يوجد في:', 'الماء', 'الخل', 'الهواء', 'الزيت', 'B', 'لأن النص نص على أن حمض الخليك هو المكوّن الأساسي للخل.' from upserted
+union all
+select id, 2, 'يستخدم في:', 'البناء', 'الطيران', 'حفظ الأطعمة', 'الزراعة', 'C', 'لأن النص ذكر استخدامه في حفظ الأطعمة بسبب خصائصه المضادة للبكتيريا.' from upserted
+union all
+select id, 3, 'من صفاته:', 'عديم الرائحة', 'رائحته نفاذة', 'لونه أزرق', 'لا يذيب المواد', 'B', 'لأن النص وصف حمض الخليك بأن له رائحة نفاذة.' from upserted;
+
+with upserted as (
+  insert into app_verbal_passages (
+    title,
+    normalized_title,
+    keywords,
+    keyword_search,
+    passage_text,
+    normalized_passage_text,
+    title_hash,
+    passage_hash,
+    status,
+    external_source_id,
+    version
+  )
+  values (
+    'قطعة النجاح (1)',
+    'قطعه النجاح 1',
+    array['قطعة النجاح (1)', 'النجاح (1)', 'النجاح'],
+    'قطعه النجاح 1 النجاح 1 النجاح',
+    $$النجاح لا يأتي صدفة، بل هو نتيجة جهد وعمل متواصل، وتخطيط سليم. فالإنسان الناجح هو الذي يحدد أهدافه ويسعى لتحقيقها بإصرار وعزيمة.
+
+كما أن الفشل لا يعني النهاية، بل هو بداية جديدة للتعلم واكتساب الخبرات، ومن خلاله يستطيع الإنسان تصحيح أخطائه والمضي قدمًا نحو النجاح.$$,
+    $$النجاح لا ياتي صدفه بل هو نتيجه جهد وعمل متواصل وتخطيط سليم فالانسان الناجح هو الذي يحدد اهدافه ويسعى لتحقيقها باصرار وعزيمه كما ان الفشل لا يعني النهايه بل هو بدايه جديده للتعلم واكتساب الخبرات ومن خلاله يستطيع الانسان تصحيح اخطائه والمضي قدما نحو النجاح$$,
+    encode(digest('قطعه النجاح 1', 'sha256'), 'hex'),
+    encode(digest($$النجاح لا ياتي صدفه بل هو نتيجه جهد وعمل متواصل وتخطيط سليم فالانسان الناجح هو الذي يحدد اهدافه ويسعى لتحقيقها باصرار وعزيمه كما ان الفشل لا يعني النهايه بل هو بدايه جديده للتعلم واكتساب الخبرات ومن خلاله يستطيع الانسان تصحيح اخطائه والمضي قدما نحو النجاح$$, 'sha256'), 'hex'),
+    'published',
+    'seed-success-1',
+    1
+  )
+  on conflict (title_hash, passage_hash) do update set
+    keywords = excluded.keywords,
+    keyword_search = excluded.keyword_search,
+    status = excluded.status,
+    external_source_id = excluded.external_source_id,
+    version = excluded.version,
+    updated_at = now()
+  returning id
+),
+deleted as (
+  delete from app_verbal_passage_questions where passage_id in (select id from upserted)
+)
+insert into app_verbal_passage_questions (
+  passage_id, question_order, question_text, option_a, option_b, option_c, option_d, correct_option, explanation
+)
+select id, 1, 'النجاح يأتي من:', 'الحظ', 'الصدفة', 'الجهد', 'اللعب', 'C', 'لأن النص أكد أن النجاح نتيجة جهد وعمل متواصل وليس صدفة.' from upserted
+union all
+select id, 2, 'الفشل:', 'نهاية', 'بداية للتعلم', 'لا فائدة منه', 'ضعف', 'B', 'لأن النص وصف الفشل بأنه بداية جديدة للتعلم واكتساب الخبرات.' from upserted
+union all
+select id, 3, 'الإنسان الناجح:', 'لا يعمل', 'يخطط', 'ينام', 'يتجاهل', 'B', 'لأن الإنسان الناجح في النص يحدد أهدافه ويسير إليها بتخطيط سليم.' from upserted;
+
+with upserted as (
+  insert into app_verbal_passages (
+    title,
+    normalized_title,
+    keywords,
+    keyword_search,
+    passage_text,
+    normalized_passage_text,
+    title_hash,
+    passage_hash,
+    status,
+    external_source_id,
+    version
+  )
+  values (
+    'قطعة فيتش وأينبه',
+    'قطعه فيتش واينبه',
+    array['قطعة فيتش وأينبه', 'فيتش وأينبه'],
+    'قطعه فيتش واينبه فيتش واينبه',
+    $$يتناول النص قصة فيتش وأينبه اللذين تعاونا معًا لتحقيق هدف مشترك، حيث عملا بروح الفريق الواحد، وتغلبا على الصعوبات التي واجهتهما في طريقهما.
+
+وقد أثبتت هذه القصة أن التعاون والعمل الجماعي من أهم أسباب النجاح، وأن الفرد لا يستطيع تحقيق الإنجازات الكبيرة بمفرده.$$,
+    $$يتناول النص قصه فيتش واينبه اللذين تعاونا معا لتحقيق هدف مشترك حيث عملا بروح الفريق الواحد وتغلبا على الصعوبات التي واجهتهما في طريقهما وقد اثبتت هذه القصه ان التعاون والعمل الجماعي من اهم اسباب النجاح وان الفرد لا يستطيع تحقيق الانجازات الكبيره بمفرده$$,
+    encode(digest('قطعه فيتش واينبه', 'sha256'), 'hex'),
+    encode(digest($$يتناول النص قصه فيتش واينبه اللذين تعاونا معا لتحقيق هدف مشترك حيث عملا بروح الفريق الواحد وتغلبا على الصعوبات التي واجهتهما في طريقهما وقد اثبتت هذه القصه ان التعاون والعمل الجماعي من اهم اسباب النجاح وان الفرد لا يستطيع تحقيق الانجازات الكبيره بمفرده$$, 'sha256'), 'hex'),
+    'published',
+    'seed-vitch-einbeh',
+    1
+  )
+  on conflict (title_hash, passage_hash) do update set
+    keywords = excluded.keywords,
+    keyword_search = excluded.keyword_search,
+    status = excluded.status,
+    external_source_id = excluded.external_source_id,
+    version = excluded.version,
+    updated_at = now()
+  returning id
+),
+deleted as (
+  delete from app_verbal_passage_questions where passage_id in (select id from upserted)
+)
+insert into app_verbal_passage_questions (
+  passage_id, question_order, question_text, option_a, option_b, option_c, option_d, correct_option, explanation
+)
+select id, 1, 'الفكرة الرئيسية:', 'العمل الفردي', 'التعاون', 'الفشل', 'الكسل', 'B', 'لأن النص كله يدور حول قيمة التعاون والعمل الجماعي في تحقيق الهدف.' from upserted
+union all
+select id, 2, 'التعاون يؤدي إلى:', 'الفشل', 'النجاح', 'التعب', 'النوم', 'B', 'لأن النص أثبت أن التعاون من أهم أسباب النجاح.' from upserted
+union all
+select id, 3, 'الفرد وحده:', 'ينجح دائمًا', 'لا يحتاج أحد', 'قد لا يحقق إنجازًا كبيرًا', 'أفضل', 'C', 'لأن النص نص على أن الإنجازات الكبيرة لا تتحقق عادة بمفرد الإنسان وحده.' from upserted;
+
+with upserted as (
+  insert into app_verbal_passages (
+    title,
+    normalized_title,
+    keywords,
+    keyword_search,
+    passage_text,
+    normalized_passage_text,
+    title_hash,
+    passage_hash,
+    status,
+    external_source_id,
+    version
+  )
+  values (
+    'قطعة دودة القز وصناعة الحرير',
+    'قطعه دوده القز وصناعه الحرير',
+    array['قطعة دودة القز وصناعة الحرير', 'دودة القز وصناعة الحرير', 'الحرير'],
+    'قطعه دوده القز وصناعه الحرير دوده القز وصناعه الحرير الحرير',
+    $$تُعد دودة القز من الكائنات الحية التي تُستخدم في إنتاج الحرير، حيث تتغذى على أوراق التوت، ثم تقوم بإفراز خيوط حريرية تلتف حول نفسها لتكوّن شرنقة.
+
+ويُستخرج الحرير من هذه الشرانق بعد معالجتها، ويُعد من أجود أنواع الأقمشة، وقد اشتهرت بعض الدول بإنتاجه منذ القدم.$$,
+    $$تعد دوده القز من الكائنات الحيه التي تستخدم في انتاج الحرير حيث تتغذى على اوراق التوت ثم تقوم بافراز خيوط حريريه تلتف حول نفسها لتكون شرنقه ويستخرج الحرير من هذه الشرانق بعد معالجتها ويعد من اجود انواع الاقمشه وقد اشتهرت بعض الدول بانتاجه منذ القدم$$,
+    encode(digest('قطعه دوده القز وصناعه الحرير', 'sha256'), 'hex'),
+    encode(digest($$تعد دوده القز من الكائنات الحيه التي تستخدم في انتاج الحرير حيث تتغذى على اوراق التوت ثم تقوم بافراز خيوط حريريه تلتف حول نفسها لتكون شرنقه ويستخرج الحرير من هذه الشرانق بعد معالجتها ويعد من اجود انواع الاقمشه وقد اشتهرت بعض الدول بانتاجه منذ القدم$$, 'sha256'), 'hex'),
+    'published',
+    'seed-silkworm-silk',
+    1
+  )
+  on conflict (title_hash, passage_hash) do update set
+    keywords = excluded.keywords,
+    keyword_search = excluded.keyword_search,
+    status = excluded.status,
+    external_source_id = excluded.external_source_id,
+    version = excluded.version,
+    updated_at = now()
+  returning id
+),
+deleted as (
+  delete from app_verbal_passage_questions where passage_id in (select id from upserted)
+)
+insert into app_verbal_passage_questions (
+  passage_id, question_order, question_text, option_a, option_b, option_c, option_d, correct_option, explanation
+)
+select id, 1, 'دودة القز تنتج:', 'القطن', 'الحرير', 'الصوف', 'البلاستيك', 'B', 'لأن النص بيّن أن دودة القز تستخدم في إنتاج الحرير.' from upserted
+union all
+select id, 2, 'تتغذى على:', 'القمح', 'التوت', 'الشعير', 'الأرز', 'B', 'لأن النص نص على أنها تتغذى على أوراق التوت.' from upserted
+union all
+select id, 3, 'الحرير:', 'رخيص', 'رديء', 'فاخر', 'بلا فائدة', 'C', 'لأن النص وصف الحرير بأنه من أجود أنواع الأقمشة.' from upserted;
