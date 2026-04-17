@@ -195,7 +195,11 @@ create table if not exists app_question_sources (
   source_slug varchar(160) not null unique,
   source_name varchar(255) not null,
   source_type varchar(80),
+  file_name varchar(255),
+  storage_path text,
   author_name varchar(160),
+  notes text,
+  uploaded_at timestamptz not null default now(),
   metadata jsonb not null default '{}'::jsonb,
   created_at timestamptz not null default now()
 );
@@ -236,11 +240,19 @@ create index if not exists idx_question_banks_section_kind
 create table if not exists app_passages (
   id bigserial primary key,
   bank_id bigint not null references app_question_banks(id) on delete cascade,
+  source_id bigint references app_question_sources(id) on delete set null,
+  piece_number integer,
+  piece_title varchar(255),
   title varchar(255),
   passage_text text not null,
   source_name varchar(160),
   estimated_read_seconds integer,
   difficulty app_difficulty default 'medium',
+  raw_page_from integer,
+  raw_page_to integer,
+  parsing_confidence numeric(5,2),
+  needs_review boolean not null default false,
+  raw_payload jsonb not null default '{}'::jsonb,
   created_by uuid references app_users(id),
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
@@ -259,10 +271,15 @@ create table if not exists app_questions (
   section app_bank_section not null,
   question_type app_question_type not null,
   difficulty app_difficulty not null default 'medium',
+  question_order integer not null default 1,
   question_text text not null,
   explanation text,
   hint text,
   correct_choice_key varchar(8),
+  answer_source varchar(40),
+  answer_confidence numeric(5,2),
+  needs_review boolean not null default false,
+  raw_payload jsonb not null default '{}'::jsonb,
   usage_count bigint not null default 0,
   save_count bigint not null default 0,
   error_count bigint not null default 0,
@@ -295,6 +312,7 @@ create table if not exists app_question_choices (
   choice_text text not null,
   is_correct boolean not null default false,
   sort_order smallint not null default 1,
+  color_hint varchar(80),
   created_at timestamptz not null default now(),
   unique (question_id, choice_key)
 );
@@ -431,6 +449,27 @@ create table if not exists app_user_saved_searches (
 create index if not exists idx_saved_searches_user_recent
   on app_user_saved_searches (user_id, last_used_at desc);
 
+create table if not exists app_extraction_reviews (
+  id bigserial primary key,
+  source_id bigint references app_question_sources(id) on delete cascade,
+  passage_id bigint references app_passages(id) on delete cascade,
+  question_id bigint references app_questions(id) on delete cascade,
+  issue_type varchar(80) not null,
+  issue_details text,
+  confidence_score numeric(5,2),
+  status varchar(30) not null default 'pending',
+  review_notes text,
+  reviewed_by uuid references app_users(id) on delete set null,
+  reviewed_at timestamptz,
+  created_at timestamptz not null default now()
+);
+
+create index if not exists idx_extraction_reviews_status
+  on app_extraction_reviews (status, issue_type, created_at desc);
+
+create index if not exists idx_extraction_reviews_source
+  on app_extraction_reviews (source_id, passage_id, question_id);
+
 create or replace view app_bank_overview as
 select
   qb.id,
@@ -462,9 +501,33 @@ alter table if exists app_question_banks
   add column if not exists search_priority smallint not null default 1,
   add column if not exists estimated_total_size bigint not null default 0;
 
+alter table if exists app_question_sources
+  add column if not exists file_name varchar(255),
+  add column if not exists storage_path text,
+  add column if not exists notes text,
+  add column if not exists uploaded_at timestamptz not null default now();
+
+alter table if exists app_passages
+  add column if not exists source_id bigint references app_question_sources(id) on delete set null,
+  add column if not exists piece_number integer,
+  add column if not exists piece_title varchar(255),
+  add column if not exists raw_page_from integer,
+  add column if not exists raw_page_to integer,
+  add column if not exists parsing_confidence numeric(5,2),
+  add column if not exists needs_review boolean not null default false,
+  add column if not exists raw_payload jsonb not null default '{}'::jsonb;
+
 alter table if exists app_questions
   add column if not exists source_id bigint references app_question_sources(id) on delete set null,
-  add column if not exists import_batch_id bigint references app_import_batches(id) on delete set null;
+  add column if not exists import_batch_id bigint references app_import_batches(id) on delete set null,
+  add column if not exists question_order integer not null default 1,
+  add column if not exists answer_source varchar(40),
+  add column if not exists answer_confidence numeric(5,2),
+  add column if not exists needs_review boolean not null default false,
+  add column if not exists raw_payload jsonb not null default '{}'::jsonb;
+
+alter table if exists app_question_choices
+  add column if not exists color_hint varchar(80);
 
 do $$
 begin
@@ -511,6 +574,24 @@ begin
     alter table app_questions
       add constraint chk_app_questions_usage_nonnegative check (
         usage_count >= 0 and save_count >= 0 and error_count >= 0
+      );
+  end if;
+end
+$$;
+
+do $$
+begin
+  if not exists (select 1 from pg_constraint where conname = 'chk_app_passages_page_bounds') then
+    alter table app_passages
+      add constraint chk_app_passages_page_bounds check (
+        coalesce(raw_page_from, 0) >= 0 and coalesce(raw_page_to, 0) >= coalesce(raw_page_from, 0)
+      );
+  end if;
+
+  if not exists (select 1 from pg_constraint where conname = 'chk_app_questions_answer_confidence_range') then
+    alter table app_questions
+      add constraint chk_app_questions_answer_confidence_range check (
+        answer_confidence is null or (answer_confidence >= 0 and answer_confidence <= 1)
       );
   end if;
 end

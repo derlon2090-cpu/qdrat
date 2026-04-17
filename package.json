@@ -9,7 +9,11 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start"
+    "start": "next start",
+    "ingest": "node scripts/verbal-pipeline/ingest.mjs",
+    "parse": "node scripts/verbal-pipeline/parse.mjs",
+    "validate": "node scripts/verbal-pipeline/validate.mjs",
+    "publish": "node scripts/verbal-pipeline/publish.mjs"
   },
   "dependencies": {
     "@neondatabase/serverless": "^1.0.2",
@@ -22,6 +26,8 @@
     "framer-motion": "^12.38.0",
     "lucide-react": "^1.8.0",
     "next": "^16.2.3",
+    "pdf2json": "^4.0.3",
+    "pdfreader": "^3.0.8",
     "postcss": "^8.5.9",
     "react": "^19.2.5",
     "react-dom": "^19.2.5",
