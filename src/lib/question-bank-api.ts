@@ -1,6 +1,7 @@
 import { neon } from "@neondatabase/serverless";
 
 import { banks as fallbackBanks, questionSearchItems as fallbackQuestions } from "@/data/miyaar";
+import { fallbackReadingPassages } from "@/data/verbal-reading-document";
 
 export type BankItem = (typeof fallbackBanks)[number];
 
@@ -53,6 +54,15 @@ export type PassageDetail = {
   parsingConfidence: number;
   needsReview: boolean;
   questions: PassageQuestion[];
+};
+
+export type ReadingPassageSummary = {
+  id: number;
+  title: string;
+  sourceName: string | null;
+  pieceNumber: number | null;
+  questionCount: number;
+  href: string;
 };
 
 type SearchFilters = {
@@ -134,6 +144,13 @@ function mapDifficulty(value?: string | null) {
   }
 }
 
+function resolvePassageTitle(pieceTitle?: string | null, title?: string | null, pieceNumber?: number | null, id?: number) {
+  if (pieceTitle?.trim()) return pieceTitle.trim();
+  if (title?.trim()) return title.trim();
+  if (pieceNumber) return `قطعة ${pieceNumber}`;
+  return `قطعة ${id ?? ""}`.trim();
+}
+
 function mapBankType(section?: string | null, kind?: string | null) {
   if (kind === "passage_bank") return "قطع";
   if (section === "quantitative") return "كمي";
@@ -174,6 +191,52 @@ function mapBankTag(title: string) {
   if (title.includes("قطعة") || title.includes("القطع")) return "الفكرة العامة";
   if (title.includes("كمي")) return "تدريب أساسي";
   return "تدريب مباشر";
+}
+
+function buildFallbackPassageDetail(passageId: number): PassageDetail | null {
+  const passage = fallbackReadingPassages.find((item) => item.id === passageId);
+  if (!passage) return null;
+
+  return {
+    id: passage.id,
+    pieceNumber: passage.pieceNumber,
+    title: passage.title,
+    text: passage.passage,
+    difficulty: "متوسط",
+    sourceName: passage.source,
+    rawPageFrom: null,
+    rawPageTo: null,
+    parsingConfidence: 1,
+    needsReview: false,
+    questions: passage.questions.map((question, questionIndex) => ({
+      id: Number(`${passage.id}${questionIndex + 1}`),
+      order: questionIndex + 1,
+      text: question.text,
+      explanation: question.explanation,
+      correctChoiceKey: ["A", "B", "C", "D"][question.options.findIndex((option) => option === question.correctAnswer)] ?? null,
+      answerSource: "manual",
+      answerConfidence: 1,
+      needsReview: false,
+      choices: question.options.map((option, optionIndex) => ({
+        id: Number(`${passage.id}${questionIndex + 1}${optionIndex + 1}`),
+        key: ["A", "B", "C", "D"][optionIndex] ?? String(optionIndex + 1),
+        text: option,
+        isCorrect: option === question.correctAnswer,
+        sortOrder: optionIndex + 1,
+      })),
+    })),
+  };
+}
+
+function getFallbackReadingPassageSummaries(): ReadingPassageSummary[] {
+  return fallbackReadingPassages.map((passage) => ({
+    id: passage.id,
+    title: passage.title,
+    sourceName: passage.source,
+    pieceNumber: passage.pieceNumber,
+    questionCount: passage.questions.length,
+    href: `/exam?section=verbal_reading&passageId=${passage.id}`,
+  }));
 }
 
 function normalizeQuestionState(value?: string | null) {
@@ -264,7 +327,7 @@ async function loadDatabaseQuestions(): Promise<SearchItem[]> {
       difficulty: mapDifficulty(row.difficulty),
       skill: row.skill_name || (row.section === "quantitative" ? "التدريب الكمي" : "التدريب اللفظي"),
       state: "غير محلول",
-      href: row.passage_id ? `/passage/${row.passage_id}` : "/exam",
+      href: row.passage_id ? `/exam?section=verbal_reading&passageId=${row.passage_id}` : "/exam",
       kind: "question",
       title: row.question_text,
     })) satisfies SearchItem[];
@@ -340,7 +403,7 @@ async function searchDatabasePassages(query: string, limit: number): Promise<Sea
         difficulty: mapDifficulty(row.difficulty),
         skill: row.piece_number ? `قطعة ${row.piece_number}` : "قطعة كاملة",
         state: row.needs_review ? "قيد المراجعة" : "جاهزة",
-        href: `/passage/${row.id}`,
+        href: `/exam?section=verbal_reading&passageId=${row.id}`,
         kind: "passage",
         pieceNumber: row.piece_number,
         questionCount: Number(row.question_count ?? 0),
@@ -420,10 +483,63 @@ export async function getQuestionItems(filters: SearchFilters = {}) {
   return merged.slice(0, limit);
 }
 
+export async function getReadingPassageSummaries(): Promise<ReadingPassageSummary[]> {
+  const databaseUrl = getDatabaseUrl();
+  if (!databaseUrl) {
+    return getFallbackReadingPassageSummaries();
+  }
+
+  try {
+    const sql = neon(databaseUrl);
+    const rows = (await sql`
+      select
+        p.id,
+        p.piece_number,
+        case
+          when nullif(p.piece_title, '') is not null then p.piece_title
+          when nullif(p.title, '') is not null then p.title
+          when p.piece_number is not null then concat('قطعة ', p.piece_number::text)
+          else concat('قطعة ', p.id::text)
+        end as piece_title,
+        p.source_name,
+        count(q.id)::int as question_count
+      from app_passages p
+      inner join app_question_banks b on b.id = p.bank_id
+      left join app_questions q on q.passage_id = p.id and q.is_published = true
+      where b.is_published = true
+      group by p.id, p.piece_number, p.piece_title, p.title, p.source_name
+      order by p.piece_number asc nulls last, p.id asc
+    `) as Array<{
+      id: number;
+      piece_number: number | null;
+      piece_title: string;
+      source_name: string | null;
+      question_count: number;
+    }>;
+
+    const rowsWithQuestions = rows.filter((row) => Number(row.question_count ?? 0) > 0);
+
+    if (!rowsWithQuestions.length) {
+      return getFallbackReadingPassageSummaries();
+    }
+
+    return rowsWithQuestions.map((row) => ({
+      id: row.id,
+      title: row.piece_title,
+      sourceName: row.source_name,
+      pieceNumber: row.piece_number,
+      questionCount: Number(row.question_count ?? 0),
+      href: `/exam?section=verbal_reading&passageId=${row.id}`,
+    }));
+  } catch {
+    return getFallbackReadingPassageSummaries();
+  }
+}
+
 export async function getPassageDetail(passageId: number) {
   const databaseUrl = getDatabaseUrl();
   if (!databaseUrl) {
-    return null;
+    return buildFallbackPassageDetail(passageId);
   }
 
   try {
@@ -463,7 +579,7 @@ export async function getPassageDetail(passageId: number) {
     }>;
 
     const passage = passageRows[0];
-    if (!passage) return null;
+    if (!passage) return buildFallbackPassageDetail(passageId);
 
     const questionRows = (await sql`
       select
@@ -529,20 +645,20 @@ export async function getPassageDetail(passageId: number) {
       }),
     );
 
-    return {
-      id: passage.id,
-      pieceNumber: passage.piece_number,
-      title: passage.piece_title,
-      text: passage.passage_text,
-      difficulty: mapDifficulty(passage.difficulty),
-      sourceName: passage.source_name,
+      return {
+        id: passage.id,
+        pieceNumber: passage.piece_number,
+        title: resolvePassageTitle(passage.piece_title, passage.piece_title, passage.piece_number, passage.id),
+        text: passage.passage_text,
+        difficulty: mapDifficulty(passage.difficulty),
+        sourceName: passage.source_name,
       rawPageFrom: passage.raw_page_from,
       rawPageTo: passage.raw_page_to,
       parsingConfidence: Number(passage.parsing_confidence ?? 0),
       needsReview: passage.needs_review,
       questions,
-    } satisfies PassageDetail;
+      } satisfies PassageDetail;
   } catch {
-    return null;
+    return buildFallbackPassageDetail(passageId);
   }
 }
