@@ -6,12 +6,149 @@ import { useSearchParams } from "next/navigation";
 import { BookOpenText, Calculator, Search } from "lucide-react";
 
 import { Input } from "@/components/ui/input";
-import { EMPTY_SECTION_MESSAGE, quantitativeSections, verbalSections } from "@/data/manual-question-bank";
-import { getReadingKeywordDirectory } from "@/lib/question-bank-api";
+import {
+  EMPTY_SECTION_MESSAGE,
+  quantitativeSections,
+  verbalReadingKeywords,
+  verbalSections,
+} from "@/data/manual-question-bank";
+import { buildPublicApiUrl } from "@/lib/api-base";
+import type { VerbalPassageRecord } from "@/lib/verbal-passages";
 
 type TrackId = "verbal" | "quant";
+
 const MIN_VERBAL_SEARCH_CHARS = 3;
 const VERBAL_SEARCH_DEBOUNCE_MS = 350;
+
+type KeywordDirectoryItem = {
+  id: string;
+  title: string;
+  href: string | null;
+  excerpt: string;
+  status: "linked" | "pending";
+  questionCount: number;
+  passageText: string | null;
+  questionTitles: string[];
+};
+
+function normalizeArabic(value: string) {
+  return value
+    .toLowerCase()
+    .replace(/[أإآ]/g, "ا")
+    .replace(/ة/g, "ه")
+    .replace(/ى/g, "ي")
+    .replace(/[ً-ْ]/g, "")
+    .replace(/[^\p{L}\p{N}\s]/gu, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function fuzzyMatch(text: string, query: string) {
+  const normalizedText = normalizeArabic(text);
+  const normalizedQuery = normalizeArabic(query);
+
+  if (!normalizedQuery) return true;
+  if (normalizedText.includes(normalizedQuery)) return true;
+
+  let pointer = 0;
+  for (const character of normalizedText) {
+    if (character === normalizedQuery[pointer]) pointer += 1;
+    if (pointer === normalizedQuery.length) return true;
+  }
+
+  return false;
+}
+
+function createSnippet(text: string, query: string, maxLength = 170) {
+  const cleanText = text.replace(/\s+/g, " ").trim();
+  if (!cleanText) return "";
+
+  if (!query.trim()) {
+    return cleanText.length > maxLength ? `${cleanText.slice(0, maxLength).trim()}...` : cleanText;
+  }
+
+  const normalizedText = normalizeArabic(cleanText);
+  const normalizedQuery = normalizeArabic(query);
+  const matchIndex = normalizedText.indexOf(normalizedQuery);
+
+  if (matchIndex === -1) {
+    return cleanText.length > maxLength ? `${cleanText.slice(0, maxLength).trim()}...` : cleanText;
+  }
+
+  const start = Math.max(matchIndex - 36, 0);
+  const end = Math.min(matchIndex + normalizedQuery.length + 90, cleanText.length);
+  const prefix = start > 0 ? "..." : "";
+  const suffix = end < cleanText.length ? "..." : "";
+
+  return `${prefix}${cleanText.slice(start, end).trim()}${suffix}`;
+}
+
+function resolveKeywordPassage(
+  keyword: (typeof verbalReadingKeywords)[number],
+  passages: VerbalPassageRecord[],
+) {
+  const keywordTerms = [keyword.title, ...(keyword.aliases ?? [])]
+    .map(normalizeArabic)
+    .filter(Boolean);
+
+  const rankedMatches = passages
+    .map((passage) => {
+      const passageTerms = [
+        passage.title,
+        passage.slug.replace(/-/g, " "),
+        ...(passage.keywords ?? []),
+      ]
+        .map(normalizeArabic)
+        .filter(Boolean);
+
+      let score = 0;
+
+      for (const keywordTerm of keywordTerms) {
+        if (!keywordTerm) continue;
+
+        if (passageTerms.some((term) => term === keywordTerm)) {
+          score = Math.max(score, 120);
+          continue;
+        }
+
+        if (passageTerms.some((term) => term.includes(keywordTerm) || keywordTerm.includes(term))) {
+          score = Math.max(score, 95);
+          continue;
+        }
+
+        if (fuzzyMatch([passage.title, ...passage.keywords].join(" "), keyword.title)) {
+          score = Math.max(score, 70);
+        }
+      }
+
+      return { passage, score };
+    })
+    .filter((item) => item.score > 0)
+    .sort((left, right) => right.score - left.score);
+
+  return rankedMatches[0]?.passage ?? null;
+}
+
+function mapKeywordToDirectoryItem(
+  keyword: (typeof verbalReadingKeywords)[number],
+  passages: VerbalPassageRecord[],
+  query = "",
+): KeywordDirectoryItem {
+  const linkedPassage = resolveKeywordPassage(keyword, passages);
+
+  return {
+    id: keyword.id,
+    title: keyword.title,
+    href: linkedPassage ? `/verbal/reading?passage=${encodeURIComponent(linkedPassage.slug)}` : null,
+    excerpt: linkedPassage
+      ? createSnippet(linkedPassage.passageText, query || keyword.title)
+      : "عنوان محفوظ داخل دليل القطع اللفظية، وسيتم ربط نص القطعة وأسئلتها به عند إضافته يدويًا.",
+    status: linkedPassage ? "linked" : "pending",
+    questionCount: linkedPassage?.questions.length ?? 0,
+    passageText: linkedPassage?.passageText ?? null,
+    questionTitles: linkedPassage?.questions.map((question) => question.questionText) ?? [],
+  };
+}
 
 function EmptySectionCard({
   title,
@@ -54,6 +191,8 @@ export function QuestionBankOrganizer() {
   const [track, setTrack] = useState<TrackId>(searchParams.get("track") === "quant" ? "quant" : "verbal");
   const [keywordQuery, setKeywordQuery] = useState(searchParams.get("keyword") ?? "");
   const [debouncedKeywordQuery, setDebouncedKeywordQuery] = useState(searchParams.get("keyword") ?? "");
+  const [verbalPassages, setVerbalPassages] = useState<VerbalPassageRecord[]>([]);
+  const [isLoadingVerbalPassages, setIsLoadingVerbalPassages] = useState(false);
 
   useEffect(() => {
     setTrack(searchParams.get("track") === "quant" ? "quant" : "verbal");
@@ -69,6 +208,39 @@ export function QuestionBankOrganizer() {
     return () => window.clearTimeout(timeoutId);
   }, [keywordQuery]);
 
+  useEffect(() => {
+    if (track !== "verbal") return;
+
+    const controller = new AbortController();
+    setIsLoadingVerbalPassages(true);
+
+    fetch(buildPublicApiUrl("/api/verbal-passages?status=published&limit=500"), {
+      cache: "no-store",
+      signal: controller.signal,
+    })
+      .then(async (response) => {
+        if (!response.ok) {
+          throw new Error("تعذر تحميل القطع اللفظية المضافة.");
+        }
+
+        return response.json() as Promise<{ items?: VerbalPassageRecord[] }>;
+      })
+      .then((payload) => {
+        setVerbalPassages(payload.items ?? []);
+      })
+      .catch(() => {
+        if (controller.signal.aborted) return;
+        setVerbalPassages([]);
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) {
+          setIsLoadingVerbalPassages(false);
+        }
+      });
+
+    return () => controller.abort();
+  }, [track]);
+
   const currentSections = useMemo(
     () => (track === "verbal" ? verbalSections : quantitativeSections),
     [track],
@@ -83,12 +255,11 @@ export function QuestionBankOrganizer() {
 
   const verbalKeywordResults = useMemo(
     () =>
-      getReadingKeywordDirectory({
-        query: debouncedKeywordQuery,
-        limit: 18,
-        minQueryLength: MIN_VERBAL_SEARCH_CHARS,
-      }),
-    [debouncedKeywordQuery],
+      verbalReadingKeywords
+        .filter((keyword) => !debouncedKeywordQuery || fuzzyMatch([keyword.title, ...(keyword.aliases ?? [])].join(" "), debouncedKeywordQuery))
+        .map((keyword) => mapKeywordToDirectoryItem(keyword, verbalPassages, debouncedKeywordQuery))
+        .slice(0, 18),
+    [debouncedKeywordQuery, verbalPassages],
   );
 
   return (
@@ -115,8 +286,7 @@ export function QuestionBankOrganizer() {
           {track === "verbal" ? "القسم اللفظي" : "القسم الكمي"}
         </div>
         <p className="mt-3 max-w-3xl text-sm leading-8 text-slate-600">
-          {EMPTY_SECTION_MESSAGE}. تم تجهيز النظام الآن ليقرأ من بيانات يدوية ثابتة فقط، وعند إضافة أي قسم أو قطعة
-          جديدة ستظهر مباشرة بدون PDF أو استخراج تلقائي.
+          {EMPTY_SECTION_MESSAGE}. تم تجهيز النظام الآن ليقرأ من بيانات يدوية ثابتة فقط، وعند إضافة أي قسم أو قطعة جديدة ستظهر مباشرة بدون PDF أو استخراج تلقائي.
         </p>
 
         {track === "verbal" ? (
@@ -125,12 +295,11 @@ export function QuestionBankOrganizer() {
               <div>
                 <div className="display-font text-xl font-bold text-slate-950">بحث القطع اللفظية بالكلمات المفتاحية</div>
                 <p className="mt-2 max-w-2xl text-sm leading-7 text-slate-500">
-                  أدخل 3 أحرف فأكثر من اسم القطعة أو من كلمة مفتاحية مرتبطة بها. عند ربط القطعة بنصها وأسئلتها ستظهر
-                  تفاصيلها داخل النتيجة نفسها وتفتح مباشرة من نفس البطاقة.
+                  أدخل 3 أحرف فأكثر من اسم القطعة أو من كلمة مفتاحية مرتبطة بها. القطع المضافة فعليًا تُربط تلقائيًا هنا وتُفتح مباشرة من نفس البطاقة.
                 </p>
               </div>
               <div className="rounded-full bg-[#123B7A]/8 px-4 py-2 text-sm font-semibold text-[#123B7A]">
-                {getReadingKeywordDirectory({ limit: 200 }).length} عنوانًا مسجلًا
+                {verbalReadingKeywords.length} عنوانًا مسجلًا
               </div>
             </div>
 
@@ -152,9 +321,13 @@ export function QuestionBankOrganizer() {
               <div className="rounded-[1.5rem] border border-dashed border-amber-200 bg-amber-50/70 p-6 text-center text-sm text-amber-800">
                 لا تظهر النتائج قبل الوصول إلى 3 أحرف. أكمل الكتابة ليصبح البحث أدق وأسرع.
               </div>
+            ) : isLoadingVerbalPassages ? (
+              <div className="rounded-[1.5rem] border border-dashed border-slate-300 bg-slate-50/80 p-6 text-center text-sm text-slate-500">
+                جارٍ تحميل القطع المضافة وربطها بالعناوين المفتاحية...
+              </div>
             ) : isDebouncingKeywordQuery ? (
               <div className="rounded-[1.5rem] border border-dashed border-slate-300 bg-slate-50/80 p-6 text-center text-sm text-slate-500">
-                جاري البحث في عناوين القطع والكلمات المفتاحية...
+                جارٍ البحث في عناوين القطع والكلمات المفتاحية...
               </div>
             ) : verbalKeywordResults.length ? (
               <div className="grid gap-3 lg:grid-cols-2">
