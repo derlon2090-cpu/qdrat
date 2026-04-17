@@ -731,3 +731,201 @@ insert into app_verbal_passage_questions (
   passage_id, question_order, question_text, option_a, option_b, option_c, option_d, correct_option, explanation
 )
 select id, 1, 'ما الذي يمكن حذفه من النص دون أن يتغير المعنى؟', 'إن - في', 'لم - إلا', 'حصلوا - على', 'يستحقون - ما', 'A', 'لأن حذف (إن) و(في) لا يغيّر المعنى الأساسي للجملة، بينما حذف غيرهما يخل بالبنية أو المعنى.' from upserted;
+
+with upserted as (
+  insert into app_verbal_passages (
+    title,
+    normalized_title,
+    keywords,
+    keyword_search,
+    passage_text,
+    normalized_passage_text,
+    title_hash,
+    passage_hash,
+    status,
+    external_source_id,
+    version
+  )
+  values (
+    'قطعة المجموعة الشمسية',
+    'قطعه المجموعه الشمسيه',
+    array['قطعة المجموعة الشمسية', 'المجموعة الشمسية'],
+    'قطعه المجموعه الشمسيه المجموعه الشمسيه',
+    $$المجموعة الشمسية هي النظام الكوكبي الذي يتكون من الشمس وجميع ما يدور حولها من أجرام، بما في ذلك الكواكب والأقمار والكويكبات والمذنبات. الشمس هي النجم الذي يقع في مركز هذا النظام، وهي التي تمنح الضوء والحرارة للأرض مما يجعل الحياة ممكنة.
+
+تدور الكواكب حول الشمس في مدارات محددة، وتختلف في أحجامها وخصائصها، وبعضها صخري مثل الأرض، وبعضها غازي مثل المشتري. وتعد الشمس أكبر جرم في المجموعة الشمسية.$$,
+    $$المجموعه الشمسيه هي النظام الكوكبي الذي يتكون من الشمس وجميع ما يدور حولها من اجرام بما في ذلك الكواكب والاقمار والكويكبات والمذنبات الشمس هي النجم الذي يقع في مركز هذا النظام وهي التي تمنح الضوء والحراره للارض مما يجعل الحياه ممكنه تدور الكواكب حول الشمس في مدارات محدده وتختلف في احجامها وخصائصها وبعضها صخري مثل الارض وبعضها غازي مثل المشتري وتعد الشمس اكبر جرم في المجموعه الشمسيه$$,
+    encode(digest('قطعه المجموعه الشمسيه', 'sha256'), 'hex'),
+    encode(digest($$المجموعه الشمسيه هي النظام الكوكبي الذي يتكون من الشمس وجميع ما يدور حولها من اجرام بما في ذلك الكواكب والاقمار والكويكبات والمذنبات الشمس هي النجم الذي يقع في مركز هذا النظام وهي التي تمنح الضوء والحراره للارض مما يجعل الحياه ممكنه تدور الكواكب حول الشمس في مدارات محدده وتختلف في احجامها وخصائصها وبعضها صخري مثل الارض وبعضها غازي مثل المشتري وتعد الشمس اكبر جرم في المجموعه الشمسيه$$, 'sha256'), 'hex'),
+    'published',
+    'seed-solar-system',
+    1
+  )
+  on conflict (title_hash, passage_hash) do update set
+    keywords = excluded.keywords,
+    keyword_search = excluded.keyword_search,
+    status = excluded.status,
+    external_source_id = excluded.external_source_id,
+    version = excluded.version,
+    updated_at = now()
+  returning id
+),
+deleted as (
+  delete from app_verbal_passage_questions where passage_id in (select id from upserted)
+)
+insert into app_verbal_passage_questions (
+  passage_id, question_order, question_text, option_a, option_b, option_c, option_d, correct_option, explanation
+)
+select id, 1, '(89) الحلقات التي تحيط بكوكب زحل تتكون من:', 'الذهب', 'الماس', 'الجليد والغبار', 'الصخور', 'C', 'لأن المعلومة العلمية المعروفة أن حلقات زحل تتكون أساسًا من قطع جليدية وغبار وصخور دقيقة.' from upserted
+union all
+select id, 2, '(90) يُستنتج من النص أن النجم:', 'ينبثق من مصدر محدد', 'أصغر من الكوكب', 'ينتج حرارة', 'يدور حول الكواكب', 'C', 'لأن النص وصف الشمس بأنها تمنح الأرض الضوء والحرارة، وهذا يدل على أن النجم ينتج حرارة.' from upserted
+union all
+select id, 3, '(91) سبب كون المريخ باللون الأحمر يرجع إلى:', 'بعده عن الشمس', 'ارتفاع حرارته', 'تعدد أقماره', 'وجود المعادن الغنية بالحديد فيه', 'D', 'لأن اللون الأحمر للمريخ يرجع إلى أكاسيد الحديد المنتشرة على سطحه.' from upserted;
+
+with upserted as (
+  insert into app_verbal_passages (
+    title,
+    normalized_title,
+    keywords,
+    keyword_search,
+    passage_text,
+    normalized_passage_text,
+    title_hash,
+    passage_hash,
+    status,
+    external_source_id,
+    version
+  )
+  values (
+    'قطعة التسامح',
+    'قطعه التسامح',
+    array['قطعة التسامح', 'التسامح'],
+    'قطعه التسامح التسامح',
+    $$لا تختلف لكلام الناس وتحلل كلامهم وتشغل وقتك في التفكير بالانتقام بل اعفُ لهم وتجاهلهم.$$,
+    $$لا تختلف لكلام الناس وتحلل كلامهم وتشغل وقتك في التفكير بالانتقام بل اعف لهم وتجاهلهم$$,
+    encode(digest('قطعه التسامح', 'sha256'), 'hex'),
+    encode(digest($$لا تختلف لكلام الناس وتحلل كلامهم وتشغل وقتك في التفكير بالانتقام بل اعف لهم وتجاهلهم$$, 'sha256'), 'hex'),
+    'published',
+    'seed-tolerance',
+    1
+  )
+  on conflict (title_hash, passage_hash) do update set
+    keywords = excluded.keywords,
+    keyword_search = excluded.keyword_search,
+    status = excluded.status,
+    external_source_id = excluded.external_source_id,
+    version = excluded.version,
+    updated_at = now()
+  returning id
+),
+deleted as (
+  delete from app_verbal_passage_questions where passage_id in (select id from upserted)
+)
+insert into app_verbal_passage_questions (
+  passage_id, question_order, question_text, option_a, option_b, option_c, option_d, correct_option, explanation
+)
+select id, 1, '(97) يُستفاد من عموم النص:', 'التسامح', 'القوة', 'الصراع', 'العداء', 'A', 'لأن النص يدعو إلى العفو والتجاهل وترك التفكير بالانتقام، وهذه كلها معاني التسامح.' from upserted;
+
+with upserted as (
+  insert into app_verbal_passages (
+    title,
+    normalized_title,
+    keywords,
+    keyword_search,
+    passage_text,
+    normalized_passage_text,
+    title_hash,
+    passage_hash,
+    status,
+    external_source_id,
+    version
+  )
+  values (
+    'قطعة الطالب والمذاكرة',
+    'قطعه الطالب والمذاكره',
+    array['قطعة الطالب والمذاكرة', 'الطالب والمذاكرة'],
+    'قطعه الطالب والمذاكره الطالب والمذاكره',
+    $$حذر الشاعر نفسه من كثرة من يدرس، ولكن معترفًا بأهمية المذاكرة، وقد حثه في النوم العميق، وأن الطالب الجيد لا يشغله شيء عن دراسته، بحيث ينفذ بين كتبه وأوراقه، ويتنقل من حروف الأدب إلى أرقام الرياضيات والعلوم، فيقرأ أثناء الليل وأطراف النهار، كما يدخل إلى علوم الفلك والطبيعة والكيمياء، ليصبح بعد ذلك قادرًا على اجتياز الاختبار.
+
+ولكنه نبه إلى أن النجاح الحقيقي لا يكون بالحفظ فقط، بل بالفهم، وأن من يعتمد على الحفظ فقط قد ينجح في الاختبار لكنه لا يستفيد.$$,
+    $$حذر الشاعر نفسه من كثره من يدرس ولكن معترفا باهميه المذاكره وقد حثه في النوم العميق وان الطالب الجيد لا يشغله شيء عن دراسته بحيث ينفذ بين كتبه واوراقه ويتنقل من حروف الادب الى ارقام الرياضيات والعلوم فيقرا اثناء الليل واطراف النهار كما يدخل الى علوم الفلك والطبيعه والكيمياء ليصبح بعد ذلك قادرا على اجتياز الاختبار ولكنه نبه الى ان النجاح الحقيقي لا يكون بالحفظ فقط بل بالفهم وان من يعتمد على الحفظ فقط قد ينجح في الاختبار لكنه لا يستفيد$$,
+    encode(digest('قطعه الطالب والمذاكره', 'sha256'), 'hex'),
+    encode(digest($$حذر الشاعر نفسه من كثره من يدرس ولكن معترفا باهميه المذاكره وقد حثه في النوم العميق وان الطالب الجيد لا يشغله شيء عن دراسته بحيث ينفذ بين كتبه واوراقه ويتنقل من حروف الادب الى ارقام الرياضيات والعلوم فيقرا اثناء الليل واطراف النهار كما يدخل الى علوم الفلك والطبيعه والكيمياء ليصبح بعد ذلك قادرا على اجتياز الاختبار ولكنه نبه الى ان النجاح الحقيقي لا يكون بالحفظ فقط بل بالفهم وان من يعتمد على الحفظ فقط قد ينجح في الاختبار لكنه لا يستفيد$$, 'sha256'), 'hex'),
+    'published',
+    'seed-student-study',
+    1
+  )
+  on conflict (title_hash, passage_hash) do update set
+    keywords = excluded.keywords,
+    keyword_search = excluded.keyword_search,
+    status = excluded.status,
+    external_source_id = excluded.external_source_id,
+    version = excluded.version,
+    updated_at = now()
+  returning id
+),
+deleted as (
+  delete from app_verbal_passage_questions where passage_id in (select id from upserted)
+)
+insert into app_verbal_passage_questions (
+  passage_id, question_order, question_text, option_a, option_b, option_c, option_d, correct_option, explanation
+)
+select id, 1, '(83) كان هدف الشاب من الدراسة يجد واجتهاد:', 'النجاح في الاختبارات فقط', 'الحصول على العلم والشهادة معًا', 'إظهار قدراته في الحفظ', 'الاستفادة من العلوم المتنوعة', 'D', 'لأن النص يصور الطالب متنقلاً بين علوم كثيرة ليستفيد منها، لا ليحفظ فقط.' from upserted
+union all
+select id, 2, '(84) الاستفهام الوارد بنهاية النص غرضه:', 'التعجب', 'الإنكار', 'الاستنكار', 'الإثبات', 'C', 'لأن نهاية النص تنتقد الاعتماد على الحفظ وحده وتستنكر هذا المسلك.' from upserted
+union all
+select id, 3, '(85) (وحظ في النوم العميق) الكلمة التي يمكن حذفها دون تغيير معنى الجملة:', 'الصناعي', 'حظ', 'النوم', 'العميق', 'B', 'لأن حذف كلمة حظ لا يغيّر أصل المقصود من العبارة، بخلاف الكلمات الأخرى.' from upserted
+union all
+select id, 4, '(86) وفقًا للنص فإن معاناة الطالب تتمثل في:', 'ملل فترة الدراسة', 'كثرة المفردات وقلة جدولها اليومي', 'التوازن بينه وبين المعلم', 'التعب', 'B', 'لأن النص يصف انتقاله بين علوم ومجالات متعددة، وهو ما يفهم منه كثرة المواد والمفردات المطلوبة.' from upserted
+union all
+select id, 5, '(87) الفكرة العامة للنص هي:', 'المناهج الدراسية', 'معاناة المعلمين', 'كسل الطلاب', 'رفع التعليم الفردي', 'A', 'لأن النص يدور حول الدراسة والمذاكرة والانتقال بين العلوم وأهمية الفهم في التعلم.' from upserted
+union all
+select id, 6, '(88) يُفهم من النص أن الطالب:', 'شجرة سيئة المنظر', 'شجرة قوية', 'شجرة ضعيفة', 'شجرة مثمرة', 'D', 'لأن الطالب المجتهد الذي يجمع بين الفهم والعلوم المتنوعة تكون ثمرة مذاكرته نافعة ومثمرة.' from upserted;
+
+with upserted as (
+  insert into app_verbal_passages (
+    title,
+    normalized_title,
+    keywords,
+    keyword_search,
+    passage_text,
+    normalized_passage_text,
+    title_hash,
+    passage_hash,
+    status,
+    external_source_id,
+    version
+  )
+  values (
+    'قطعة الليل والنهار',
+    'قطعه الليل والنهار',
+    array['قطعة الليل والنهار', 'الليل والنهار'],
+    'قطعه الليل والنهار الليل والنهار',
+    $$قطعة الليل والنهار.$$,
+    $$قطعه الليل والنهار$$,
+    encode(digest('قطعه الليل والنهار', 'sha256'), 'hex'),
+    encode(digest($$قطعه الليل والنهار$$, 'sha256'), 'hex'),
+    'published',
+    'seed-day-night',
+    1
+  )
+  on conflict (title_hash, passage_hash) do update set
+    keywords = excluded.keywords,
+    keyword_search = excluded.keyword_search,
+    status = excluded.status,
+    external_source_id = excluded.external_source_id,
+    version = excluded.version,
+    updated_at = now()
+  returning id
+),
+deleted as (
+  delete from app_verbal_passage_questions where passage_id in (select id from upserted)
+)
+insert into app_verbal_passage_questions (
+  passage_id, question_order, question_text, option_a, option_b, option_c, option_d, correct_option, explanation
+)
+select id, 1, '(79) أدق وصف لنظرية دراسة:', 'وهم', 'اعتقاد', 'فرضية تحقق', 'ظن', 'C', 'لأن الخيار الأدق علميًا هو أنها فرضية قابلة للتحقق والدراسة.' from upserted
+union all
+select id, 2, '(80) طول النهار يشعر بـ ... التعرض للضوء يسبب:', 'الحزن', 'الكآبة', 'الإضاءة', 'الانطفاء', 'C', 'لأن التعرض للضوء يقترن بالإضاءة والإنارة لا بالحزن أو الانطفاء.' from upserted
+union all
+select id, 3, '(81) يُستنتج أن حجب أشعة الشمس في الشتاء سببها:', 'قصر النهار', 'البرودة', 'كثرة الأمطار', 'الغيوم', 'D', 'لأن الغيوم هي التي تحجب أشعة الشمس مباشرة.' from upserted;

@@ -165,6 +165,14 @@ const verbalReadingKeywordTitles = [
   "قطعة التمركز",
   "قطعة قصيرة",
   "النص القصير",
+  "المجموعة الشمسية",
+  "قطعة المجموعة الشمسية",
+  "التسامح",
+  "قطعة التسامح",
+  "الطالب والمذاكرة",
+  "قطعة الطالب والمذاكرة",
+  "الليل والنهار",
+  "قطعة الليل والنهار",
 ];
 
 export const verbalReadingKeywords: ManualReadingKeyword[] = Array.from(
