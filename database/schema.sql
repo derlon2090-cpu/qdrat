@@ -814,3 +814,70 @@ for each row execute function set_updated_at();
 drop trigger if exists trg_app_verbal_passage_questions_updated_at on app_verbal_passage_questions;
 create trigger trg_app_verbal_passage_questions_updated_at before update on app_verbal_passage_questions
 for each row execute function set_updated_at();
+
+create or replace view app_user_accounts_overview as
+select
+  u.id as user_id,
+  u.full_name,
+  case
+    when u.email like '%@miyaar.local' then null
+    else u.email
+  end as email,
+  u.phone,
+  u.role,
+  u.is_active,
+  u.last_login_at,
+  u.created_at as user_created_at,
+  u.updated_at as user_updated_at,
+  sp.target_score,
+  sp.exam_date,
+  sp.daily_minutes,
+  sp.current_level,
+  sp.verbal_score,
+  sp.quantitative_score,
+  sp.overall_score,
+  subscription.plan_name,
+  subscription.subscription_status,
+  subscription.subscription_starts_at,
+  subscription.subscription_ends_at,
+  coalesce(session_stats.active_sessions, 0) as active_sessions,
+  session_stats.last_seen_at as last_session_seen_at,
+  coalesce(mistake_stats.total_mistakes, 0) as total_mistakes,
+  coalesce(mistake_stats.quantitative_mistakes, 0) as quantitative_mistakes,
+  coalesce(mistake_stats.verbal_mistakes, 0) as verbal_mistakes
+from app_users u
+left join app_student_profiles sp on sp.user_id = u.id
+left join lateral (
+  select
+    plans.plan_name,
+    subscriptions.status as subscription_status,
+    subscriptions.starts_at as subscription_starts_at,
+    subscriptions.ends_at as subscription_ends_at
+  from app_user_subscriptions subscriptions
+  inner join app_subscription_plans plans on plans.id = subscriptions.plan_id
+  where subscriptions.user_id = u.id
+  order by
+    case
+      when subscriptions.status in ('active', 'trial') then 0
+      else 1
+    end,
+    coalesce(subscriptions.ends_at, subscriptions.starts_at) desc nulls last,
+    subscriptions.created_at desc
+  limit 1
+) subscription on true
+left join lateral (
+  select
+    count(*)::integer as active_sessions,
+    max(last_seen_at) as last_seen_at
+  from app_user_sessions sessions
+  where sessions.user_id = u.id
+    and sessions.expires_at > now()
+) session_stats on true
+left join lateral (
+  select
+    count(*)::integer as total_mistakes,
+    count(*) filter (where section = 'quantitative')::integer as quantitative_mistakes,
+    count(*) filter (where section = 'verbal')::integer as verbal_mistakes
+  from app_user_mistakes mistakes
+  where mistakes.user_id = u.id
+) mistake_stats on true;

@@ -332,7 +332,7 @@ export function QuestionBankOrganizer() {
           : [],
     [track],
   );
-  const showMistakesCard = authStatus === "authenticated";
+  const showMistakesCard = true;
 
   const normalizedKeywordLength = useMemo(
     () => keywordQuery.replace(/\s+/g, "").length,

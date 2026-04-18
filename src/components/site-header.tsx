@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Menu, X } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { MiyaarLogo } from "@/components/miyaar-logo";
 import { HeaderAuthControls } from "@/components/header-auth-controls";
@@ -11,6 +11,27 @@ import { SearchTrigger } from "@/components/search-trigger";
 import { Button } from "@/components/ui/button";
 import { productSidebarItems, topNavItems } from "@/lib/site-nav";
 import { cn } from "@/lib/utils";
+
+function isNavItemActive(pathname: string, currentSearch: string, href: string) {
+  if (!href.includes("?")) {
+    return pathname === href;
+  }
+
+  const [targetPath, queryString] = href.split("?");
+  if (pathname !== targetPath) {
+    return false;
+  }
+
+  const params = new URLSearchParams(queryString);
+  const currentParams = new URLSearchParams(currentSearch);
+  for (const [key, value] of params.entries()) {
+    if (currentParams.get(key) !== value) {
+      return false;
+    }
+  }
+
+  return true;
+}
 
 export function SiteHeader({
   ctaHref = "/diagnostic",
@@ -23,6 +44,11 @@ export function SiteHeader({
 }) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
+  const [currentSearch, setCurrentSearch] = useState("");
+
+  useEffect(() => {
+    setCurrentSearch(window.location.search);
+  }, []);
 
   const mobileItems = useMemo(
     () =>
@@ -88,7 +114,7 @@ export function SiteHeader({
             <div className="space-y-2">
               {mobileItems.map((item) => {
                 const Icon = item.icon;
-                const active = pathname === item.href;
+                const active = isNavItemActive(pathname, currentSearch, item.href);
 
                 return (
                   <Link

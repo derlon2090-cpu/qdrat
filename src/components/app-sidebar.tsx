@@ -2,12 +2,39 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
 
 import { productSidebarItems } from "@/lib/site-nav";
 import { cn } from "@/lib/utils";
 
+function isNavItemActive(pathname: string, currentSearch: string, href: string) {
+  if (!href.includes("?")) {
+    return pathname === href;
+  }
+
+  const [targetPath, queryString] = href.split("?");
+  if (pathname !== targetPath) {
+    return false;
+  }
+
+  const params = new URLSearchParams(queryString);
+  const currentParams = new URLSearchParams(currentSearch);
+  for (const [key, value] of params.entries()) {
+    if (currentParams.get(key) !== value) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
 export function AppSidebar() {
   const pathname = usePathname();
+  const [currentSearch, setCurrentSearch] = useState("");
+
+  useEffect(() => {
+    setCurrentSearch(window.location.search);
+  }, []);
 
   return (
     <aside className="hidden xl:block xl:w-[280px]">
@@ -20,7 +47,7 @@ export function AppSidebar() {
         <div className="space-y-2">
           {productSidebarItems.map((item) => {
             const Icon = item.icon;
-            const active = pathname === item.href;
+            const active = isNavItemActive(pathname, currentSearch, item.href);
 
             return (
               <Link key={item.href} href={item.href} className={cn("nav-item", active && "nav-item-active")}>

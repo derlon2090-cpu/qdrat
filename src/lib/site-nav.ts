@@ -1,5 +1,6 @@
 import type { LucideIcon } from "lucide-react";
 import {
+  AlertTriangle,
   BookCopy,
   BriefcaseBusiness,
   ClipboardList,
@@ -91,6 +92,14 @@ export const productSidebarItems: SiteNavItem[] = [
     description: "تدريب وبحث",
   },
   {
+    href: "/question-bank?track=mistakes",
+    label: "الأخطاء",
+    icon: AlertTriangle,
+    accent: "text-[#dc2626]",
+    iconWrap: "bg-[#fff1f2]",
+    description: "أسئلتك الخاطئة",
+  },
+  {
     href: "/updates",
     label: "إصدارات",
     icon: BookCopy,
@@ -123,4 +132,3 @@ export const productSidebarItems: SiteNavItem[] = [
     description: "الثقة والتحويل",
   },
 ];
-
