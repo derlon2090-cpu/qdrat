@@ -10,10 +10,9 @@ import { QuestionBankMistakesPanel } from "@/components/question-bank-mistakes-p
 import { Input } from "@/components/ui/input";
 import {
   EMPTY_SECTION_MESSAGE,
-  quantitativeSections,
   verbalReadingKeywords,
-  verbalSections,
 } from "@/data/manual-question-bank";
+import { quantitativeSections, verbalSections } from "@/data/question-bank-sections";
 import { useAuthSession } from "@/hooks/use-auth-session";
 import { buildPublicApiUrl } from "@/lib/api-base";
 import type { VerbalPassageQuestionRecord, VerbalPassageRecord } from "@/lib/verbal-passages";
@@ -355,14 +354,14 @@ export function QuestionBankOrganizer() {
       <div className={`grid gap-4 ${showMistakesCard ? "md:grid-cols-3" : "md:grid-cols-2"}`}>
         <EmptySectionCard
           title="اللفظي"
-          description="تم تفريغ الأقسام القديمة، وسيتم إدخال القطع والأسئلة اللفظية يدويًا واحدة واحدة مع دعم البحث بالكلمات المفتاحية."
+          description="الأقسام اللفظية أصبحت مرتبة الآن إلى قطع لفظي، تناظر لفظي، إكمال الجمل، الخطأ السياقي، والمفردة الشاذة."
           active={track === "verbal"}
           onClick={() => setTrack("verbal")}
           icon={BookOpenText}
         />
         <EmptySectionCard
           title="الكمي"
-          description="تم تفريغ القسم الكمي بالكامل، وسيتم إدخال الأبواب والأسئلة الجديدة يدويًا لاحقًا."
+          description="القسم الكمي ما زال مهيأ للإضافة اليدوية اللاحقة، وسيظهر هنا فور إدخال الأبواب والأسئلة الجديدة."
           active={track === "quant"}
           onClick={() => setTrack("quant")}
           icon={Calculator}
@@ -385,7 +384,9 @@ export function QuestionBankOrganizer() {
         <p className="mt-3 max-w-3xl text-sm leading-8 text-slate-600">
           {track === "mistakes"
             ? "كل سؤال تخطئ فيه وأنت مسجل الدخول يُحفظ هنا داخل حسابك فقط، ويختفي تلقائيًا بعد 5 حلول صحيحة أو عند حذفه يدويًا."
-            : `${EMPTY_SECTION_MESSAGE}. تم تجهيز النظام الآن ليقرأ من بيانات يدوية ثابتة فقط، وعند إضافة أي قسم أو قطعة جديدة ستظهر مباشرة بدون PDF أو استخراج تلقائي.`}
+            : track === "verbal"
+              ? "رتبنا بنك اللفظي إلى مسارات واضحة: القطع اللفظية بالبحث بالكلمات المفتاحية، ثم أقسام التدريب اللفظي المتنوعة المبنية من الأسئلة التي أرسلتها."
+              : `${EMPTY_SECTION_MESSAGE}. النظام مهيأ الآن للإضافة اليدوية المنظمة، وعند إدخال أي باب أو سؤال جديد سيظهر مباشرة داخل هذا القسم.`}
         </p>
 
         {track === "mistakes" ? (
@@ -530,7 +531,7 @@ export function QuestionBankOrganizer() {
         ) : track !== "mistakes" ? (
           <div className="mt-6 rounded-[1.7rem] border border-dashed border-slate-300 bg-white/70 p-8 text-center text-sm text-slate-500">
             {track === "verbal"
-              ? "لا يوجد محتوى أسئلة ظاهر الآن داخل القسم اللفظي، لكن دليل العناوين الجاهز للبحث أصبح متاحًا بالأعلى."
+              ? "إذا لم تختر قسمًا بعد، ابدأ من بطاقات اللفظي بالأعلى أو من بحث القطع اللفظية."
               : "لا يوجد محتوى معروض حاليًا داخل هذا القسم."}
           </div>
         ) : null}

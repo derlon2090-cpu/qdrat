@@ -1,10 +1,13 @@
 import {
   EMPTY_SECTION_MESSAGE,
   readingPassages,
-  quantitativeSections,
   verbalReadingKeywords,
-  verbalSections,
 } from "@/data/manual-question-bank";
+import { quantitativeSections, verbalSections } from "@/data/question-bank-sections";
+import {
+  getVerbalQuestionCategory,
+  verbalMixedPracticeQuestions,
+} from "@/data/verbal-mixed-bank";
 
 export type BankItem = {
   id: string;
@@ -239,6 +242,28 @@ function mapReadingQuestionsToSearchItems() {
   );
 }
 
+function mapVerbalPracticeQuestionsToSearchItems() {
+  return verbalMixedPracticeQuestions.map((question, index) => {
+    const category = getVerbalQuestionCategory(question.categoryId);
+
+    return {
+      id: question.id,
+      text: question.prompt,
+      title: question.prompt,
+      excerpt: question.explanation,
+      section: "لفظي",
+      type: category.title,
+      difficulty: "جاهزة",
+      skill: category.title,
+      state: question.source,
+      href: `/verbal/practice?category=${question.categoryId}&question=${question.id}`,
+      kind: "question" as const,
+      pieceNumber: index + 1,
+      needsReview: false,
+    };
+  });
+}
+
 export function getReadingPassageSummariesSync(): ReadingPassageSummary[] {
   return readingPassages.map(mapPassageToSummary);
 }
@@ -273,12 +298,26 @@ export async function getBankItems(filters: SearchFilters = {}) {
   const query = filters.query?.trim() ?? "";
   const type = filters.type?.trim() ?? "الكل";
 
+  const sectionCounts = new Map<string, number>([
+    ["verbal_passages", readingPassages.length],
+    ["verbal_analogy", verbalMixedPracticeQuestions.filter((question) => question.categoryId === "analogy").length],
+    [
+      "verbal_sentence_completion",
+      verbalMixedPracticeQuestions.filter((question) => question.categoryId === "sentence_completion").length,
+    ],
+    [
+      "verbal_contextual_error",
+      verbalMixedPracticeQuestions.filter((question) => question.categoryId === "contextual_error").length,
+    ],
+    ["verbal_odd_word", verbalMixedPracticeQuestions.filter((question) => question.categoryId === "odd_word").length],
+  ]);
+
   const items: BankItem[] = [...verbalSections, ...quantitativeSections].map((section) => ({
     id: section.id,
     title: section.title,
-    count: 0,
-    level: EMPTY_SECTION_MESSAGE,
-    type: section.href?.includes("verbal") ? "لفظي" : "كمي",
+    count: sectionCounts.get(section.id) ?? 0,
+    level: (sectionCounts.get(section.id) ?? 0) > 0 ? "جاهز الآن" : EMPTY_SECTION_MESSAGE,
+    type: section.id.startsWith("verbal_") ? "لفظي" : "كمي",
     tag: section.description,
   }));
 
@@ -295,7 +334,8 @@ export async function getQuestionItems(filters: SearchFilters = {}) {
   const type = filters.type?.trim() ?? "الكل";
   const limit = Math.min(Math.max(Number(filters.limit ?? 24), 1), 80);
 
-  const questionItems = mapReadingQuestionsToSearchItems().filter((item) => {
+  const mixedVerbalItems = mapVerbalPracticeQuestionsToSearchItems();
+  const questionItems = [...mapReadingQuestionsToSearchItems(), ...mixedVerbalItems].filter((item) => {
     const matchesQuery = !query || fuzzyMatch(`${item.text} ${item.skill} ${item.excerpt ?? ""}`, query);
     const matchesSection = section === "الكل" || item.section === section;
     const matchesType = type === "الكل" || item.type === type;

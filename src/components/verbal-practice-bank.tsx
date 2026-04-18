@@ -1,0 +1,389 @@
+"use client";
+
+import Link from "next/link";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useMemo, useState } from "react";
+
+import { useAuthSession } from "@/hooks/use-auth-session";
+import { trackMistakeFromClient } from "@/lib/client-mistakes";
+import {
+  getVerbalQuestionCategory,
+  getVerbalQuestionsByCategory,
+  verbalQuestionCategories,
+} from "@/data/verbal-mixed-bank";
+import { Button } from "@/components/ui/button";
+
+type SavedAnswerMap = Record<string, string>;
+
+const SAVED_ANSWERS_KEY = "miyaar-verbal-practice-answers";
+
+function getChoiceLetter(index: number) {
+  return ["أ", "ب", "ج", "د"][index] ?? String(index + 1);
+}
+
+function readSavedAnswers() {
+  if (typeof window === "undefined") return {};
+
+  try {
+    const raw = window.sessionStorage.getItem(SAVED_ANSWERS_KEY);
+    if (!raw) return {};
+    const parsed = JSON.parse(raw) as unknown;
+    return parsed && typeof parsed === "object" ? (parsed as SavedAnswerMap) : {};
+  } catch {
+    return {};
+  }
+}
+
+function persistSavedAnswers(value: SavedAnswerMap) {
+  if (typeof window === "undefined") return;
+  window.sessionStorage.setItem(SAVED_ANSWERS_KEY, JSON.stringify(value));
+}
+
+function buildPracticeHref(pathname: string, currentParams: URLSearchParams, categoryId: string, questionId: string) {
+  const nextParams = new URLSearchParams(currentParams.toString());
+  nextParams.set("category", categoryId);
+  nextParams.set("question", questionId);
+  return `${pathname}?${nextParams.toString()}`;
+}
+
+export function VerbalPracticeBank() {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const { status: authStatus } = useAuthSession();
+
+  const [savedAnswers, setSavedAnswers] = useState<SavedAnswerMap>({});
+  const [selectedAnswer, setSelectedAnswer] = useState("");
+  const [submitted, setSubmitted] = useState(false);
+  const [showAuthPrompt, setShowAuthPrompt] = useState(false);
+
+  useEffect(() => {
+    setSavedAnswers(readSavedAnswers());
+  }, []);
+
+  const currentCategory = useMemo(
+    () => getVerbalQuestionCategory(searchParams.get("category")),
+    [searchParams],
+  );
+  const questions = useMemo(
+    () => getVerbalQuestionsByCategory(currentCategory.id),
+    [currentCategory.id],
+  );
+
+  const currentQuestionIndex = useMemo(() => {
+    const requestedQuestionId = searchParams.get("question");
+    const index = questions.findIndex((question) => question.id === requestedQuestionId);
+    return index >= 0 ? index : 0;
+  }, [questions, searchParams]);
+
+  const currentQuestion = questions[currentQuestionIndex] ?? null;
+
+  const currentKey = currentQuestion ? `${currentCategory.id}-${currentQuestion.id}` : "";
+
+  useEffect(() => {
+    if (!currentQuestion) return;
+    const oldAnswer = savedAnswers[currentKey] || "";
+    setSelectedAnswer(oldAnswer);
+    setSubmitted(Boolean(oldAnswer));
+    setShowAuthPrompt(false);
+  }, [currentKey, currentQuestion, savedAnswers]);
+
+  useEffect(() => {
+    if (!currentQuestion) return;
+    if (!searchParams.get("question") || !searchParams.get("category")) {
+      router.replace(buildPracticeHref(pathname, new URLSearchParams(searchParams.toString()), currentCategory.id, currentQuestion.id), {
+        scroll: false,
+      });
+    }
+  }, [currentCategory.id, currentQuestion, pathname, router, searchParams]);
+
+  const result = useMemo(() => {
+    if (!submitted || !selectedAnswer || !currentQuestion) return null;
+
+    const isCorrect = selectedAnswer === currentQuestion.correctAnswer;
+    return {
+      isCorrect,
+      correctAnswer: currentQuestion.correctAnswer,
+      explanation: currentQuestion.explanation,
+    };
+  }, [currentQuestion, selectedAnswer, submitted]);
+
+  function openQuestion(categoryId: string, questionId: string) {
+    router.replace(buildPracticeHref(pathname, new URLSearchParams(searchParams.toString()), categoryId, questionId), {
+      scroll: false,
+    });
+  }
+
+  function openCategory(categoryId: string) {
+    const nextQuestions = getVerbalQuestionsByCategory(categoryId as typeof currentCategory.id);
+    if (!nextQuestions.length) return;
+    openQuestion(categoryId, nextQuestions[0].id);
+  }
+
+  async function confirmAnswer() {
+    if (!selectedAnswer || !currentQuestion) return;
+
+    setSubmitted(true);
+    setSavedAnswers((previous) => {
+      const next = {
+        ...previous,
+        [currentKey]: selectedAnswer,
+      };
+      persistSavedAnswers(next);
+      return next;
+    });
+
+    const trackingResult = await trackMistakeFromClient({
+      questionKey: currentKey,
+      section: "verbal",
+      sourceBank: `بنك اللفظي / ${currentCategory.title}`,
+      questionTypeLabel: currentCategory.title,
+      questionText: currentQuestion.prompt,
+      questionHref: `/verbal/practice?category=${encodeURIComponent(currentCategory.id)}&question=${encodeURIComponent(currentQuestion.id)}`,
+      metadata: {
+        source: currentQuestion.source,
+        categoryId: currentCategory.id,
+        categoryTitle: currentCategory.title,
+      },
+      outcome: selectedAnswer === currentQuestion.correctAnswer ? "correct" : "incorrect",
+    });
+
+    if (trackingResult.unauthorized && selectedAnswer !== currentQuestion.correctAnswer) {
+      setShowAuthPrompt(true);
+      return;
+    }
+
+    if (selectedAnswer === currentQuestion.correctAnswer || authStatus === "authenticated") {
+      setShowAuthPrompt(false);
+    }
+  }
+
+  if (!currentQuestion) {
+    return (
+      <div className="rounded-[1.8rem] border border-dashed border-slate-300 bg-white p-8 text-center text-sm text-slate-500 shadow-sm">
+        لا توجد أسئلة ظاهرة الآن داخل هذا القسم.
+      </div>
+    );
+  }
+
+  const previousQuestion = questions[currentQuestionIndex - 1] ?? null;
+  const nextQuestion = questions[currentQuestionIndex + 1] ?? null;
+
+  return (
+    <div dir="rtl" className="space-y-6">
+      <div className="rounded-[1.9rem] border border-[#E8D8B3] bg-white/95 p-6 shadow-soft">
+        <div className="display-font text-2xl font-bold text-slate-950">اختر القسم اللفظي الذي تريد التدريب عليه</div>
+        <p className="mt-2 max-w-3xl text-sm leading-8 text-slate-600">
+          صنفنا الأسئلة التي أرسلتها إلى تناظر لفظي، إكمال الجمل، الخطأ السياقي، والمفردة الشاذة، مع تصحيح بعد تأكيد الإجابة وشرح
+          للإجابة الصحيحة.
+        </p>
+
+        <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+          {verbalQuestionCategories.map((category) => {
+            const categoryQuestions = getVerbalQuestionsByCategory(category.id);
+            const active = category.id === currentCategory.id;
+            return (
+              <button
+                key={category.id}
+                type="button"
+                onClick={() => openCategory(category.id)}
+                className={`rounded-[1.5rem] border p-5 text-right transition ${
+                  active
+                    ? "border-transparent bg-[linear-gradient(135deg,#102955,#123B7A_55%,#2f5fa7)] text-white shadow-[0_18px_38px_rgba(18,59,122,0.22)]"
+                    : "border-slate-200 bg-slate-50/80 text-slate-900 hover:border-[#C99A43] hover:bg-white"
+                }`}
+              >
+                <div className="display-font text-xl font-bold">{category.title}</div>
+                <div className={`mt-2 text-sm leading-7 ${active ? "text-white/80" : "text-slate-500"}`}>{category.description}</div>
+                <div className={`mt-4 text-xs font-semibold ${active ? "text-white/75" : "text-[#123B7A]"}`}>
+                  {categoryQuestions.length} سؤال
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      <div className="grid gap-6 xl:grid-cols-[360px_1fr]">
+        <aside className="rounded-[1.9rem] border border-slate-200 bg-white p-4 shadow-sm">
+          <div className="px-3 pb-4">
+            <div className="text-sm font-semibold text-slate-500">القسم الحالي</div>
+            <div className="display-font mt-2 text-2xl font-bold text-slate-950">{currentCategory.title}</div>
+            <div className="mt-2 text-sm leading-7 text-slate-500">{currentCategory.description}</div>
+          </div>
+
+          <div className="max-h-[700px] space-y-2 overflow-y-auto px-1 pb-1">
+            {questions.map((question, index) => {
+              const isActive = index === currentQuestionIndex;
+              const saved = savedAnswers[`${currentCategory.id}-${question.id}`];
+
+              return (
+                <button
+                  key={question.id}
+                  type="button"
+                  onClick={() => openQuestion(currentCategory.id, question.id)}
+                  className={`w-full rounded-[1.25rem] border px-4 py-4 text-right transition ${
+                    isActive
+                      ? "border-[#123B7A] bg-[#eef4ff] text-[#123B7A]"
+                      : saved
+                        ? "border-emerald-200 bg-emerald-50 text-emerald-800"
+                        : "border-slate-200 bg-slate-50/70 text-slate-700 hover:bg-white"
+                  }`}
+                >
+                  <div className="text-xs font-semibold opacity-80">سؤال {index + 1}</div>
+                  <div className="mt-2 line-clamp-2 text-sm leading-7">{question.prompt}</div>
+                </button>
+              );
+            })}
+          </div>
+        </aside>
+
+        <section className="rounded-[1.9rem] border border-slate-200 bg-white p-6 shadow-sm md:p-8">
+          <div className="flex flex-wrap items-start justify-between gap-4 border-b border-slate-200 pb-5">
+            <div>
+              <div className="text-sm font-semibold text-[#123B7A]">
+                {currentCategory.title} / سؤال {currentQuestionIndex + 1} من {questions.length}
+              </div>
+              <h2 className="display-font mt-3 text-3xl font-bold text-slate-950">{currentQuestion.prompt}</h2>
+            </div>
+
+            <div className="rounded-2xl bg-slate-50 px-4 py-3 text-sm text-slate-500 ring-1 ring-slate-200">
+              المصدر: {currentQuestion.source}
+            </div>
+          </div>
+
+          <div className="mt-8 grid gap-4 md:grid-cols-2">
+            {currentQuestion.options.map((option, index) => {
+              const isSelected = selectedAnswer === option;
+              const isCorrect = submitted && option === currentQuestion.correctAnswer;
+              const isWrongSelected = submitted && isSelected && option !== currentQuestion.correctAnswer;
+
+              let classes = "border-slate-200 bg-white text-slate-800 hover:border-[#C99A43] hover:bg-[#fffaf1]";
+
+              if (isCorrect) {
+                classes = "border-emerald-300 bg-emerald-50 text-emerald-900";
+              } else if (isWrongSelected) {
+                classes = "border-rose-300 bg-rose-50 text-rose-900";
+              } else if (isSelected) {
+                classes = "border-[#123B7A] bg-[#eef4ff] text-[#123B7A]";
+              }
+
+              return (
+                <button
+                  key={`${currentQuestion.id}-${index + 1}`}
+                  type="button"
+                  onClick={() => {
+                    setSelectedAnswer(option);
+                    setSubmitted(false);
+                    setShowAuthPrompt(false);
+                  }}
+                  className={`rounded-[1.4rem] border px-5 py-5 text-right transition ${classes}`}
+                >
+                  <div className="flex items-start justify-between gap-4">
+                    <span className="flex-1 text-lg leading-8">{option}</span>
+                    <span className="text-sm font-bold">{getChoiceLetter(index)}</span>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+
+          <div className="mt-8 flex flex-wrap items-center gap-3">
+            <Button size="lg" onClick={() => void confirmAnswer()} disabled={!selectedAnswer}>
+              تأكيد الإجابة
+            </Button>
+
+            <Button
+              variant="outline"
+              size="lg"
+              onClick={() => previousQuestion && openQuestion(currentCategory.id, previousQuestion.id)}
+              disabled={!previousQuestion}
+            >
+              السؤال السابق
+            </Button>
+
+            <Button
+              variant="outline"
+              size="lg"
+              onClick={() => nextQuestion && openQuestion(currentCategory.id, nextQuestion.id)}
+              disabled={!nextQuestion}
+            >
+              السؤال التالي
+            </Button>
+          </div>
+
+          {submitted && result ? (
+            <div
+              className={`mt-6 rounded-[1.4rem] border px-5 py-5 text-base leading-8 ${
+                result.isCorrect ? "border-emerald-200 bg-emerald-50 text-emerald-900" : "border-rose-200 bg-rose-50 text-rose-900"
+              }`}
+            >
+              <div className="text-xl font-bold">{result.isCorrect ? "إجابة صحيحة" : "إجابة خاطئة"}</div>
+              {!result.isCorrect ? (
+                <div className="mt-3">
+                  <span className="font-bold">الإجابة الصحيحة:</span> {result.correctAnswer}
+                </div>
+              ) : null}
+              <div className="mt-3">
+                <span className="font-bold">الشرح:</span> {result.explanation}
+              </div>
+            </div>
+          ) : null}
+
+          {showAuthPrompt ? (
+            <div className="mt-6 rounded-[1.4rem] border border-amber-200 bg-amber-50 px-5 py-5 text-sm leading-8 text-amber-800">
+              سجّل دخولك حتى يتم حفظ هذا السؤال داخل قائمة الأخطاء الخاصة بحسابك.
+              <div className="mt-3 flex flex-wrap gap-3">
+                <Link href="/login?next=/question-bank?track=mistakes" className="font-semibold text-[#123B7A]">
+                  تسجيل الدخول
+                </Link>
+                <Link href="/register?next=/question-bank?track=mistakes" className="font-semibold text-[#123B7A]">
+                  إنشاء حساب
+                </Link>
+              </div>
+            </div>
+          ) : null}
+
+          <div className="mt-8 grid gap-4 lg:grid-cols-2">
+            <div className="rounded-[1.4rem] border border-slate-200 bg-slate-50/70 p-5">
+              <div className="mb-3 text-lg font-bold text-slate-900">الانتقال إلى سؤال آخر</div>
+              <div className="flex flex-wrap gap-2">
+                {questions.map((question, index) => (
+                  <button
+                    key={`jump-${question.id}`}
+                    type="button"
+                    onClick={() => openQuestion(currentCategory.id, question.id)}
+                    className={`rounded-xl px-4 py-3 text-sm font-bold ${
+                      index === currentQuestionIndex ? "bg-slate-900 text-white" : "bg-white text-slate-700 ring-1 ring-slate-200"
+                    }`}
+                  >
+                    سؤال {index + 1}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="rounded-[1.4rem] border border-slate-200 bg-slate-50/70 p-5">
+              <div className="mb-3 text-lg font-bold text-slate-900">الانتقال إلى قسم لفظي آخر</div>
+              <div className="flex flex-wrap gap-2">
+                {verbalQuestionCategories.map((category) => (
+                  <button
+                    key={`category-${category.id}`}
+                    type="button"
+                    onClick={() => openCategory(category.id)}
+                    className={`rounded-xl px-4 py-3 text-sm font-bold ${
+                      category.id === currentCategory.id ? "bg-[#123B7A] text-white" : "bg-white text-slate-700 ring-1 ring-slate-200"
+                    }`}
+                  >
+                    {category.title}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+    </div>
+  );
+}
+

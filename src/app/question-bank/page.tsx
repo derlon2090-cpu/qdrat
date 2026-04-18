@@ -8,8 +8,8 @@ export default function QuestionBankPage() {
   return (
     <PageShell
       eyebrow="بنك الأسئلة"
-      title="جهزنا بنك الأسئلة ليستقبل المحتوى اليدوي الجديد فقط"
-      description="تم حذف المحتوى التجريبي والقديم من الأقسام، وأصبح النظام جاهزًا لإضافة القطع والأسئلة يدويًا واحدة واحدة بنفس الصياغة الأصلية وبدون أي استخراج تلقائي."
+      title="بنك أسئلة منظم بين القطع اللفظية والأقسام التدريبية"
+      description="القطع اللفظية تعمل بالبحث بالكلمات المفتاحية، والأسئلة اللفظية المتنوعة صارت مرتبة داخل تناظر لفظي، إكمال الجمل، الخطأ السياقي، والمفردة الشاذة مع تصحيح وشرح بعد التأكيد."
       icon={BriefcaseBusiness}
       iconWrap="bg-[#fff7ed]"
       iconColor="text-[#d97706]"
@@ -20,7 +20,7 @@ export default function QuestionBankPage() {
       <Suspense
         fallback={
           <div className="rounded-[1.7rem] border border-dashed border-slate-300 bg-white/70 p-8 text-center text-sm text-slate-500">
-            جارٍ تجهيز دليل بنك الأسئلة...
+            جارٍ تجهيز بنك الأسئلة...
           </div>
         }
       >
