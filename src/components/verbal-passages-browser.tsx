@@ -2,19 +2,19 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { Dice5, Search } from "lucide-react";
+import { ArrowUpLeft, Dice5, Search } from "lucide-react";
 
 import samplePassagesData from "../../data/verbal-passages.sample.json";
+import { VerbalPassageViewer } from "@/components/verbal-passage-viewer";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { buildPublicApiUrl } from "@/lib/api-base";
-import { searchPassagesLocal, normalizeArabicText } from "@/lib/verbal-passages-core";
+import { normalizeArabicText, searchPassagesLocal } from "@/lib/verbal-passages-core";
 import type {
   VerbalPassageQuestionRecord,
   VerbalPassageRecord,
   VerbalPassageSummary,
 } from "@/lib/verbal-passages";
-import { VerbalPassageViewer } from "@/components/verbal-passage-viewer";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 
 const SEARCH_MIN_CHARS = 3;
 const SEARCH_DEBOUNCE_MS = 400;
@@ -23,10 +23,6 @@ type PassageDirectoryItem = Pick<
   VerbalPassageSummary,
   "id" | "slug" | "title" | "status" | "version" | "externalSourceId" | "excerpt"
 >;
-
-type ListedPassageItem = VerbalPassageRecord & {
-  questionCount?: number;
-};
 
 type SampleQuestionRow = {
   question_text: string;
@@ -49,10 +45,16 @@ type SamplePassageRow = {
   questions?: SampleQuestionRow[];
 };
 
-function createExcerpt(text: string, maxLength = 220) {
+function createExcerpt(text: string, maxLength = 160) {
   const cleanText = text.replace(/\s+/g, " ").trim();
   if (cleanText.length <= maxLength) return cleanText;
   return `${cleanText.slice(0, maxLength).trim()}...`;
+}
+
+function buildPassageHref(pathname: string, searchParams: URLSearchParams, slug: string) {
+  const nextParams = new URLSearchParams(searchParams.toString());
+  nextParams.set("passage", slug);
+  return `${pathname}?${nextParams.toString()}`;
 }
 
 function mapSampleQuestion(
@@ -91,16 +93,13 @@ function mapSamplePassage(row: SamplePassageRow, index: number): VerbalPassageRe
   };
 }
 
-const fallbackPassageRecords = (samplePassagesData as SamplePassageRow[]).map(mapSamplePassage);
+const fallbackPassages = (samplePassagesData as SamplePassageRow[]).map(mapSamplePassage);
 
 function mergePassageSources(primary: VerbalPassageRecord[], fallback: VerbalPassageRecord[]) {
   const unique = new Map<string, VerbalPassageRecord>();
 
   for (const passage of [...primary, ...fallback]) {
-    const key =
-      passage.slug.trim().toLowerCase() ||
-      normalizeArabicText([passage.title, ...(passage.keywords ?? [])].join(" "));
-
+    const key = passage.slug.trim().toLowerCase();
     if (!unique.has(key)) {
       unique.set(key, passage);
     }
@@ -109,22 +108,16 @@ function mergePassageSources(primary: VerbalPassageRecord[], fallback: VerbalPas
   return Array.from(unique.values()).sort((left, right) => left.title.localeCompare(right.title, "ar"));
 }
 
-function mapDirectoryItem(item: ListedPassageItem): PassageDirectoryItem {
+function mapDirectoryItem(passage: VerbalPassageRecord): PassageDirectoryItem {
   return {
-    id: item.id,
-    slug: item.slug,
-    title: item.title,
-    status: item.status,
-    version: item.version,
-    externalSourceId: item.externalSourceId,
-    excerpt: createExcerpt(item.passageText),
+    id: passage.id,
+    slug: passage.slug,
+    title: passage.title,
+    status: passage.status,
+    version: passage.version,
+    externalSourceId: passage.externalSourceId,
+    excerpt: createExcerpt(passage.passageText),
   };
-}
-
-function clearPassageParam(pathname: string, searchParams: URLSearchParams) {
-  const nextParams = new URLSearchParams(searchParams.toString());
-  nextParams.delete("passage");
-  return nextParams.toString() ? `${pathname}?${nextParams.toString()}` : pathname;
 }
 
 export function VerbalPassagesBrowser({ mode = "student" }: { mode?: "student" | "admin" }) {
@@ -134,11 +127,11 @@ export function VerbalPassagesBrowser({ mode = "student" }: { mode?: "student" |
 
   const [query, setQuery] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
-  const [passageRecords, setPassageRecords] = useState<VerbalPassageRecord[]>(fallbackPassageRecords);
-  const [selectedPassageId, setSelectedPassageId] = useState<string | null>(null);
+  const [passageRecords, setPassageRecords] = useState<VerbalPassageRecord[]>(fallbackPassages);
+  const [currentPassageSlug, setCurrentPassageSlug] = useState<string | null>(null);
   const [isLoadingDirectory, setIsLoadingDirectory] = useState(false);
-  const [syncMessage, setSyncMessage] = useState("");
-  const [hasAutoOpenedRandom, setHasAutoOpenedRandom] = useState(false);
+  const [hasInitializedSelection, setHasInitializedSelection] = useState(false);
+  const [statusMessage, setStatusMessage] = useState("");
 
   const requestedSlug = searchParams.get("passage")?.trim().toLowerCase() ?? "";
 
@@ -170,13 +163,13 @@ export function VerbalPassagesBrowser({ mode = "student" }: { mode?: "student" |
       })
       .then((payload) => {
         const items = Array.isArray(payload.items) ? payload.items : [];
-        setPassageRecords(mergePassageSources(items, fallbackPassageRecords));
-        setSyncMessage("");
+        setPassageRecords(mergePassageSources(items, fallbackPassages));
+        setStatusMessage("");
       })
       .catch(() => {
         if (controller.signal.aborted) return;
-        setPassageRecords(fallbackPassageRecords);
-        setSyncMessage("تعذر مزامنة القاعدة الآن، لذا نعرض القطع المضافة داخل المشروع مباشرة.");
+        setPassageRecords(fallbackPassages);
+        setStatusMessage("تعذر مزامنة القاعدة الآن، لذلك نعرض القطع المضافة داخل المشروع مباشرة.");
       })
       .finally(() => {
         if (!controller.signal.aborted) {
@@ -193,214 +186,235 @@ export function VerbalPassagesBrowser({ mode = "student" }: { mode?: "student" |
   );
 
   const availablePassages = useMemo(
-    () => visiblePassages.map((item) => mapDirectoryItem(item)),
+    () => visiblePassages.map((passage) => mapDirectoryItem(passage)),
     [visiblePassages],
   );
+
+  const currentPassage = useMemo(
+    () => visiblePassages.find((passage) => passage.slug === currentPassageSlug) ?? null,
+    [currentPassageSlug, visiblePassages],
+  );
+
+  const currentPassageIndex = useMemo(
+    () => visiblePassages.findIndex((passage) => passage.slug === currentPassageSlug),
+    [currentPassageSlug, visiblePassages],
+  );
+
+  const nextPassage = currentPassageIndex >= 0 ? visiblePassages[currentPassageIndex + 1] ?? null : null;
 
   const normalizedQueryLength = useMemo(
     () => normalizeArabicText(query).replace(/\s+/g, "").length,
     [query],
   );
 
-  const searchMatches = useMemo(() => {
-    if (normalizeArabicText(debouncedQuery).replace(/\s+/g, "").length < SEARCH_MIN_CHARS) {
-      return [] as PassageDirectoryItem[];
-    }
-
-    const matchedIds = searchPassagesLocal(visiblePassages, debouncedQuery, SEARCH_MIN_CHARS).map(
-      (item) => item.id,
-    );
-
-    return matchedIds
-      .map((id) => visiblePassages.find((passage) => passage.id === id))
-      .filter((item): item is VerbalPassageRecord => Boolean(item))
-      .map((item) => mapDirectoryItem(item));
-  }, [debouncedQuery, visiblePassages]);
-
-  const showSearchMatches = useMemo(
+  const canSearch = useMemo(
     () => normalizeArabicText(debouncedQuery).replace(/\s+/g, "").length >= SEARCH_MIN_CHARS,
     [debouncedQuery],
   );
 
-  const sidebarItems = showSearchMatches ? searchMatches : availablePassages;
-  const selectedPassage = visiblePassages.find((item) => item.id === selectedPassageId) ?? null;
-  const selectedPassageIndex = visiblePassages.findIndex((item) => item.id === selectedPassageId);
-  const nextPassage = selectedPassageIndex >= 0 ? visiblePassages[selectedPassageIndex + 1] ?? null : null;
-  const isWaitingForDebounce = query !== debouncedQuery;
+  const searchMatches = useMemo(() => {
+    if (!canSearch) return [] as PassageDirectoryItem[];
+
+    const matchedSlugs = searchPassagesLocal(visiblePassages, debouncedQuery, SEARCH_MIN_CHARS).map(
+      (passage) => passage.slug?.trim().toLowerCase() ?? "",
+    );
+
+    return matchedSlugs
+      .map((slug) => visiblePassages.find((passage) => passage.slug === slug))
+      .filter((passage): passage is VerbalPassageRecord => Boolean(passage))
+      .map((passage) => mapDirectoryItem(passage));
+  }, [canSearch, debouncedQuery, visiblePassages]);
+
+  const sidebarItems = canSearch ? searchMatches : availablePassages;
+
+  const selectPassage = useCallback(
+    (slug: string) => {
+      if (!slug) return;
+
+      setCurrentPassageSlug(slug);
+      setHasInitializedSelection(true);
+
+      const nextHref = buildPassageHref(pathname, new URLSearchParams(searchParams.toString()), slug);
+      router.replace(nextHref, { scroll: false });
+    },
+    [pathname, router, searchParams],
+  );
 
   const openRandomPassage = useCallback(
-    (options?: { excludeCurrent?: boolean; clearSearch?: boolean }) => {
+    (options?: { excludeCurrent?: boolean }) => {
       if (!visiblePassages.length) return;
 
       const candidates =
-        options?.excludeCurrent && visiblePassages.length > 1 && selectedPassageId
-          ? visiblePassages.filter((item) => item.id !== selectedPassageId)
+        options?.excludeCurrent && currentPassageSlug && visiblePassages.length > 1
+          ? visiblePassages.filter((passage) => passage.slug !== currentPassageSlug)
           : visiblePassages;
 
       const randomPassage = candidates[Math.floor(Math.random() * candidates.length)];
       if (!randomPassage) return;
 
-      if (options?.clearSearch) {
-        setQuery("");
-        setDebouncedQuery("");
-      }
-
-      setSelectedPassageId(randomPassage.id);
-      setHasAutoOpenedRandom(true);
+      selectPassage(randomPassage.slug);
+      setStatusMessage(`تم فتح قطعة عشوائية: ${randomPassage.title}`);
     },
-    [selectedPassageId, visiblePassages],
+    [currentPassageSlug, selectPassage, visiblePassages],
   );
 
   useEffect(() => {
     if (!visiblePassages.length) return;
 
     if (requestedSlug) {
-      const matchedPassage = visiblePassages.find((item) => item.slug === requestedSlug);
+      const matchedPassage = visiblePassages.find((passage) => passage.slug === requestedSlug);
 
       if (matchedPassage) {
-        if (matchedPassage.id !== selectedPassageId) {
-          setSelectedPassageId(matchedPassage.id);
-          setHasAutoOpenedRandom(true);
+        if (currentPassageSlug !== matchedPassage.slug) {
+          setCurrentPassageSlug(matchedPassage.slug);
         }
+        setHasInitializedSelection(true);
         return;
       }
 
-      if (!selectedPassageId) {
-        openRandomPassage();
-        setSyncMessage("لم نجد القطعة المطلوبة بهذا المفتاح، فتم فتح قطعة عشوائية بدلًا منها.");
+      const fallbackPassage =
+        visiblePassages.find((passage) => passage.slug === currentPassageSlug) ??
+        visiblePassages[Math.floor(Math.random() * visiblePassages.length)];
+
+      if (fallbackPassage) {
+        setCurrentPassageSlug(fallbackPassage.slug);
+        setHasInitializedSelection(true);
+        setStatusMessage("لم نجد القطعة المطلوبة بهذا المفتاح، فتم فتح قطعة متاحة بدلًا منها.");
+
+        if (fallbackPassage.slug !== requestedSlug) {
+          const nextHref = buildPassageHref(pathname, new URLSearchParams(searchParams.toString()), fallbackPassage.slug);
+          router.replace(nextHref, { scroll: false });
+        }
       }
       return;
     }
 
-    if (!selectedPassageId && !hasAutoOpenedRandom) {
-      openRandomPassage();
+    if (!hasInitializedSelection) {
+      const randomPassage = visiblePassages[Math.floor(Math.random() * visiblePassages.length)];
+      if (randomPassage) {
+        setCurrentPassageSlug(randomPassage.slug);
+        setHasInitializedSelection(true);
+        const nextHref = buildPassageHref(pathname, new URLSearchParams(searchParams.toString()), randomPassage.slug);
+        router.replace(nextHref, { scroll: false });
+      }
     }
   }, [
-    hasAutoOpenedRandom,
-    openRandomPassage,
+    currentPassageSlug,
+    hasInitializedSelection,
+    pathname,
     requestedSlug,
-    selectedPassageId,
+    router,
+    searchParams,
     visiblePassages,
   ]);
 
-  useEffect(() => {
-    if (!selectedPassage?.slug) return;
-    if (requestedSlug === selectedPassage.slug) return;
-
-    const nextParams = new URLSearchParams(searchParams.toString());
-    nextParams.set("passage", selectedPassage.slug);
-    router.replace(`${pathname}?${nextParams.toString()}`, { scroll: false });
-  }, [pathname, requestedSlug, router, searchParams, selectedPassage?.slug]);
-
   const resultCaption = useMemo(() => {
     if (isLoadingDirectory) return "جاري تحميل القطع...";
-    if (isWaitingForDebounce && normalizedQueryLength >= SEARCH_MIN_CHARS) return "جاري تجهيز نتائج البحث...";
-    if (!showSearchMatches && normalizedQueryLength > 0 && normalizedQueryLength < SEARCH_MIN_CHARS) {
-      return `يبدأ البحث بعد ${SEARCH_MIN_CHARS} أحرف، ويمكنك الآن الاختيار من العناوين الجاهزة.`;
+    if (!canSearch && normalizedQueryLength > 0 && normalizedQueryLength < SEARCH_MIN_CHARS) {
+      return `يبدأ البحث بعد ${SEARCH_MIN_CHARS} أحرف، ويمكنك الآن استخدام القائمة الجانبية دون تغيير القطعة الحالية.`;
     }
-    if (showSearchMatches) {
-      return searchMatches.length ? `${searchMatches.length} نتيجة` : "لا توجد نتائج مطابقة حاليًا.";
+    if (canSearch) {
+      return searchMatches.length ? `${searchMatches.length} نتيجة مطابقة` : "لا توجد نتائج مطابقة الآن.";
     }
-    return `${availablePassages.length} عنوانًا متاحًا`;
-  }, [
-    availablePassages.length,
-    isLoadingDirectory,
-    isWaitingForDebounce,
-    normalizedQueryLength,
-    searchMatches.length,
-    showSearchMatches,
-  ]);
+    return `${availablePassages.length} قطعة متاحة`;
+  }, [availablePassages.length, canSearch, isLoadingDirectory, normalizedQueryLength, searchMatches.length]);
 
   const emptyStateMessage = useMemo(() => {
     if (!availablePassages.length) {
       return "لا توجد قطع لفظية متاحة الآن.";
     }
 
-    if (showSearchMatches) {
-      return "لا توجد قطع مطابقة لهذه الكلمة المفتاحية الآن. جرّب عنوانًا آخر أو ابدأ بقطعة عشوائية.";
+    if (canSearch) {
+      return "لم نعثر على قطعة مطابقة لعبارة البحث الحالية. جرّب عنوانًا آخر أو استخدم الزر الذهبي لفتح قطعة عشوائية.";
     }
 
     if (normalizedQueryLength > 0 && normalizedQueryLength < SEARCH_MIN_CHARS) {
-      return `اكتب ${SEARCH_MIN_CHARS} أحرف فأكثر لبدء البحث، أو اختر مباشرة من قائمة العناوين المتاحة.`;
+      return `اكتب ${SEARCH_MIN_CHARS} أحرف فأكثر لبدء البحث، أو اختر من القائمة الجانبية مباشرة.`;
     }
 
-    return "اختر قطعة من القائمة لتظهر هنا مع النص والأسئلة، أو ابدأ مباشرة بقطعة عشوائية.";
-  }, [availablePassages.length, normalizedQueryLength, showSearchMatches]);
+    return "القائمة الجانبية تعرض عناوين القطع فقط، أما عرض القطعة الحالية فيبقى مستقلًا في المساحة الرئيسية.";
+  }, [availablePassages.length, canSearch, normalizedQueryLength]);
 
   return (
     <div dir="rtl" className="space-y-6">
       <div className="rounded-[2rem] border border-[#E8D8B3] bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(248,247,244,0.96))] p-7 shadow-soft">
         <div className="display-font text-3xl font-bold text-slate-950">بنك القطع اللفظي</div>
         <p className="mt-3 max-w-3xl text-sm leading-8 text-slate-600">
-          كل قطعة مرتبطة بعنوان مفتاحي ثابت، ويمكن فتحها مباشرة من الرابط أو بدء قطعة عشوائية عند الدخول إلى
-          القسم. ويبدأ البحث بعد كتابة 3 أحرف فأكثر حتى تبقى النتائج أدق وأسرع.
+          افتح القطعة مباشرة بالمفتاح الموجود في الرابط، أو ابدأ بقطعة عشوائية واحدة ثابتة، أو استخدم البحث
+          للوصول إلى قطعة أخرى بدون أن تتغير القطعة الحالية تلقائيًا أثناء الكتابة.
         </p>
 
-        <div className="mt-5 grid gap-3 lg:grid-cols-[1fr_auto]">
+        <div className="mt-5 grid gap-3 xl:grid-cols-[minmax(0,1fr)_auto]">
           <div className="relative">
             <Search className="pointer-events-none absolute right-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
             <Input
               value={query}
               onChange={(event) => setQuery(event.target.value)}
-              placeholder="ابحث عن القطعة"
+              placeholder="ابحث عن القطعة بالعنوان أو الـ slug أو الكلمات المفتاحية"
               className="h-14 rounded-[1.7rem] border-[#E8D8B3] pr-12 text-base shadow-[0_10px_24px_rgba(18,59,122,0.05)]"
             />
           </div>
 
           <Button
             type="button"
-            onClick={() => openRandomPassage({ excludeCurrent: true, clearSearch: true })}
+            onClick={() => openRandomPassage({ excludeCurrent: true })}
             disabled={isLoadingDirectory || !availablePassages.length}
             className="h-14 rounded-[1.7rem] bg-[linear-gradient(135deg,#F5D08A_0%,#E6B85C_40%,#D4A94C_100%)] px-7 text-base font-bold text-slate-950 shadow-[0_12px_30px_rgba(201,154,67,0.28)] transition hover:-translate-y-0.5 hover:shadow-[0_16px_34px_rgba(201,154,67,0.34)] disabled:translate-y-0 disabled:opacity-60"
           >
             <Dice5 className="ml-2 h-5 w-5" />
-            {selectedPassageId ? "ابدأ قطعة عشوائية أخرى" : "ابدأ قطعة عشوائية"}
+            {currentPassage ? "ابدأ قطعة عشوائية أخرى" : "ابدأ قطعة عشوائية"}
           </Button>
         </div>
 
         <div className="mt-3 text-sm leading-7 text-slate-500">
-          {syncMessage || "إذا ما تبي تختار يدويًا، اضغط الزر الذهبي وابدأ مباشرة بقطعة عشوائية من بنك القطع اللفظي."}
+          {statusMessage ||
+            "البحث هنا أداة وصول فقط؛ لن يغيّر القطعة الحالية إلا عند الضغط على نتيجة أو عند اختيار الزر العشوائي."}
         </div>
       </div>
 
-      <div className="grid gap-6 xl:grid-cols-[380px_1fr]">
-        <aside className="rounded-[1.8rem] border border-slate-200 bg-white p-5 shadow-sm">
+      <div className="grid gap-6 xl:grid-cols-[360px_minmax(0,1fr)] xl:items-start">
+        <aside className="order-2 rounded-[1.8rem] border border-slate-200 bg-white p-5 shadow-sm xl:order-1 xl:sticky xl:top-24">
           <div className="display-font text-xl font-bold text-slate-950">
-            {showSearchMatches ? "نتائج البحث" : "العناوين المتاحة"}
+            {canSearch ? "نتائج البحث" : "قائمة القطع"}
           </div>
           <div className="mt-2 text-sm leading-7 text-slate-500">{resultCaption}</div>
 
-          <div className="mt-5 space-y-3">
+          <div className="mt-5 max-h-[70vh] space-y-3 overflow-y-auto pl-1">
             {sidebarItems.map((item) => (
-              <button
+              <article
                 key={item.id}
-                type="button"
-                onClick={() => {
-                  setSelectedPassageId(item.id);
-                  setHasAutoOpenedRandom(true);
-                }}
-                className={`w-full rounded-[1.35rem] border p-4 text-right transition ${
-                  selectedPassageId === item.id
+                className={`rounded-[1.35rem] border p-4 transition ${
+                  currentPassageSlug === item.slug
                     ? "border-[#123B7A] bg-[#123B7A]/5"
-                    : "border-slate-200 bg-slate-50/70 hover:border-[#C99A43]"
+                    : "border-slate-200 bg-slate-50/70"
                 }`}
               >
                 <div className="display-font text-base font-bold text-slate-950">{item.title}</div>
                 <div className="mt-1 text-xs font-semibold text-[#123B7A]">/{item.slug}</div>
-                <div className="mt-2 text-sm leading-7 text-slate-500">{item.excerpt}</div>
-                <div className="mt-3 flex flex-wrap gap-2 text-xs">
-                  <span className="rounded-full bg-[#123B7A]/8 px-3 py-1 font-semibold text-[#123B7A]">
-                    النسخة {item.version}
-                  </span>
+                <div className="mt-2 line-clamp-3 text-sm leading-7 text-slate-500">{item.excerpt}</div>
+
+                <div className="mt-4 flex items-center justify-between gap-3">
                   <span
-                    className={`rounded-full px-3 py-1 font-semibold ${
+                    className={`rounded-full px-3 py-1 text-xs font-semibold ${
                       item.status === "published" ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700"
                     }`}
                   >
                     {item.status === "published" ? "منشورة" : "مسودة"}
                   </span>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      selectPassage(item.slug);
+                      setStatusMessage(`تم فتح قطعة: ${item.title}`);
+                    }}
+                    className="inline-flex items-center gap-2 rounded-2xl border border-[#123B7A]/15 bg-white px-4 py-2 text-sm font-semibold text-[#123B7A] transition hover:border-[#123B7A] hover:bg-[#123B7A]/5"
+                  >
+                    فتح
+                    <ArrowUpLeft className="h-4 w-4" />
+                  </button>
                 </div>
-              </button>
+              </article>
             ))}
 
             {!sidebarItems.length ? (
@@ -411,24 +425,18 @@ export function VerbalPassagesBrowser({ mode = "student" }: { mode?: "student" |
           </div>
         </aside>
 
-        <section>
-          {selectedPassage ? (
+        <section className="order-1 min-w-0 xl:order-2">
+          {currentPassage ? (
             <VerbalPassageViewer
-              passage={selectedPassage}
+              passage={currentPassage}
               mode={mode}
               nextPassageTitle={nextPassage?.title ?? null}
-              onOpenNextPassage={nextPassage ? () => setSelectedPassageId(nextPassage.id) : null}
-              onBackToResults={() => {
-                router.replace(clearPassageParam(pathname, new URLSearchParams(searchParams.toString())), {
-                  scroll: false,
-                });
-                setSelectedPassageId(null);
-              }}
+              onOpenNextPassage={nextPassage ? () => selectPassage(nextPassage.slug) : null}
             />
           ) : (
             <div className="rounded-[1.8rem] border border-dashed border-slate-300 bg-white p-8 text-center text-sm text-slate-500 shadow-sm">
-              اختر قطعة من القائمة لتظهر هنا مع النص والأسئلة والخيارات، أو ابدأ الآن بقطعة عشوائية من الزر
-              الذهبي.
+              يتم هنا عرض القطعة الحالية فقط. إذا فتحت الصفحة بمفتاح صحيح فستظهر مباشرة، وإذا دخلت بدون مفتاح
+              فسيتم بدء قطعة عشوائية واحدة، ويمكنك تغييرها يدويًا من القائمة الجانبية.
             </div>
           )}
         </section>

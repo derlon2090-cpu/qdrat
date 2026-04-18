@@ -594,12 +594,16 @@ function getSearchScore(passage: SearchableVerbalPassage, query: string) {
   if (!normalizedQuery || normalizedQuery.length < 3) return 0;
 
   const normalizedTitle = normalizeArabicText(passage.title);
+  const normalizedSlug = normalizeArabicText((passage.slug ?? "").replace(/[-_]+/g, " "));
   const normalizedKeywords = passage.keywords.map((keyword) => normalizeArabicText(keyword));
 
   if (normalizedTitle === normalizedQuery) return 100;
+  if (normalizedSlug === normalizedQuery) return 97;
   if (normalizedKeywords.includes(normalizedQuery)) return 95;
+  if (normalizedSlug.startsWith(normalizedQuery)) return 90;
   if (normalizedTitle.startsWith(normalizedQuery)) return 88;
   if (normalizedKeywords.some((keyword) => keyword.startsWith(normalizedQuery))) return 82;
+  if (normalizedSlug.includes(normalizedQuery)) return 78;
   if (normalizedTitle.includes(normalizedQuery)) return 76;
   if (normalizedKeywords.some((keyword) => keyword.includes(normalizedQuery))) return 70;
   return 0;

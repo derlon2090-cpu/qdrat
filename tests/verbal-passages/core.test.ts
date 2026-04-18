@@ -38,6 +38,7 @@ runTest("should return results for 3+ chars", () => {
   const passages = [
     {
       id: "1",
+      slug: "oil",
       title: "قطعة الزيت",
       keywords: ["الزيت", "قطعة الزيت"],
       passageText: "نص القطعة",
@@ -46,6 +47,7 @@ runTest("should return results for 3+ chars", () => {
     },
     {
       id: "2",
+      slug: "trees",
       title: "قطعة الأشجار",
       keywords: ["الأشجار", "قطعة الأشجار"],
       passageText: "نص القطعة",
@@ -57,6 +59,24 @@ runTest("should return results for 3+ chars", () => {
   const results = searchPassagesLocal(passages, "الزي");
   assert.equal(results.length, 1);
   assert.equal(results[0]?.title, "قطعة الزيت");
+});
+
+runTest("should match passage slug for 3+ chars", () => {
+  const passages = [
+    {
+      id: "1",
+      slug: "desertification",
+      title: "قطعة التصحر",
+      keywords: ["التصحر", "قطعة التصحر"],
+      passageText: "نص القطعة",
+      status: "published" as const,
+      questions: [],
+    },
+  ];
+
+  const results = searchPassagesLocal(passages, "des");
+  assert.equal(results.length, 1);
+  assert.equal(results[0]?.slug, "desertification");
 });
 
 runTest("should link questions to the correct passage", () => {
