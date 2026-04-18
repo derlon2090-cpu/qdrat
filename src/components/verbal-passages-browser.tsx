@@ -4,8 +4,14 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Dice5, Search } from "lucide-react";
 
+import samplePassagesData from "../../data/verbal-passages.sample.json";
 import { buildPublicApiUrl } from "@/lib/api-base";
-import type { VerbalPassageRecord, VerbalPassageSummary } from "@/lib/verbal-passages";
+import { searchPassagesLocal, normalizeArabicText } from "@/lib/verbal-passages-core";
+import type {
+  VerbalPassageQuestionRecord,
+  VerbalPassageRecord,
+  VerbalPassageSummary,
+} from "@/lib/verbal-passages";
 import { VerbalPassageViewer } from "@/components/verbal-passage-viewer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -22,25 +28,103 @@ type ListedPassageItem = VerbalPassageRecord & {
   questionCount?: number;
 };
 
+type SampleQuestionRow = {
+  question_text: string;
+  option_a: string;
+  option_b: string;
+  option_c: string;
+  option_d: string;
+  correct_option: "A" | "B" | "C" | "D";
+  explanation?: string | null;
+};
+
+type SamplePassageRow = {
+  title: string;
+  slug: string;
+  keywords?: string[];
+  passage_text: string;
+  status?: string;
+  version?: number;
+  external_source_id?: string | null;
+  questions?: SampleQuestionRow[];
+};
+
 function createExcerpt(text: string, maxLength = 220) {
   const cleanText = text.replace(/\s+/g, " ").trim();
   if (cleanText.length <= maxLength) return cleanText;
   return `${cleanText.slice(0, maxLength).trim()}...`;
 }
 
-function mapListedItems(items: ListedPassageItem[]) {
-  return items.map(
-    (item) =>
-      ({
-        id: item.id,
-        slug: item.slug,
-        title: item.title,
-        status: item.status,
-        version: item.version,
-        externalSourceId: item.externalSourceId,
-        excerpt: createExcerpt(item.passageText),
-      }) satisfies PassageDirectoryItem,
-  );
+function mapSampleQuestion(
+  question: SampleQuestionRow,
+  index: number,
+  slug: string,
+): VerbalPassageQuestionRecord {
+  return {
+    id: `sample-${slug}-question-${index + 1}`,
+    questionOrder: index + 1,
+    questionText: question.question_text,
+    optionA: question.option_a,
+    optionB: question.option_b,
+    optionC: question.option_c,
+    optionD: question.option_d,
+    correctOption: question.correct_option,
+    explanation: question.explanation ?? null,
+  };
+}
+
+function mapSamplePassage(row: SamplePassageRow, index: number): VerbalPassageRecord {
+  return {
+    id: `sample-passage-${index + 1}-${row.slug}`,
+    slug: row.slug,
+    title: row.title,
+    keywords: row.keywords ?? [],
+    passageText: row.passage_text,
+    status: row.status === "draft" ? "draft" : "published",
+    version: typeof row.version === "number" && row.version > 0 ? row.version : 1,
+    externalSourceId: row.external_source_id ?? `sample-json-${row.slug}`,
+    createdAt: "",
+    updatedAt: "",
+    questions: (row.questions ?? []).map((question, questionIndex) =>
+      mapSampleQuestion(question, questionIndex, row.slug),
+    ),
+  };
+}
+
+const fallbackPassageRecords = (samplePassagesData as SamplePassageRow[]).map(mapSamplePassage);
+
+function mergePassageSources(primary: VerbalPassageRecord[], fallback: VerbalPassageRecord[]) {
+  const unique = new Map<string, VerbalPassageRecord>();
+
+  for (const passage of [...primary, ...fallback]) {
+    const key =
+      passage.slug.trim().toLowerCase() ||
+      normalizeArabicText([passage.title, ...(passage.keywords ?? [])].join(" "));
+
+    if (!unique.has(key)) {
+      unique.set(key, passage);
+    }
+  }
+
+  return Array.from(unique.values()).sort((left, right) => left.title.localeCompare(right.title, "ar"));
+}
+
+function mapDirectoryItem(item: ListedPassageItem): PassageDirectoryItem {
+  return {
+    id: item.id,
+    slug: item.slug,
+    title: item.title,
+    status: item.status,
+    version: item.version,
+    externalSourceId: item.externalSourceId,
+    excerpt: createExcerpt(item.passageText),
+  };
+}
+
+function clearPassageParam(pathname: string, searchParams: URLSearchParams) {
+  const nextParams = new URLSearchParams(searchParams.toString());
+  nextParams.delete("passage");
+  return nextParams.toString() ? `${pathname}?${nextParams.toString()}` : pathname;
 }
 
 export function VerbalPassagesBrowser({ mode = "student" }: { mode?: "student" | "admin" }) {
@@ -50,51 +134,13 @@ export function VerbalPassagesBrowser({ mode = "student" }: { mode?: "student" |
 
   const [query, setQuery] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
-  const [results, setResults] = useState<VerbalPassageSummary[]>([]);
-  const [availablePassages, setAvailablePassages] = useState<PassageDirectoryItem[]>([]);
-  const [selectedPassage, setSelectedPassage] = useState<VerbalPassageRecord | null>(null);
+  const [passageRecords, setPassageRecords] = useState<VerbalPassageRecord[]>(fallbackPassageRecords);
   const [selectedPassageId, setSelectedPassageId] = useState<string | null>(null);
-  const [isSearching, setIsSearching] = useState(false);
   const [isLoadingDirectory, setIsLoadingDirectory] = useState(false);
-  const [isLoadingPassage, setIsLoadingPassage] = useState(false);
-  const [message, setMessage] = useState("اكتب 3 أحرف فأكثر ليبدأ البحث في عنوان القطعة والكلمات المفتاحية.");
+  const [syncMessage, setSyncMessage] = useState("");
+  const [hasAutoOpenedRandom, setHasAutoOpenedRandom] = useState(false);
 
   const requestedSlug = searchParams.get("passage")?.trim().toLowerCase() ?? "";
-
-  const normalizedLength = useMemo(() => query.replace(/\s+/g, "").length, [query]);
-  const navigablePassages = useMemo(
-    () => (results.length ? results : availablePassages),
-    [availablePassages, results],
-  );
-  const selectedResultIndex = useMemo(
-    () => navigablePassages.findIndex((item) => item.id === selectedPassageId),
-    [navigablePassages, selectedPassageId],
-  );
-  const nextPassage = selectedResultIndex >= 0 ? navigablePassages[selectedResultIndex + 1] ?? null : null;
-
-  const openRandomPassage = useCallback(
-    (options?: { excludeCurrent?: boolean; clearSearch?: boolean }) => {
-      if (!availablePassages.length) return;
-
-      const candidates =
-        options?.excludeCurrent && availablePassages.length > 1 && selectedPassageId
-          ? availablePassages.filter((item) => item.id !== selectedPassageId)
-          : availablePassages;
-      const randomPassage = candidates[Math.floor(Math.random() * candidates.length)];
-
-      if (!randomPassage) return;
-
-      if (options?.clearSearch) {
-        setQuery("");
-        setDebouncedQuery("");
-        setResults([]);
-      }
-
-      setSelectedPassageId(randomPassage.id);
-      setMessage("تم فتح قطعة عشوائية لتبدأ التدريب مباشرة.");
-    },
-    [availablePassages, selectedPassageId],
-  );
 
   useEffect(() => {
     const timeoutId = window.setTimeout(() => {
@@ -109,7 +155,7 @@ export function VerbalPassagesBrowser({ mode = "student" }: { mode?: "student" |
     setIsLoadingDirectory(true);
 
     fetch(
-      buildPublicApiUrl(`/api/verbal-passages?status=${mode === "admin" ? "all" : "published"}&limit=200`),
+      buildPublicApiUrl(`/api/verbal-passages?status=${mode === "admin" ? "all" : "published"}&limit=500`),
       {
         cache: "no-store",
         signal: controller.signal,
@@ -117,18 +163,20 @@ export function VerbalPassagesBrowser({ mode = "student" }: { mode?: "student" |
     )
       .then(async (response) => {
         if (!response.ok) {
-          throw new Error("تعذر تحميل دليل القطع اللفظية.");
+          throw new Error("تعذر مزامنة بنك القطع من القاعدة.");
         }
-        return response.json() as Promise<{ items?: ListedPassageItem[] }>;
+
+        return response.json() as Promise<{ items?: VerbalPassageRecord[] }>;
       })
       .then((payload) => {
-        const items = mapListedItems(payload.items ?? []);
-        setAvailablePassages(items);
+        const items = Array.isArray(payload.items) ? payload.items : [];
+        setPassageRecords(mergePassageSources(items, fallbackPassageRecords));
+        setSyncMessage("");
       })
-      .catch((error) => {
+      .catch(() => {
         if (controller.signal.aborted) return;
-        setAvailablePassages([]);
-        setMessage(error instanceof Error ? error.message : "تعذر تحميل دليل القطع اللفظية.");
+        setPassageRecords(fallbackPassageRecords);
+        setSyncMessage("تعذر مزامنة القاعدة الآن، لذا نعرض القطع المضافة داخل المشروع مباشرة.");
       })
       .finally(() => {
         if (!controller.signal.aborted) {
@@ -139,114 +187,101 @@ export function VerbalPassagesBrowser({ mode = "student" }: { mode?: "student" |
     return () => controller.abort();
   }, [mode]);
 
+  const visiblePassages = useMemo(
+    () => passageRecords.filter((passage) => mode === "admin" || passage.status === "published"),
+    [mode, passageRecords],
+  );
+
+  const availablePassages = useMemo(
+    () => visiblePassages.map((item) => mapDirectoryItem(item)),
+    [visiblePassages],
+  );
+
+  const normalizedQueryLength = useMemo(
+    () => normalizeArabicText(query).replace(/\s+/g, "").length,
+    [query],
+  );
+
+  const searchMatches = useMemo(() => {
+    if (normalizeArabicText(debouncedQuery).replace(/\s+/g, "").length < SEARCH_MIN_CHARS) {
+      return [] as PassageDirectoryItem[];
+    }
+
+    const matchedIds = searchPassagesLocal(visiblePassages, debouncedQuery, SEARCH_MIN_CHARS).map(
+      (item) => item.id,
+    );
+
+    return matchedIds
+      .map((id) => visiblePassages.find((passage) => passage.id === id))
+      .filter((item): item is VerbalPassageRecord => Boolean(item))
+      .map((item) => mapDirectoryItem(item));
+  }, [debouncedQuery, visiblePassages]);
+
+  const showSearchMatches = useMemo(
+    () => normalizeArabicText(debouncedQuery).replace(/\s+/g, "").length >= SEARCH_MIN_CHARS,
+    [debouncedQuery],
+  );
+
+  const sidebarItems = showSearchMatches ? searchMatches : availablePassages;
+  const selectedPassage = visiblePassages.find((item) => item.id === selectedPassageId) ?? null;
+  const selectedPassageIndex = visiblePassages.findIndex((item) => item.id === selectedPassageId);
+  const nextPassage = selectedPassageIndex >= 0 ? visiblePassages[selectedPassageIndex + 1] ?? null : null;
+  const isWaitingForDebounce = query !== debouncedQuery;
+
+  const openRandomPassage = useCallback(
+    (options?: { excludeCurrent?: boolean; clearSearch?: boolean }) => {
+      if (!visiblePassages.length) return;
+
+      const candidates =
+        options?.excludeCurrent && visiblePassages.length > 1 && selectedPassageId
+          ? visiblePassages.filter((item) => item.id !== selectedPassageId)
+          : visiblePassages;
+
+      const randomPassage = candidates[Math.floor(Math.random() * candidates.length)];
+      if (!randomPassage) return;
+
+      if (options?.clearSearch) {
+        setQuery("");
+        setDebouncedQuery("");
+      }
+
+      setSelectedPassageId(randomPassage.id);
+      setHasAutoOpenedRandom(true);
+    },
+    [selectedPassageId, visiblePassages],
+  );
+
   useEffect(() => {
-    if (!availablePassages.length) return;
+    if (!visiblePassages.length) return;
 
     if (requestedSlug) {
-      const matchedPassage = availablePassages.find((item) => item.slug === requestedSlug);
+      const matchedPassage = visiblePassages.find((item) => item.slug === requestedSlug);
+
       if (matchedPassage) {
         if (matchedPassage.id !== selectedPassageId) {
           setSelectedPassageId(matchedPassage.id);
-          setMessage("");
+          setHasAutoOpenedRandom(true);
         }
         return;
       }
 
-      const randomPassage = availablePassages[Math.floor(Math.random() * availablePassages.length)];
-      if (randomPassage && randomPassage.id !== selectedPassageId) {
-        setSelectedPassageId(randomPassage.id);
-        setMessage("لم نجد القطعة المطلوبة بهذا المفتاح، فتم فتح قطعة عشوائية بدلًا منها.");
+      if (!selectedPassageId) {
+        openRandomPassage();
+        setSyncMessage("لم نجد القطعة المطلوبة بهذا المفتاح، فتم فتح قطعة عشوائية بدلًا منها.");
       }
       return;
     }
 
-    if (!selectedPassageId && !query.trim()) {
+    if (!selectedPassageId && !hasAutoOpenedRandom) {
       openRandomPassage();
     }
-  }, [availablePassages, openRandomPassage, query, requestedSlug, selectedPassageId]);
-
-  useEffect(() => {
-    if (!debouncedQuery.trim()) {
-      setResults([]);
-      if (!selectedPassageId) {
-        setMessage("اكتب 3 أحرف فأكثر ليبدأ البحث في عنوان القطعة والكلمات المفتاحية.");
-      }
-      return;
-    }
-
-    if (debouncedQuery.replace(/\s+/g, "").length < SEARCH_MIN_CHARS) {
-      setResults([]);
-      setMessage("لا تظهر أي نتائج قبل الوصول إلى 3 أحرف.");
-      return;
-    }
-
-    const controller = new AbortController();
-    setIsSearching(true);
-    setMessage("جاري البحث في بنك القطع اللفظي...");
-
-    fetch(
-      buildPublicApiUrl(
-        `/api/verbal-passages/search?q=${encodeURIComponent(debouncedQuery)}&includeDraft=${mode === "admin" ? "1" : "0"}`,
-      ),
-      { signal: controller.signal },
-    )
-      .then(async (response) => {
-        if (!response.ok) {
-          throw new Error("تعذر تنفيذ البحث.");
-        }
-        return response.json() as Promise<{ items?: VerbalPassageSummary[] }>;
-      })
-      .then((payload) => {
-        const items = payload.items ?? [];
-        setResults(items);
-        setMessage(items.length ? "" : "لا توجد قطع مطابقة لهذه الكلمة المفتاحية.");
-      })
-      .catch((error) => {
-        if (controller.signal.aborted) return;
-        setResults([]);
-        setMessage(error instanceof Error ? error.message : "تعذر تنفيذ البحث في القطع اللفظية.");
-      })
-      .finally(() => {
-        if (!controller.signal.aborted) {
-          setIsSearching(false);
-        }
-      });
-
-    return () => controller.abort();
-  }, [debouncedQuery, mode, selectedPassageId]);
-
-  useEffect(() => {
-    if (!selectedPassageId) return;
-
-    const controller = new AbortController();
-    setIsLoadingPassage(true);
-
-    fetch(buildPublicApiUrl(`/api/verbal-passages/${selectedPassageId}`), {
-      cache: "no-store",
-      signal: controller.signal,
-    })
-      .then(async (response) => {
-        if (!response.ok) {
-          throw new Error("تعذر تحميل تفاصيل القطعة.");
-        }
-        return response.json() as Promise<{ item?: VerbalPassageRecord }>;
-      })
-      .then((payload) => {
-        setSelectedPassage(payload.item ?? null);
-      })
-      .catch((error) => {
-        if (controller.signal.aborted) return;
-        setSelectedPassage(null);
-        setMessage(error instanceof Error ? error.message : "تعذر تحميل تفاصيل القطعة.");
-      })
-      .finally(() => {
-        if (!controller.signal.aborted) {
-          setIsLoadingPassage(false);
-        }
-      });
-
-    return () => controller.abort();
-  }, [selectedPassageId]);
+  }, [
+    hasAutoOpenedRandom,
+    openRandomPassage,
+    requestedSlug,
+    selectedPassageId,
+    visiblePassages,
+  ]);
 
   useEffect(() => {
     if (!selectedPassage?.slug) return;
@@ -257,23 +292,58 @@ export function VerbalPassagesBrowser({ mode = "student" }: { mode?: "student" |
     router.replace(`${pathname}?${nextParams.toString()}`, { scroll: false });
   }, [pathname, requestedSlug, router, searchParams, selectedPassage?.slug]);
 
+  const resultCaption = useMemo(() => {
+    if (isLoadingDirectory) return "جاري تحميل القطع...";
+    if (isWaitingForDebounce && normalizedQueryLength >= SEARCH_MIN_CHARS) return "جاري تجهيز نتائج البحث...";
+    if (!showSearchMatches && normalizedQueryLength > 0 && normalizedQueryLength < SEARCH_MIN_CHARS) {
+      return `يبدأ البحث بعد ${SEARCH_MIN_CHARS} أحرف، ويمكنك الآن الاختيار من العناوين الجاهزة.`;
+    }
+    if (showSearchMatches) {
+      return searchMatches.length ? `${searchMatches.length} نتيجة` : "لا توجد نتائج مطابقة حاليًا.";
+    }
+    return `${availablePassages.length} عنوانًا متاحًا`;
+  }, [
+    availablePassages.length,
+    isLoadingDirectory,
+    isWaitingForDebounce,
+    normalizedQueryLength,
+    searchMatches.length,
+    showSearchMatches,
+  ]);
+
+  const emptyStateMessage = useMemo(() => {
+    if (!availablePassages.length) {
+      return "لا توجد قطع لفظية متاحة الآن.";
+    }
+
+    if (showSearchMatches) {
+      return "لا توجد قطع مطابقة لهذه الكلمة المفتاحية الآن. جرّب عنوانًا آخر أو ابدأ بقطعة عشوائية.";
+    }
+
+    if (normalizedQueryLength > 0 && normalizedQueryLength < SEARCH_MIN_CHARS) {
+      return `اكتب ${SEARCH_MIN_CHARS} أحرف فأكثر لبدء البحث، أو اختر مباشرة من قائمة العناوين المتاحة.`;
+    }
+
+    return "اختر قطعة من القائمة لتظهر هنا مع النص والأسئلة، أو ابدأ مباشرة بقطعة عشوائية.";
+  }, [availablePassages.length, normalizedQueryLength, showSearchMatches]);
+
   return (
     <div dir="rtl" className="space-y-6">
       <div className="rounded-[2rem] border border-[#E8D8B3] bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(248,247,244,0.96))] p-7 shadow-soft">
         <div className="display-font text-3xl font-bold text-slate-950">بنك القطع اللفظي</div>
         <p className="mt-3 max-w-3xl text-sm leading-8 text-slate-600">
-          كل قطعة مرتبطة باسم مفتاحي ثابت، ويمكن فتحها مباشرة من الرابط أو بدء قطعة عشوائية تلقائيًا عند الدخول
-          إلى القسم. ويبدأ البحث بعد كتابة 3 أحرف فأكثر حتى تبقى النتائج أدق وأسرع.
+          كل قطعة مرتبطة بعنوان مفتاحي ثابت، ويمكن فتحها مباشرة من الرابط أو بدء قطعة عشوائية عند الدخول إلى
+          القسم. ويبدأ البحث بعد كتابة 3 أحرف فأكثر حتى تبقى النتائج أدق وأسرع.
         </p>
 
-        <div className="mt-5 flex flex-col gap-3 lg:flex-row lg:items-center">
-          <div className="relative flex-1">
+        <div className="mt-5 grid gap-3 lg:grid-cols-[1fr_auto]">
+          <div className="relative">
             <Search className="pointer-events-none absolute right-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
             <Input
               value={query}
               onChange={(event) => setQuery(event.target.value)}
               placeholder="ابحث عن القطعة"
-              className="h-14 pr-12 text-base"
+              className="h-14 rounded-[1.7rem] border-[#E8D8B3] pr-12 text-base shadow-[0_10px_24px_rgba(18,59,122,0.05)]"
             />
           </div>
 
@@ -281,7 +351,7 @@ export function VerbalPassagesBrowser({ mode = "student" }: { mode?: "student" |
             type="button"
             onClick={() => openRandomPassage({ excludeCurrent: true, clearSearch: true })}
             disabled={isLoadingDirectory || !availablePassages.length}
-            className="h-14 rounded-2xl bg-[linear-gradient(135deg,#F5D08A_0%,#E6B85C_40%,#D4A94C_100%)] px-6 text-base font-bold text-slate-950 shadow-[0_12px_30px_rgba(201,154,67,0.28)] transition hover:-translate-y-0.5 hover:shadow-[0_16px_34px_rgba(201,154,67,0.34)] disabled:translate-y-0 disabled:opacity-60"
+            className="h-14 rounded-[1.7rem] bg-[linear-gradient(135deg,#F5D08A_0%,#E6B85C_40%,#D4A94C_100%)] px-7 text-base font-bold text-slate-950 shadow-[0_12px_30px_rgba(201,154,67,0.28)] transition hover:-translate-y-0.5 hover:shadow-[0_16px_34px_rgba(201,154,67,0.34)] disabled:translate-y-0 disabled:opacity-60"
           >
             <Dice5 className="ml-2 h-5 w-5" />
             {selectedPassageId ? "ابدأ قطعة عشوائية أخرى" : "ابدأ قطعة عشوائية"}
@@ -289,29 +359,26 @@ export function VerbalPassagesBrowser({ mode = "student" }: { mode?: "student" |
         </div>
 
         <div className="mt-3 text-sm leading-7 text-slate-500">
-          إذا ما تبي تختار يدويًا، اضغط الزر الذهبي وابدأ مباشرة بقطعة عشوائية من بنك القطع اللفظي.
+          {syncMessage || "إذا ما تبي تختار يدويًا، اضغط الزر الذهبي وابدأ مباشرة بقطعة عشوائية من بنك القطع اللفظي."}
         </div>
       </div>
 
       <div className="grid gap-6 xl:grid-cols-[380px_1fr]">
         <aside className="rounded-[1.8rem] border border-slate-200 bg-white p-5 shadow-sm">
-          <div className="display-font text-xl font-bold text-slate-950">نتائج البحث</div>
-          <div className="mt-2 text-sm leading-7 text-slate-500">
-            {isLoadingDirectory
-              ? "جاري تحميل دليل القطع..."
-              : isSearching
-                ? "جاري البحث..."
-                : normalizedLength < SEARCH_MIN_CHARS
-                  ? "لا تظهر النتائج قبل 3 أحرف."
-                  : `${results.length} نتيجة`}
+          <div className="display-font text-xl font-bold text-slate-950">
+            {showSearchMatches ? "نتائج البحث" : "العناوين المتاحة"}
           </div>
+          <div className="mt-2 text-sm leading-7 text-slate-500">{resultCaption}</div>
 
           <div className="mt-5 space-y-3">
-            {results.map((item) => (
+            {sidebarItems.map((item) => (
               <button
                 key={item.id}
                 type="button"
-                onClick={() => setSelectedPassageId(item.id)}
+                onClick={() => {
+                  setSelectedPassageId(item.id);
+                  setHasAutoOpenedRandom(true);
+                }}
                 className={`w-full rounded-[1.35rem] border p-4 text-right transition ${
                   selectedPassageId === item.id
                     ? "border-[#123B7A] bg-[#123B7A]/5"
@@ -336,40 +403,32 @@ export function VerbalPassagesBrowser({ mode = "student" }: { mode?: "student" |
               </button>
             ))}
 
-            {!results.length ? (
+            {!sidebarItems.length ? (
               <div className="rounded-[1.35rem] border border-dashed border-slate-300 bg-slate-50/80 p-5 text-sm leading-7 text-slate-500">
-                {message}
+                {emptyStateMessage}
               </div>
             ) : null}
           </div>
         </aside>
 
         <section>
-          {isLoadingPassage ? (
-            <div className="rounded-[1.8rem] border border-slate-200 bg-white p-8 text-center text-sm text-slate-500 shadow-sm">
-              جاري تحميل القطعة...
-            </div>
-          ) : selectedPassage ? (
+          {selectedPassage ? (
             <VerbalPassageViewer
               passage={selectedPassage}
               mode={mode}
               nextPassageTitle={nextPassage?.title ?? null}
               onOpenNextPassage={nextPassage ? () => setSelectedPassageId(nextPassage.id) : null}
               onBackToResults={() => {
-                const nextParams = new URLSearchParams(searchParams.toString());
-                nextParams.delete("passage");
-                router.replace(
-                  nextParams.toString() ? `${pathname}?${nextParams.toString()}` : pathname,
-                  { scroll: false },
-                );
+                router.replace(clearPassageParam(pathname, new URLSearchParams(searchParams.toString())), {
+                  scroll: false,
+                });
                 setSelectedPassageId(null);
-                setSelectedPassage(null);
               }}
             />
           ) : (
             <div className="rounded-[1.8rem] border border-dashed border-slate-300 bg-white p-8 text-center text-sm text-slate-500 shadow-sm">
-              اختر قطعة من النتائج لتظهر هنا مع النص والأسئلة والخيارات، أو ابدأ من الرابط المباشر باستخدام
-              المفتاح الخاص بالقطعة.
+              اختر قطعة من القائمة لتظهر هنا مع النص والأسئلة والخيارات، أو ابدأ الآن بقطعة عشوائية من الزر
+              الذهبي.
             </div>
           )}
         </section>
