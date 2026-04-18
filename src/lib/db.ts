@@ -1,3 +1,6 @@
+import { existsSync, readFileSync } from "node:fs";
+import { join } from "node:path";
+
 import { neon } from "@neondatabase/serverless";
 
 export type DatabaseHealth = {
@@ -10,15 +13,75 @@ export type DatabaseHealth = {
   checkedAt?: string;
 };
 
+const DATABASE_ENV_KEYS = [
+  "DATABASE_URL",
+  "POSTGRES_URL",
+  "POSTGRES_PRISMA_URL",
+  "NEON_DATABASE_URL",
+] as const;
+
+let cachedDatabaseUrlFromFile: string | null | undefined;
+
+function stripWrappingQuotes(value: string) {
+  return value.replace(/^["']|["']$/g, "").trim();
+}
+
+function readDatabaseUrlFromEnvFiles() {
+  if (cachedDatabaseUrlFromFile !== undefined) {
+    return cachedDatabaseUrlFromFile;
+  }
+
+  const candidateFiles = [
+    join(/* turbopackIgnore: true */ process.cwd(), ".env.local"),
+    join(/* turbopackIgnore: true */ process.cwd(), ".env"),
+  ];
+
+  for (const filePath of candidateFiles) {
+    if (!existsSync(filePath)) continue;
+
+    const content = readFileSync(filePath, "utf8");
+    const lines = content.split(/\r?\n/);
+
+    for (const line of lines) {
+      const trimmedLine = line.trim();
+      if (!trimmedLine || trimmedLine.startsWith("#")) continue;
+
+      const separatorIndex = trimmedLine.indexOf("=");
+      if (separatorIndex === -1) continue;
+
+      const key = trimmedLine.slice(0, separatorIndex).trim();
+      if (!DATABASE_ENV_KEYS.includes(key as (typeof DATABASE_ENV_KEYS)[number])) continue;
+
+      const value = stripWrappingQuotes(trimmedLine.slice(separatorIndex + 1));
+      if (value) {
+        cachedDatabaseUrlFromFile = value;
+        return value;
+      }
+    }
+  }
+
+  cachedDatabaseUrlFromFile = null;
+  return null;
+}
+
 export function getDatabaseUrl() {
-  return process.env.DATABASE_URL?.trim();
+  for (const key of DATABASE_ENV_KEYS) {
+    const value = process.env[key]?.trim();
+    if (value) {
+      return stripWrappingQuotes(value);
+    }
+  }
+
+  return readDatabaseUrlFromEnvFiles();
 }
 
 export function getSqlClient() {
   const databaseUrl = getDatabaseUrl();
 
   if (!databaseUrl) {
-    throw new Error("DATABASE_URL غير موجودة. أضف رابط Neon داخل .env.local لتفعيل هذه الميزة.");
+    throw new Error(
+      "تعذر العثور على رابط قاعدة البيانات. أضف DATABASE_URL أو POSTGRES_URL داخل .env.local ثم أعد تشغيل الخادم إذا لزم.",
+    );
   }
 
   return neon(databaseUrl);
@@ -31,7 +94,7 @@ export async function getDatabaseHealth(): Promise<DatabaseHealth> {
     return {
       configured: false,
       connected: false,
-      message: "DATABASE_URL غير موجودة بعد. أضف رابط Neon داخل .env.local لتفعيل الربط.",
+      message: "رابط قاعدة البيانات غير موجود بعد. أضف DATABASE_URL أو POSTGRES_URL داخل .env.local لتفعيل الربط.",
     };
   }
 

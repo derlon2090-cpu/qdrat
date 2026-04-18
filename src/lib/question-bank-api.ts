@@ -310,6 +310,10 @@ export async function getBankItems(filters: SearchFilters = {}) {
       verbalMixedPracticeQuestions.filter((question) => question.categoryId === "contextual_error").length,
     ],
     ["verbal_odd_word", verbalMixedPracticeQuestions.filter((question) => question.categoryId === "odd_word").length],
+    [
+      "verbal_short_reading",
+      verbalMixedPracticeQuestions.filter((question) => question.categoryId === "short_reading").length,
+    ],
   ]);
 
   const items: BankItem[] = [...verbalSections, ...quantitativeSections].map((section) => ({
