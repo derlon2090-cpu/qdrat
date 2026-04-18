@@ -1,7 +1,10 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 
+import { useAuthSession } from "@/hooks/use-auth-session";
+import { trackMistakeFromClient } from "@/lib/client-mistakes";
 import type { VerbalPassageRecord } from "@/lib/verbal-passages";
 
 type ViewerMode = "student" | "admin";
@@ -34,6 +37,8 @@ export function VerbalPassageViewer({
 }) {
   const [selectedAnswers, setSelectedAnswers] = useState<Record<string, "A" | "B" | "C" | "D" | undefined>>({});
   const [submittedAnswers, setSubmittedAnswers] = useState<Record<string, boolean>>({});
+  const [authPromptQuestionId, setAuthPromptQuestionId] = useState<string | null>(null);
+  const { status: authStatus } = useAuthSession();
 
   const questionMap = useMemo(
     () =>
@@ -51,6 +56,7 @@ export function VerbalPassageViewer({
   useEffect(() => {
     setSelectedAnswers({});
     setSubmittedAnswers({});
+    setAuthPromptQuestionId(null);
   }, [passage.id]);
 
   const submittedCount = useMemo(
@@ -59,6 +65,39 @@ export function VerbalPassageViewer({
   );
 
   const isPassageCompleted = mode === "student" && passage.questions.length > 0 && submittedCount === passage.questions.length;
+
+  async function confirmQuestionAnswer(question: VerbalPassageRecord["questions"][number]) {
+    const selected = selectedAnswers[question.id];
+    if (!selected) return;
+
+    setSubmittedAnswers((previous) => ({
+      ...previous,
+      [question.id]: true,
+    }));
+
+    const result = await trackMistakeFromClient({
+      questionKey: `${passage.slug}:${question.id}`,
+      section: "verbal",
+      sourceBank: "بنك القطع اللفظي",
+      questionTypeLabel: "لفظي",
+      questionText: question.questionText,
+      questionHref: `/verbal/reading?passage=${encodeURIComponent(passage.slug)}`,
+      metadata: {
+        passageTitle: passage.title,
+        questionOrder: question.questionOrder,
+      },
+      outcome: selected === question.correctOption ? "correct" : "incorrect",
+    });
+
+    if (result.unauthorized && selected !== question.correctOption) {
+      setAuthPromptQuestionId(question.id);
+      return;
+    }
+
+    if (selected === question.correctOption || authStatus === "authenticated") {
+      setAuthPromptQuestionId((current) => (current === question.id ? null : current));
+    }
+  }
 
   return (
     <div className="space-y-6" dir="rtl">
@@ -124,12 +163,17 @@ export function VerbalPassageViewer({
                       key={`${question.id}-${option.key}`}
                       type="button"
                       disabled={mode === "admin"}
-                      onClick={() =>
+                      onClick={() => {
                         setSelectedAnswers((previous) => ({
                           ...previous,
                           [question.id]: option.key,
-                        }))
-                      }
+                        }));
+                        setSubmittedAnswers((previous) => ({
+                          ...previous,
+                          [question.id]: false,
+                        }));
+                        setAuthPromptQuestionId((current) => (current === question.id ? null : current));
+                      }}
                       className={`rounded-[1.25rem] border px-4 py-4 text-right transition ${classes} ${
                         mode === "admin" ? "cursor-default" : ""
                       }`}
@@ -152,12 +196,7 @@ export function VerbalPassageViewer({
                 <div className="mt-5">
                   <button
                     type="button"
-                    onClick={() =>
-                      setSubmittedAnswers((previous) => ({
-                        ...previous,
-                        [question.id]: true,
-                      }))
-                    }
+                    onClick={() => void confirmQuestionAnswer(question)}
                     disabled={!selected}
                     className="rounded-2xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-40"
                   >
@@ -196,6 +235,20 @@ export function VerbalPassageViewer({
                             : question.optionD}
                     </div>
                   ) : null}
+                </div>
+              ) : null}
+
+              {mode === "student" && authPromptQuestionId === question.id ? (
+                <div className="mt-4 rounded-[1.25rem] border border-amber-200 bg-amber-50 px-4 py-4 text-sm leading-8 text-amber-800">
+                  سجّل دخولك حتى يتم حفظ هذا السؤال داخل قائمة الأخطاء الخاصة بحسابك.
+                  <div className="mt-3 flex flex-wrap gap-3">
+                    <Link href="/login?next=/question-bank?track=mistakes" className="font-semibold text-[#123B7A]">
+                      تسجيل الدخول
+                    </Link>
+                    <Link href="/register?next=/question-bank?track=mistakes" className="font-semibold text-[#123B7A]">
+                      إنشاء حساب
+                    </Link>
+                  </div>
                 </div>
               ) : null}
 

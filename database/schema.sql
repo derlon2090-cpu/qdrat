@@ -119,6 +119,20 @@ create table if not exists app_users (
   updated_at timestamptz not null default now()
 );
 
+create table if not exists app_user_sessions (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references app_users(id) on delete cascade,
+  session_token_hash varchar(64) not null unique,
+  user_agent text,
+  ip_address varchar(120),
+  expires_at timestamptz not null,
+  last_seen_at timestamptz not null default now(),
+  created_at timestamptz not null default now()
+);
+
+create index if not exists idx_app_user_sessions_user_id
+  on app_user_sessions (user_id, expires_at desc);
+
 create table if not exists app_student_profiles (
   user_id uuid primary key references app_users(id) on delete cascade,
   target_score smallint,
@@ -411,6 +425,30 @@ create table if not exists app_review_queue (
 create index if not exists idx_review_queue_user_bucket
   on app_review_queue (user_id, bucket, due_at nulls first);
 
+create table if not exists app_user_mistakes (
+  id bigserial primary key,
+  user_id uuid not null references app_users(id) on delete cascade,
+  question_key varchar(255) not null,
+  question_id bigint references app_questions(id) on delete set null,
+  section app_bank_section not null,
+  source_bank varchar(255) not null,
+  question_type_label varchar(120) not null,
+  question_text text not null,
+  question_href text,
+  correct_count integer not null default 0,
+  removal_threshold integer not null default 5,
+  metadata jsonb not null default '{}'::jsonb,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  unique (user_id, question_key)
+);
+
+create index if not exists idx_app_user_mistakes_user_section
+  on app_user_mistakes (user_id, section, updated_at desc);
+
+create index if not exists idx_app_user_mistakes_question_key
+  on app_user_mistakes (question_key);
+
 create table if not exists app_study_plans (
   id bigserial primary key,
   user_id uuid not null references app_users(id) on delete cascade,
@@ -501,6 +539,10 @@ alter table if exists app_users
 create unique index if not exists idx_app_users_username
   on app_users (username)
   where username is not null;
+
+create unique index if not exists idx_app_users_phone
+  on app_users (phone)
+  where phone is not null;
 
 alter table if exists app_subscription_plans
   add column if not exists sort_order smallint not null default 1;
@@ -612,6 +654,17 @@ $$;
 
 do $$
 begin
+  if not exists (select 1 from pg_constraint where conname = 'chk_app_user_mistakes_counts_nonnegative') then
+    alter table app_user_mistakes
+      add constraint chk_app_user_mistakes_counts_nonnegative check (
+        correct_count >= 0 and removal_threshold > 0 and correct_count <= removal_threshold
+      );
+  end if;
+end
+$$;
+
+do $$
+begin
   if not exists (select 1 from pg_constraint where conname = 'chk_app_subscription_plans_price_nonnegative') then
     alter table app_subscription_plans
       add constraint chk_app_subscription_plans_price_nonnegative check (price_sar >= 0);
@@ -716,6 +769,10 @@ $$;
 
 drop trigger if exists trg_app_users_updated_at on app_users;
 create trigger trg_app_users_updated_at before update on app_users
+for each row execute function set_updated_at();
+
+drop trigger if exists trg_app_user_mistakes_updated_at on app_user_mistakes;
+create trigger trg_app_user_mistakes_updated_at before update on app_user_mistakes
 for each row execute function set_updated_at();
 
 drop trigger if exists trg_app_student_profiles_updated_at on app_student_profiles;

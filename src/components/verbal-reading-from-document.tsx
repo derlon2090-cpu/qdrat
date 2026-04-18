@@ -1,8 +1,11 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 
+import { useAuthSession } from "@/hooks/use-auth-session";
+import { trackMistakeFromClient } from "@/lib/client-mistakes";
 import type { PassageDetail, ReadingPassageSummary } from "@/lib/question-bank-api";
 
 type VerbalReadingFromDocumentProps = {
@@ -47,6 +50,8 @@ export function VerbalReadingFromDocument({
   const [selectedAnswer, setSelectedAnswer] = useState("");
   const [submitted, setSubmitted] = useState(false);
   const [savedAnswers, setSavedAnswers] = useState<SavedAnswerMap>({});
+  const [showAuthPrompt, setShowAuthPrompt] = useState(false);
+  const { status: authStatus } = useAuthSession();
 
   useEffect(() => {
     setSavedAnswers(readSavedAnswers());
@@ -81,6 +86,7 @@ export function VerbalReadingFromDocument({
     const oldAnswer = savedAnswers[questionKey] || "";
     setSelectedAnswer(oldAnswer);
     setSubmitted(Boolean(oldAnswer));
+    setShowAuthPrompt(false);
   }, [questionKey, savedAnswers]);
 
   const result = useMemo(() => {
@@ -100,7 +106,7 @@ export function VerbalReadingFromDocument({
     };
   }, [currentQuestion, selectedAnswer, submitted]);
 
-  const confirmAnswer = () => {
+  const confirmAnswer = async () => {
     if (!selectedAnswer) return;
 
     setSubmitted(true);
@@ -112,6 +118,29 @@ export function VerbalReadingFromDocument({
       persistSavedAnswers(next);
       return next;
     });
+
+    const trackingResult = await trackMistakeFromClient({
+      questionKey,
+      section: "verbal",
+      sourceBank: "بنك القطع اللفظي",
+      questionTypeLabel: "لفظي",
+      questionText: currentQuestion.text,
+      questionHref: `/exam?section=verbal_reading&passageId=${encodeURIComponent(currentPassage.id)}&question=${questionIndex}`,
+      metadata: {
+        passageTitle: currentPassage.title,
+        questionOrder: currentQuestion.order,
+      },
+      outcome: selectedAnswer === currentQuestion.correctAnswer ? "correct" : "incorrect",
+    });
+
+    if (trackingResult.unauthorized && selectedAnswer !== currentQuestion.correctAnswer) {
+      setShowAuthPrompt(true);
+      return;
+    }
+
+    if (selectedAnswer === currentQuestion.correctAnswer || authStatus === "authenticated") {
+      setShowAuthPrompt(false);
+    }
   };
 
   const goToQuestion = (newIndex: number) => {
@@ -229,6 +258,7 @@ export function VerbalReadingFromDocument({
                         onClick={() => {
                           setSelectedAnswer(option);
                           setSubmitted(false);
+                          setShowAuthPrompt(false);
                         }}
                         className={`rounded-2xl border px-5 py-5 text-right text-2xl transition ${classes}`}
                       >
@@ -243,7 +273,7 @@ export function VerbalReadingFromDocument({
 
                 <div className="mt-8 flex flex-wrap items-center gap-3">
                   <button
-                    onClick={confirmAnswer}
+                    onClick={() => void confirmAnswer()}
                     disabled={!selectedAnswer}
                     className="rounded-2xl bg-sky-600 px-8 py-4 text-xl font-bold text-white disabled:cursor-not-allowed disabled:opacity-40"
                   >
@@ -289,6 +319,20 @@ export function VerbalReadingFromDocument({
                         </div>
                       </>
                     ) : null}
+                  </div>
+                ) : null}
+
+                {showAuthPrompt ? (
+                  <div className="mt-6 rounded-2xl border border-amber-200 bg-amber-50 px-5 py-5 text-sm leading-8 text-amber-800">
+                    سجّل دخولك حتى يتم حفظ هذا السؤال داخل قائمة الأخطاء الخاصة بحسابك.
+                    <div className="mt-3 flex flex-wrap gap-3">
+                      <Link href="/login?next=/question-bank?track=mistakes" className="font-semibold text-[#123B7A]">
+                        تسجيل الدخول
+                      </Link>
+                      <Link href="/register?next=/question-bank?track=mistakes" className="font-semibold text-[#123B7A]">
+                        إنشاء حساب
+                      </Link>
+                    </div>
                   </div>
                 ) : null}
               </div>

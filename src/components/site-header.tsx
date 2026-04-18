@@ -6,6 +6,7 @@ import { Menu, X } from "lucide-react";
 import { useMemo, useState } from "react";
 
 import { MiyaarLogo } from "@/components/miyaar-logo";
+import { HeaderAuthControls } from "@/components/header-auth-controls";
 import { SearchTrigger } from "@/components/search-trigger";
 import { Button } from "@/components/ui/button";
 import { productSidebarItems, topNavItems } from "@/lib/site-nav";
@@ -65,9 +66,7 @@ export function SiteHeader({
             <Menu className="h-5 w-5 text-[#123B7A]" />
           </button>
 
-          <Link href={ctaHref} className="hidden sm:block">
-            <Button>{ctaLabel}</Button>
-          </Link>
+          <HeaderAuthControls ctaHref={ctaHref} ctaLabel={ctaLabel} />
         </div>
       </div>
 
@@ -112,7 +111,17 @@ export function SiteHeader({
               })}
             </div>
 
-            <div className="mt-6">
+            <div className="mt-6 space-y-3">
+              <Link href="/login" onClick={() => setOpen(false)}>
+                <Button className="w-full" variant="outline">
+                  تسجيل الدخول
+                </Button>
+              </Link>
+              <Link href="/register" onClick={() => setOpen(false)}>
+                <Button className="w-full" variant="outline">
+                  إنشاء حساب
+                </Button>
+              </Link>
               <Link href={ctaHref} onClick={() => setOpen(false)}>
                 <Button className="w-full">{ctaLabel}</Button>
               </Link>

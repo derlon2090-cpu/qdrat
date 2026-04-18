@@ -3,9 +3,10 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { BookOpenText, Calculator, Search } from "lucide-react";
+import { BookOpenText, Calculator, Search, TriangleAlert, type LucideIcon } from "lucide-react";
 
 import samplePassagesData from "../../data/verbal-passages.sample.json";
+import { QuestionBankMistakesPanel } from "@/components/question-bank-mistakes-panel";
 import { Input } from "@/components/ui/input";
 import {
   EMPTY_SECTION_MESSAGE,
@@ -13,10 +14,11 @@ import {
   verbalReadingKeywords,
   verbalSections,
 } from "@/data/manual-question-bank";
+import { useAuthSession } from "@/hooks/use-auth-session";
 import { buildPublicApiUrl } from "@/lib/api-base";
 import type { VerbalPassageQuestionRecord, VerbalPassageRecord } from "@/lib/verbal-passages";
 
-type TrackId = "verbal" | "quant";
+type TrackId = "verbal" | "quant" | "mistakes";
 
 const MIN_VERBAL_SEARCH_CHARS = 3;
 const VERBAL_SEARCH_DEBOUNCE_MS = 350;
@@ -227,7 +229,7 @@ function EmptySectionCard({
   description: string;
   active: boolean;
   onClick: () => void;
-  icon: typeof BookOpenText;
+  icon: LucideIcon;
 }) {
   return (
     <button
@@ -254,14 +256,27 @@ function EmptySectionCard({
 
 export function QuestionBankOrganizer() {
   const searchParams = useSearchParams();
-  const [track, setTrack] = useState<TrackId>(searchParams.get("track") === "quant" ? "quant" : "verbal");
+  const { status: authStatus, user } = useAuthSession();
+  const [track, setTrack] = useState<TrackId>(
+    searchParams.get("track") === "quant"
+      ? "quant"
+      : searchParams.get("track") === "mistakes"
+        ? "mistakes"
+        : "verbal",
+  );
   const [keywordQuery, setKeywordQuery] = useState(searchParams.get("keyword") ?? "");
   const [debouncedKeywordQuery, setDebouncedKeywordQuery] = useState(searchParams.get("keyword") ?? "");
   const [verbalPassages, setVerbalPassages] = useState<VerbalPassageRecord[]>(fallbackVerbalPassages);
   const [isLoadingVerbalPassages, setIsLoadingVerbalPassages] = useState(false);
 
   useEffect(() => {
-    setTrack(searchParams.get("track") === "quant" ? "quant" : "verbal");
+    setTrack(
+      searchParams.get("track") === "quant"
+        ? "quant"
+        : searchParams.get("track") === "mistakes"
+          ? "mistakes"
+          : "verbal",
+    );
     setKeywordQuery(searchParams.get("keyword") ?? "");
     setDebouncedKeywordQuery(searchParams.get("keyword") ?? "");
   }, [searchParams]);
@@ -309,9 +324,15 @@ export function QuestionBankOrganizer() {
   }, [track]);
 
   const currentSections = useMemo(
-    () => (track === "verbal" ? verbalSections : quantitativeSections),
+    () =>
+      track === "verbal"
+        ? verbalSections
+        : track === "quant"
+          ? quantitativeSections
+          : [],
     [track],
   );
+  const showMistakesCard = authStatus === "authenticated";
 
   const normalizedKeywordLength = useMemo(
     () => keywordQuery.replace(/\s+/g, "").length,
@@ -331,7 +352,7 @@ export function QuestionBankOrganizer() {
 
   return (
     <div className="space-y-8">
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className={`grid gap-4 ${showMistakesCard ? "md:grid-cols-3" : "md:grid-cols-2"}`}>
         <EmptySectionCard
           title="اللفظي"
           description="تم تفريغ الأقسام القديمة، وسيتم إدخال القطع والأسئلة اللفظية يدويًا واحدة واحدة مع دعم البحث بالكلمات المفتاحية."
@@ -346,15 +367,32 @@ export function QuestionBankOrganizer() {
           onClick={() => setTrack("quant")}
           icon={Calculator}
         />
+        {showMistakesCard ? (
+          <EmptySectionCard
+            title="الأخطاء"
+            description="قسم خاص بحسابك يجمع أسئلة الكمي واللفظي التي أخطأت فيها، مع حذف تلقائي بعد 5 حلول صحيحة أو حذف يدوي."
+            active={track === "mistakes"}
+            onClick={() => setTrack("mistakes")}
+            icon={TriangleAlert}
+          />
+        ) : null}
       </div>
 
       <div className="rounded-[2.2rem] border border-[#E8D8B3] bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(248,247,244,0.96))] p-8 shadow-soft">
         <div className="display-font text-2xl font-bold text-slate-950">
-          {track === "verbal" ? "القسم اللفظي" : "القسم الكمي"}
+          {track === "verbal" ? "القسم اللفظي" : track === "quant" ? "القسم الكمي" : "الأخطاء"}
         </div>
         <p className="mt-3 max-w-3xl text-sm leading-8 text-slate-600">
-          {EMPTY_SECTION_MESSAGE}. تم تجهيز النظام الآن ليقرأ من بيانات يدوية ثابتة فقط، وعند إضافة أي قسم أو قطعة جديدة ستظهر مباشرة بدون PDF أو استخراج تلقائي.
+          {track === "mistakes"
+            ? "كل سؤال تخطئ فيه وأنت مسجل الدخول يُحفظ هنا داخل حسابك فقط، ويختفي تلقائيًا بعد 5 حلول صحيحة أو عند حذفه يدويًا."
+            : `${EMPTY_SECTION_MESSAGE}. تم تجهيز النظام الآن ليقرأ من بيانات يدوية ثابتة فقط، وعند إضافة أي قسم أو قطعة جديدة ستظهر مباشرة بدون PDF أو استخراج تلقائي.`}
         </p>
+
+        {track === "mistakes" ? (
+          <div className="mt-8">
+            <QuestionBankMistakesPanel sessionStatus={authStatus} user={user} />
+          </div>
+        ) : null}
 
         {track === "verbal" ? (
           <div id="verbal-reading-search" className="mt-8 space-y-5 rounded-[1.9rem] border border-slate-200 bg-white p-6 shadow-sm">
@@ -468,7 +506,7 @@ export function QuestionBankOrganizer() {
           </div>
         ) : null}
 
-        {currentSections.length ? (
+        {track !== "mistakes" && currentSections.length ? (
           <div className="mt-6 grid gap-4 md:grid-cols-2">
             {currentSections.map((section) =>
               section.href ? (
@@ -489,13 +527,13 @@ export function QuestionBankOrganizer() {
               ),
             )}
           </div>
-        ) : (
+        ) : track !== "mistakes" ? (
           <div className="mt-6 rounded-[1.7rem] border border-dashed border-slate-300 bg-white/70 p-8 text-center text-sm text-slate-500">
             {track === "verbal"
               ? "لا يوجد محتوى أسئلة ظاهر الآن داخل القسم اللفظي، لكن دليل العناوين الجاهز للبحث أصبح متاحًا بالأعلى."
               : "لا يوجد محتوى معروض حاليًا داخل هذا القسم."}
           </div>
-        )}
+        ) : null}
       </div>
     </div>
   );
