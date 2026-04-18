@@ -5,6 +5,7 @@ import { useCallback, useEffect, useState } from "react";
 import type { AuthSessionPayload } from "@/lib/auth-shared";
 
 type SessionStatus = "loading" | "authenticated" | "unauthenticated";
+const SESSION_REFRESH_INTERVAL_MS = 10 * 60 * 1000;
 
 export function useAuthSession() {
   const [status, setStatus] = useState<SessionStatus>("loading");
@@ -40,6 +41,29 @@ export function useAuthSession() {
 
   useEffect(() => {
     void refreshSession();
+  }, [refreshSession]);
+
+  useEffect(() => {
+    function refreshWhenVisible() {
+      if (document.visibilityState === "visible") {
+        void refreshSession();
+      }
+    }
+
+    window.addEventListener("focus", refreshWhenVisible);
+    document.addEventListener("visibilitychange", refreshWhenVisible);
+
+    const intervalId = window.setInterval(() => {
+      if (document.visibilityState === "visible") {
+        void refreshSession();
+      }
+    }, SESSION_REFRESH_INTERVAL_MS);
+
+    return () => {
+      window.removeEventListener("focus", refreshWhenVisible);
+      document.removeEventListener("visibilitychange", refreshWhenVisible);
+      window.clearInterval(intervalId);
+    };
   }, [refreshSession]);
 
   return {

@@ -9,6 +9,7 @@ export type AuthSessionUser = {
 export type AuthSessionPayload = {
   authenticated: boolean;
   user: AuthSessionUser | null;
+  expiresAt?: string | null;
 };
 
 export const AUTH_COOKIE_NAME = "miyaar_session";

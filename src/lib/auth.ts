@@ -7,6 +7,7 @@ import { getSqlClient } from "@/lib/db";
 import { hashPassword, verifyPassword } from "@/lib/password";
 
 const SESSION_TTL_DAYS = 30;
+const SESSION_TTL_MS = SESSION_TTL_DAYS * 24 * 60 * 60 * 1000;
 
 type DbUserRow = {
   id: string;
@@ -62,11 +63,17 @@ function getClientIp(request: NextRequest) {
   return request.headers.get("x-real-ip");
 }
 
+type AuthenticatedSession = {
+  user: AuthSessionUser;
+  token: string;
+  expiresAt: Date;
+};
+
 async function createSession(userId: string, request: NextRequest) {
   const sql = getSql();
   const token = randomBytes(32).toString("hex");
   const sessionTokenHash = sha256(token);
-  const expiresAt = new Date(Date.now() + SESSION_TTL_DAYS * 24 * 60 * 60 * 1000);
+  const expiresAt = new Date(Date.now() + SESSION_TTL_MS);
 
   await sql.query(
     `
@@ -100,6 +107,7 @@ export function setAuthCookie(response: NextResponse, token: string, expiresAt: 
     sameSite: "lax",
     secure: process.env.NODE_ENV === "production",
     path: "/",
+    maxAge: SESSION_TTL_DAYS * 24 * 60 * 60,
     expires: expiresAt,
   });
 }
@@ -110,6 +118,7 @@ export function clearAuthCookie(response: NextResponse) {
     sameSite: "lax",
     secure: process.env.NODE_ENV === "production",
     path: "/",
+    maxAge: 0,
     expires: new Date(0),
   });
 }
@@ -120,7 +129,7 @@ export async function deleteSessionByToken(token: string | null | undefined) {
   await sql.query(`delete from app_user_sessions where session_token_hash = $1`, [sha256(token)]);
 }
 
-export async function getAuthenticatedUserFromRequest(request: NextRequest) {
+async function getAuthenticatedSessionFromRequest(request: NextRequest): Promise<AuthenticatedSession | null> {
   const token = request.cookies.get(AUTH_COOKIE_NAME)?.value?.trim();
   if (!token) return null;
 
@@ -132,7 +141,8 @@ export async function getAuthenticatedUserFromRequest(request: NextRequest) {
         u.email,
         u.phone,
         u.full_name,
-        u.role
+        u.role,
+        sessions.expires_at
       from app_user_sessions sessions
       inner join app_users u on u.id = sessions.user_id
       where sessions.session_token_hash = $1
@@ -141,31 +151,52 @@ export async function getAuthenticatedUserFromRequest(request: NextRequest) {
       limit 1
     `,
     [sha256(token)],
-  )) as Array<Pick<DbUserRow, "id" | "email" | "phone" | "full_name" | "role">>;
+  )) as Array<
+    Pick<DbUserRow, "id" | "email" | "phone" | "full_name" | "role"> & {
+      expires_at: string | Date;
+    }
+  >;
 
   const row = rows[0];
   if (!row) {
     return null;
   }
 
+  const expiresAt = new Date(Date.now() + SESSION_TTL_MS);
   await sql.query(
     `
       update app_user_sessions
-      set last_seen_at = now()
+      set
+        last_seen_at = now(),
+        expires_at = $2::timestamptz
       where session_token_hash = $1
     `,
-    [sha256(token)],
+    [sha256(token), expiresAt.toISOString()],
   );
 
-  return mapDbUser(row);
+  return {
+    user: mapDbUser(row),
+    token,
+    expiresAt,
+  };
+}
+
+export async function getAuthenticatedUserFromRequest(request: NextRequest) {
+  const session = await getAuthenticatedSessionFromRequest(request);
+  return session?.user ?? null;
+}
+
+export async function getSessionContextFromRequest(request: NextRequest) {
+  return getAuthenticatedSessionFromRequest(request);
 }
 
 export async function buildSessionPayload(request: NextRequest): Promise<AuthSessionPayload> {
-  const user = await getAuthenticatedUserFromRequest(request);
+  const session = await getAuthenticatedSessionFromRequest(request);
 
   return {
-    authenticated: Boolean(user),
-    user,
+    authenticated: Boolean(session?.user),
+    user: session?.user ?? null,
+    expiresAt: session?.expiresAt.toISOString() ?? null,
   };
 }
 
