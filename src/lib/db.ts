@@ -16,18 +16,20 @@ export type DatabaseHealth = {
 const DATABASE_ENV_KEYS = [
   "DATABASE_URL",
   "POSTGRES_URL",
+  "POSTGRES_URL_NON_POOLING",
+  "POSTGRES_URL_NO_SSL",
   "POSTGRES_PRISMA_URL",
   "NEON_DATABASE_URL",
 ] as const;
 
-let cachedDatabaseUrlFromFile: string | null | undefined;
+let cachedDatabaseUrlFromFile: string | undefined;
 
 function stripWrappingQuotes(value: string) {
   return value.replace(/^["']|["']$/g, "").trim();
 }
 
 function readDatabaseUrlFromEnvFiles() {
-  if (cachedDatabaseUrlFromFile !== undefined) {
+  if (cachedDatabaseUrlFromFile) {
     return cachedDatabaseUrlFromFile;
   }
 
@@ -60,7 +62,6 @@ function readDatabaseUrlFromEnvFiles() {
     }
   }
 
-  cachedDatabaseUrlFromFile = null;
   return null;
 }
 

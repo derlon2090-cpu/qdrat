@@ -1,8 +1,11 @@
+export type UserGender = "male" | "female";
+
 export type AuthSessionUser = {
   id: string;
   fullName: string;
   email: string | null;
   phone: string | null;
+  gender: UserGender | null;
   role: "student" | "admin" | "editor" | "coach";
 };
 

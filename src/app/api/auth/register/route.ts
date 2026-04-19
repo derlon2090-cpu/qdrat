@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { createSessionForUser, registerUser, setAuthCookie } from "@/lib/auth";
+import type { UserGender } from "@/lib/auth-shared";
 
 export async function POST(request: NextRequest) {
   try {
@@ -9,6 +10,7 @@ export async function POST(request: NextRequest) {
       email?: string;
       phone?: string;
       password?: string;
+      gender?: UserGender | "";
     };
 
     const user = await registerUser({
@@ -16,6 +18,7 @@ export async function POST(request: NextRequest) {
       email: payload.email ?? "",
       phone: payload.phone ?? "",
       password: payload.password ?? "",
+      gender: payload.gender ?? "",
     });
 
     const session = await createSessionForUser(user.id, request);

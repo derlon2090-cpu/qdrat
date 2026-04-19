@@ -105,12 +105,21 @@ begin
 end
 $$;
 
+do $$
+begin
+  if not exists (select 1 from pg_type where typname = 'app_user_gender') then
+    create type app_user_gender as enum ('male', 'female');
+  end if;
+end
+$$;
+
 create table if not exists app_users (
   id uuid primary key default gen_random_uuid(),
   email varchar(255) not null unique,
   username varchar(60) unique,
   phone varchar(30),
   full_name varchar(160) not null,
+  gender app_user_gender,
   password_hash text,
   role app_user_role not null default 'student',
   is_active boolean not null default true,
@@ -118,6 +127,9 @@ create table if not exists app_users (
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
+
+alter table app_users
+  add column if not exists gender app_user_gender;
 
 create table if not exists app_user_sessions (
   id uuid primary key default gen_random_uuid(),
@@ -815,7 +827,9 @@ drop trigger if exists trg_app_verbal_passage_questions_updated_at on app_verbal
 create trigger trg_app_verbal_passage_questions_updated_at before update on app_verbal_passage_questions
 for each row execute function set_updated_at();
 
-create or replace view app_user_accounts_overview as
+drop view if exists app_user_accounts_overview;
+
+create view app_user_accounts_overview as
 select
   u.id as user_id,
   u.full_name,
@@ -824,6 +838,7 @@ select
     else u.email
   end as email,
   u.phone,
+  u.gender,
   u.role,
   u.is_active,
   u.last_login_at,

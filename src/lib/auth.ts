@@ -2,7 +2,12 @@ import { createHash, randomBytes } from "node:crypto";
 
 import type { NextRequest, NextResponse } from "next/server";
 
-import { AUTH_COOKIE_NAME, type AuthSessionPayload, type AuthSessionUser } from "@/lib/auth-shared";
+import {
+  AUTH_COOKIE_NAME,
+  type AuthSessionPayload,
+  type AuthSessionUser,
+  type UserGender,
+} from "@/lib/auth-shared";
 import { getSqlClient } from "@/lib/db";
 import { hashPassword, verifyPassword } from "@/lib/password";
 
@@ -14,6 +19,7 @@ type DbUserRow = {
   email: string | null;
   phone: string | null;
   full_name: string;
+  gender: UserGender | null;
   role: AuthSessionUser["role"];
   password_hash: string | null;
 };
@@ -44,12 +50,15 @@ function createPlaceholderEmail(phone: string) {
   return `phone-${digits}@miyaar.local`;
 }
 
-function mapDbUser(row: Pick<DbUserRow, "id" | "email" | "phone" | "full_name" | "role">): AuthSessionUser {
+function mapDbUser(
+  row: Pick<DbUserRow, "id" | "email" | "phone" | "full_name" | "gender" | "role">,
+): AuthSessionUser {
   return {
     id: row.id,
     fullName: row.full_name,
     email: row.email?.endsWith("@miyaar.local") ? null : row.email,
     phone: row.phone,
+    gender: row.gender,
     role: row.role,
   };
 }
@@ -169,6 +178,7 @@ async function getAuthenticatedSessionFromRequest(request: NextRequest): Promise
         u.email,
         u.phone,
         u.full_name,
+        u.gender,
         u.role,
         sessions.expires_at
       from app_user_sessions sessions
@@ -180,7 +190,7 @@ async function getAuthenticatedSessionFromRequest(request: NextRequest): Promise
     `,
     [sha256(token)],
   )) as Array<
-    Pick<DbUserRow, "id" | "email" | "phone" | "full_name" | "role"> & {
+    Pick<DbUserRow, "id" | "email" | "phone" | "full_name" | "gender" | "role"> & {
       expires_at: string | Date;
     }
   >;
@@ -233,11 +243,13 @@ export async function registerUser(input: {
   email?: string;
   phone?: string;
   password: string;
+  gender?: UserGender | "";
 }) {
   const sql = getSql();
   const fullName = input.fullName.trim();
   const email = input.email ? normalizeEmail(input.email) : "";
   const phone = input.phone ? normalizePhone(input.phone) : "";
+  const gender = input.gender === "male" || input.gender === "female" ? input.gender : null;
 
   if (!fullName) {
     throw new Error("الاسم الكامل مطلوب لإنشاء الحساب.");
@@ -247,13 +259,17 @@ export async function registerUser(input: {
     throw new Error("أدخل البريد الإلكتروني أو رقم الجوال على الأقل.");
   }
 
+  if (!gender) {
+    throw new Error("اختر الجنس قبل إنشاء الحساب.");
+  }
+
   if (input.password.trim().length < 6) {
     throw new Error("كلمة المرور يجب أن تكون 6 أحرف على الأقل.");
   }
 
   const existingRows = (await sql.query(
     `
-      select id::text, email, phone, full_name, role, password_hash
+      select id::text, email, phone, full_name, gender, role, password_hash
       from app_users
       where ($1::text <> '' and lower(email) = $1)
          or ($2::text <> '' and phone = $2)
@@ -273,13 +289,14 @@ export async function registerUser(input: {
         email,
         phone,
         full_name,
+        gender,
         password_hash,
         role
       )
-      values ($1, $2, $3, $4, 'student')
-      returning id::text, email, phone, full_name, role, password_hash
+      values ($1, $2, $3, $4::app_user_gender, $5, 'student')
+      returning id::text, email, phone, full_name, gender, role, password_hash
     `,
-    [resolvedEmail, phone || null, fullName, hashPassword(input.password)],
+    [resolvedEmail, phone || null, fullName, gender, hashPassword(input.password)],
   )) as DbUserRow[];
 
   const row = insertedRows[0];
@@ -302,7 +319,7 @@ export async function authenticateUser(input: { identifier: string; password: st
 
   const rows = (await sql.query(
     `
-      select id::text, email, phone, full_name, role, password_hash
+      select id::text, email, phone, full_name, gender, role, password_hash
       from app_users
       where lower(email) = $1
          or phone = $2

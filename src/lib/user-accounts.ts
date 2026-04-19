@@ -5,6 +5,7 @@ export type UserAccountOverview = {
   fullName: string;
   email: string | null;
   phone: string | null;
+  gender: "male" | "female" | null;
   role: "student" | "admin" | "editor" | "coach";
   isActive: boolean;
   lastLoginAt: string | null;
@@ -33,6 +34,7 @@ type UserAccountOverviewRow = {
   full_name: string;
   email: string | null;
   phone: string | null;
+  gender: UserAccountOverview["gender"];
   role: UserAccountOverview["role"];
   is_active: boolean;
   last_login_at: string | null;
@@ -66,6 +68,7 @@ function mapUserAccount(row: UserAccountOverviewRow): UserAccountOverview {
     fullName: row.full_name,
     email: row.email,
     phone: row.phone,
+    gender: row.gender,
     role: row.role,
     isActive: row.is_active,
     lastLoginAt: row.last_login_at,
@@ -98,6 +101,7 @@ export async function listUserAccountsOverview() {
       full_name,
       email,
       phone,
+      gender,
       role,
       is_active,
       last_login_at::text,

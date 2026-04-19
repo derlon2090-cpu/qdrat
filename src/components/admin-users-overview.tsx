@@ -27,6 +27,12 @@ function formatPlanStatus(item: UserAccountOverview) {
   return `${plan} / ${subscription}`;
 }
 
+function formatGender(value: UserAccountOverview["gender"]) {
+  if (value === "male") return "ذكر";
+  if (value === "female") return "أنثى";
+  return "—";
+}
+
 export function AdminUsersOverview() {
   const [items, setItems] = useState<UserAccountOverview[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -144,7 +150,8 @@ export function AdminUsersOverview() {
               <div className="text-sm text-slate-500">Accounts Overview</div>
               <h2 className="display-font mt-2 text-2xl font-bold text-slate-950">جدول المستخدمين والباقات والجلسات</h2>
               <p className="mt-3 max-w-3xl text-sm leading-8 text-slate-600">
-                هذا الجدول يقرأ من العرض الموحّد داخل قاعدة البيانات، ويجمع بيانات الحساب، الخطة، الاشتراك، الجلسات، وملخص الأخطاء لكل مستخدم.
+                هذا الجدول يقرأ من العرض الموحّد داخل قاعدة البيانات، ويجمع بيانات الحساب والخطة والاشتراك
+                والجلسات وملخص الأخطاء لكل مستخدم، مع إظهار الجنس ضمن الملف الشخصي.
               </p>
             </div>
             <div className="rounded-2xl bg-slate-50 px-4 py-3 text-sm text-slate-500 ring-1 ring-slate-200">
@@ -159,11 +166,12 @@ export function AdminUsersOverview() {
           ) : null}
 
           <div className="overflow-x-auto">
-            <table className="min-w-[1120px] border-separate border-spacing-y-3">
+            <table className="min-w-[1180px] border-separate border-spacing-y-3">
               <thead>
                 <tr className="text-right text-sm text-slate-500">
                   <th className="px-4 pb-2 font-medium">المستخدم</th>
                   <th className="px-4 pb-2 font-medium">التواصل</th>
+                  <th className="px-4 pb-2 font-medium">الجنس</th>
                   <th className="px-4 pb-2 font-medium">الدور</th>
                   <th className="px-4 pb-2 font-medium">الباقة / الاشتراك</th>
                   <th className="px-4 pb-2 font-medium">النتيجة والخطة</th>
@@ -192,6 +200,7 @@ export function AdminUsersOverview() {
                       <div>{item.email ?? "—"}</div>
                       <div>{item.phone ?? "—"}</div>
                     </td>
+                    <td className="px-4 py-4 align-top text-sm leading-7 text-slate-600">{formatGender(item.gender)}</td>
                     <td className="px-4 py-4 align-top">
                       <span className="rounded-full bg-[#eef4ff] px-3 py-1 text-xs font-semibold text-[#123B7A]">
                         {item.role}
@@ -219,7 +228,7 @@ export function AdminUsersOverview() {
                     </td>
                     <td className="rounded-l-[1.35rem] px-4 py-4 align-top text-sm leading-7 text-slate-600">
                       <div>آخر دخول: {formatDate(item.lastLoginAt)}</div>
-                      <div>أنشئ: {formatDate(item.userCreatedAt)}</div>
+                      <div>أُنشئ: {formatDate(item.userCreatedAt)}</div>
                       <div>تحديث: {formatDate(item.userUpdatedAt)}</div>
                     </td>
                   </tr>

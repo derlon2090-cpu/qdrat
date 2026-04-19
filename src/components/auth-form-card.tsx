@@ -2,10 +2,11 @@
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Loader2 } from "lucide-react";
+import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { useState } from "react";
 
 type Mode = "login" | "register";
+type GenderValue = "" | "male" | "female";
 
 export function AuthFormCard({ mode }: { mode: Mode }) {
   const router = useRouter();
@@ -15,9 +16,12 @@ export function AuthFormCard({ mode }: { mode: Mode }) {
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
+  const [gender, setGender] = useState<GenderValue>("");
   const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
 
@@ -44,6 +48,7 @@ export function AuthFormCard({ mode }: { mode: Mode }) {
                 fullName,
                 email,
                 phone,
+                gender,
                 password,
               })
             : JSON.stringify({
@@ -74,7 +79,7 @@ export function AuthFormCard({ mode }: { mode: Mode }) {
       <p className="mt-3 text-sm leading-8 text-slate-600">
         {mode === "register"
           ? "أنشئ حسابك ليتم حفظ أسئلتك الخاطئة وخطتك وتقدمك باسمك."
-          : "سجّل دخولك للوصول إلى قائمة الأخطاء الخاصة بك ومتابعة تقدمك."}
+          : "سجل دخولك للوصول إلى قائمة الأخطاء الخاصة بك ومتابعة تقدمك."}
       </p>
 
       <form onSubmit={handleSubmit} className="mt-6 space-y-4">
@@ -103,6 +108,7 @@ export function AuthFormCard({ mode }: { mode: Mode }) {
                 type="email"
               />
             </label>
+
             <label className="block">
               <span className="mb-2 block text-sm font-semibold text-slate-700">رقم الجوال</span>
               <input
@@ -111,6 +117,20 @@ export function AuthFormCard({ mode }: { mode: Mode }) {
                 className="h-12 w-full rounded-2xl border border-slate-200 px-4 text-sm outline-none transition focus:border-[#123B7A]"
                 placeholder="05xxxxxxxx"
               />
+            </label>
+
+            <label className="block">
+              <span className="mb-2 block text-sm font-semibold text-slate-700">الجنس</span>
+              <select
+                value={gender}
+                onChange={(event) => setGender(event.target.value as GenderValue)}
+                className="h-12 w-full rounded-2xl border border-slate-200 bg-white px-4 text-sm outline-none transition focus:border-[#123B7A]"
+                required
+              >
+                <option value="">اختر الجنس</option>
+                <option value="male">ذكر</option>
+                <option value="female">أنثى</option>
+              </select>
             </label>
           </>
         ) : (
@@ -128,27 +148,47 @@ export function AuthFormCard({ mode }: { mode: Mode }) {
 
         <label className="block">
           <span className="mb-2 block text-sm font-semibold text-slate-700">كلمة المرور</span>
-          <input
-            value={password}
-            onChange={(event) => setPassword(event.target.value)}
-            className="h-12 w-full rounded-2xl border border-slate-200 px-4 text-sm outline-none transition focus:border-[#123B7A]"
-            placeholder="******"
-            type="password"
-            required
-          />
+          <div className="relative">
+            <input
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
+              className="h-12 w-full rounded-2xl border border-slate-200 px-4 pl-12 text-sm outline-none transition focus:border-[#123B7A]"
+              placeholder="******"
+              type={showPassword ? "text" : "password"}
+              required
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword((value) => !value)}
+              className="absolute inset-y-0 left-3 inline-flex items-center text-slate-400 transition hover:text-slate-700"
+              aria-label={showPassword ? "إخفاء كلمة المرور" : "إظهار كلمة المرور"}
+            >
+              {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+            </button>
+          </div>
         </label>
 
         {mode === "register" ? (
           <label className="block">
             <span className="mb-2 block text-sm font-semibold text-slate-700">تأكيد كلمة المرور</span>
-            <input
-              value={confirmPassword}
-              onChange={(event) => setConfirmPassword(event.target.value)}
-              className="h-12 w-full rounded-2xl border border-slate-200 px-4 text-sm outline-none transition focus:border-[#123B7A]"
-              placeholder="******"
-              type="password"
-              required
-            />
+            <div className="relative">
+              <input
+                value={confirmPassword}
+                onChange={(event) => setConfirmPassword(event.target.value)}
+                className="h-12 w-full rounded-2xl border border-slate-200 px-4 pl-12 text-sm outline-none transition focus:border-[#123B7A]"
+                placeholder="******"
+                type={showConfirmPassword ? "text" : "password"}
+                required
+              />
+              <button
+                type="button"
+                onClick={() => setShowConfirmPassword((value) => !value)}
+                className="absolute inset-y-0 left-3 inline-flex items-center text-slate-400 transition hover:text-slate-700"
+                aria-label={showConfirmPassword ? "إخفاء تأكيد كلمة المرور" : "إظهار تأكيد كلمة المرور"}
+              >
+                {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              </button>
+            </div>
           </label>
         ) : null}
 
@@ -169,7 +209,7 @@ export function AuthFormCard({ mode }: { mode: Mode }) {
           <>
             لديك حساب بالفعل؟{" "}
             <Link href={`/login?next=${encodeURIComponent(next)}`} className="font-semibold text-[#123B7A]">
-              سجّل الدخول
+              سجل الدخول
             </Link>
           </>
         ) : (
