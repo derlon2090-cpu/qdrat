@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
@@ -7,6 +8,66 @@ import { useState } from "react";
 
 type Mode = "login" | "register";
 type GenderValue = "" | "male" | "female";
+
+const genderOptions: Array<{
+  value: Exclude<GenderValue, "">;
+  label: string;
+  image: string;
+  alt: string;
+}> = [
+  {
+    value: "female",
+    label: "أنثى",
+    image: "/avatars/female-student.svg",
+    alt: "أيقونة أنثى",
+  },
+  {
+    value: "male",
+    label: "ذكر",
+    image: "/avatars/male-student.svg",
+    alt: "أيقونة ذكر",
+  },
+];
+
+function PasswordField({
+  label,
+  value,
+  onChange,
+  shown,
+  onToggle,
+  confirm = false,
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  shown: boolean;
+  onToggle: () => void;
+  confirm?: boolean;
+}) {
+  return (
+    <label className="block">
+      <span className="mb-2 block text-sm font-semibold text-slate-700">{label}</span>
+      <div className="relative">
+        <input
+          value={value}
+          onChange={(event) => onChange(event.target.value)}
+          className="h-12 w-full rounded-2xl border border-slate-200 px-4 pl-12 text-sm outline-none transition focus:border-[#123B7A]"
+          placeholder="******"
+          type={shown ? "text" : "password"}
+          required
+        />
+        <button
+          type="button"
+          onClick={onToggle}
+          className="absolute inset-y-0 left-3 inline-flex items-center text-slate-400 transition hover:text-slate-700"
+          aria-label={shown ? `إخفاء ${confirm ? "تأكيد " : ""}كلمة المرور` : `إظهار ${confirm ? "تأكيد " : ""}كلمة المرور`}
+        >
+          {shown ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+        </button>
+      </div>
+    </label>
+  );
+}
 
 export function AuthFormCard({ mode }: { mode: Mode }) {
   const router = useRouter();
@@ -28,6 +89,11 @@ export function AuthFormCard({ mode }: { mode: Mode }) {
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError("");
+
+    if (mode === "register" && !gender) {
+      setError("اختر الجنس قبل إنشاء الحساب.");
+      return;
+    }
 
     if (mode === "register" && password !== confirmPassword) {
       setError("تأكيد كلمة المرور غير مطابق.");
@@ -82,22 +148,20 @@ export function AuthFormCard({ mode }: { mode: Mode }) {
           : "سجل دخولك للوصول إلى قائمة الأخطاء الخاصة بك ومتابعة تقدمك."}
       </p>
 
-      <form onSubmit={handleSubmit} className="mt-6 space-y-4">
-        {mode === "register" ? (
-          <label className="block">
-            <span className="mb-2 block text-sm font-semibold text-slate-700">الاسم</span>
-            <input
-              value={fullName}
-              onChange={(event) => setFullName(event.target.value)}
-              className="h-12 w-full rounded-2xl border border-slate-200 px-4 text-sm outline-none transition focus:border-[#123B7A]"
-              placeholder="الاسم الكامل"
-              required
-            />
-          </label>
-        ) : null}
-
+      <form onSubmit={handleSubmit} className="mt-6 space-y-5">
         {mode === "register" ? (
           <>
+            <label className="block">
+              <span className="mb-2 block text-sm font-semibold text-slate-700">الاسم</span>
+              <input
+                value={fullName}
+                onChange={(event) => setFullName(event.target.value)}
+                className="h-12 w-full rounded-2xl border border-slate-200 px-4 text-sm outline-none transition focus:border-[#123B7A]"
+                placeholder="الاسم الكامل"
+                required
+              />
+            </label>
+
             <label className="block">
               <span className="mb-2 block text-sm font-semibold text-slate-700">البريد الإلكتروني</span>
               <input
@@ -119,19 +183,34 @@ export function AuthFormCard({ mode }: { mode: Mode }) {
               />
             </label>
 
-            <label className="block">
-              <span className="mb-2 block text-sm font-semibold text-slate-700">الجنس</span>
-              <select
-                value={gender}
-                onChange={(event) => setGender(event.target.value as GenderValue)}
-                className="h-12 w-full rounded-2xl border border-slate-200 bg-white px-4 text-sm outline-none transition focus:border-[#123B7A]"
-                required
-              >
-                <option value="">اختر الجنس</option>
-                <option value="male">ذكر</option>
-                <option value="female">أنثى</option>
-              </select>
-            </label>
+            <div className="space-y-3">
+              <div className="text-sm font-semibold text-slate-700">اختر الجنس</div>
+              <div className="grid gap-4 sm:grid-cols-2">
+                {genderOptions.map((option) => {
+                  const isSelected = gender === option.value;
+
+                  return (
+                    <button
+                      key={option.value}
+                      type="button"
+                      onClick={() => setGender(option.value)}
+                      className={`rounded-[1.8rem] border bg-white p-5 text-center transition ${
+                        isSelected
+                          ? "border-[#C99A43] bg-[#fffaf2] shadow-[0_16px_30px_rgba(201,154,67,0.16)]"
+                          : "border-slate-200 hover:border-[#d8c6a3] hover:bg-slate-50"
+                      }`}
+                    >
+                      <div className="flex justify-center">
+                        <div className="rounded-[1.5rem] bg-slate-50 px-6 py-4">
+                          <Image src={option.image} alt={option.alt} width={88} height={88} className="h-20 w-20" />
+                        </div>
+                      </div>
+                      <div className="mt-4 text-2xl font-semibold text-slate-700">{option.label}</div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
           </>
         ) : (
           <label className="block">
@@ -146,50 +225,23 @@ export function AuthFormCard({ mode }: { mode: Mode }) {
           </label>
         )}
 
-        <label className="block">
-          <span className="mb-2 block text-sm font-semibold text-slate-700">كلمة المرور</span>
-          <div className="relative">
-            <input
-              value={password}
-              onChange={(event) => setPassword(event.target.value)}
-              className="h-12 w-full rounded-2xl border border-slate-200 px-4 pl-12 text-sm outline-none transition focus:border-[#123B7A]"
-              placeholder="******"
-              type={showPassword ? "text" : "password"}
-              required
-            />
-            <button
-              type="button"
-              onClick={() => setShowPassword((value) => !value)}
-              className="absolute inset-y-0 left-3 inline-flex items-center text-slate-400 transition hover:text-slate-700"
-              aria-label={showPassword ? "إخفاء كلمة المرور" : "إظهار كلمة المرور"}
-            >
-              {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-            </button>
-          </div>
-        </label>
+        <PasswordField
+          label="كلمة المرور"
+          value={password}
+          onChange={setPassword}
+          shown={showPassword}
+          onToggle={() => setShowPassword((value) => !value)}
+        />
 
         {mode === "register" ? (
-          <label className="block">
-            <span className="mb-2 block text-sm font-semibold text-slate-700">تأكيد كلمة المرور</span>
-            <div className="relative">
-              <input
-                value={confirmPassword}
-                onChange={(event) => setConfirmPassword(event.target.value)}
-                className="h-12 w-full rounded-2xl border border-slate-200 px-4 pl-12 text-sm outline-none transition focus:border-[#123B7A]"
-                placeholder="******"
-                type={showConfirmPassword ? "text" : "password"}
-                required
-              />
-              <button
-                type="button"
-                onClick={() => setShowConfirmPassword((value) => !value)}
-                className="absolute inset-y-0 left-3 inline-flex items-center text-slate-400 transition hover:text-slate-700"
-                aria-label={showConfirmPassword ? "إخفاء تأكيد كلمة المرور" : "إظهار تأكيد كلمة المرور"}
-              >
-                {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-              </button>
-            </div>
-          </label>
+          <PasswordField
+            label="تأكيد كلمة المرور"
+            value={confirmPassword}
+            onChange={setConfirmPassword}
+            shown={showConfirmPassword}
+            onToggle={() => setShowConfirmPassword((value) => !value)}
+            confirm
+          />
         ) : null}
 
         {error ? <div className="rounded-2xl bg-rose-50 px-4 py-3 text-sm text-rose-700">{error}</div> : null}

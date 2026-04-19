@@ -34,7 +34,7 @@ const ENV_FILE_CANDIDATES = [
 let cachedDatabaseUrlFromFile: string | undefined;
 
 function stripWrappingQuotes(value: string) {
-  return value.replace(/^["']|["']$/g, "").trim();
+  return value.replace(/^["']|["']$/g, "").replace(/\s+/g, "").trim();
 }
 
 function readDatabaseUrlFromEnvFiles() {
