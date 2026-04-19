@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { AlertTriangle, CheckCircle2, Database, FileSearch, Layers3 } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Database, FileSearch, Layers3, Users } from "lucide-react";
 
 import { Reveal } from "@/components/reveal";
 import { SiteHeader } from "@/components/site-header";
@@ -78,6 +78,30 @@ export default async function AdminPage() {
                   className="inline-flex items-center justify-center rounded-2xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white transition hover:opacity-90"
                 >
                   افتح إدارة القطع اللفظية
+                </Link>
+              </CardContent>
+            </Card>
+          </Reveal>
+
+          <Reveal delay={0.04}>
+            <Card>
+              <CardContent className="flex flex-wrap items-center justify-between gap-4 p-6">
+                <div className="max-w-2xl">
+                  <p className="text-sm text-slate-500">Users & Sessions</p>
+                  <h2 className="display-font mt-2 text-2xl font-bold text-slate-950">
+                    إدارة المستخدمين والجلسات
+                  </h2>
+                  <p className="mt-3 text-sm leading-7 text-slate-600">
+                    عرض جدول موحد لبيانات المستخدمين، الاشتراكات، الجلسات النشطة، وملخص الأخطاء المرتبطة بكل حساب داخل قاعدة البيانات.
+                  </p>
+                </div>
+
+                <Link
+                  href="/admin/users"
+                  className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-800 transition hover:bg-slate-50"
+                >
+                  <Users className="h-4 w-4" />
+                  افتح إدارة المستخدمين
                 </Link>
               </CardContent>
             </Card>

@@ -109,7 +109,10 @@ function mergePassageSources(primary: VerbalPassageRecord[], fallback: VerbalPas
   const unique = new Map<string, VerbalPassageRecord>();
 
   for (const passage of [...primary, ...fallback]) {
-    const key = passage.slug.trim().toLowerCase();
+    const key = [
+      normalizeArabicText(passage.title),
+      normalizeArabicText(passage.passageText.slice(0, 240)),
+    ].join("::");
     if (!unique.has(key)) {
       unique.set(key, passage);
     }

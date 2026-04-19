@@ -24,7 +24,7 @@ export async function POST(request: NextRequest) {
       user,
     });
 
-    setAuthCookie(response, session.token, session.expiresAt);
+    setAuthCookie(response, session.token, session.expiresAt, request);
     return response;
   } catch (error) {
     return NextResponse.json(

@@ -101,22 +101,50 @@ async function createSession(userId: string, request: NextRequest) {
   };
 }
 
-export function setAuthCookie(response: NextResponse, token: string, expiresAt: Date) {
+function shouldUseSecureCookie(request?: NextRequest) {
+  if (!request) {
+    return process.env.NODE_ENV === "production";
+  }
+
+  const forwardedProto = request.headers
+    .get("x-forwarded-proto")
+    ?.split(",")[0]
+    ?.trim()
+    ?.toLowerCase();
+
+  if (forwardedProto) {
+    return forwardedProto === "https";
+  }
+
+  const hostname = request.nextUrl.hostname.toLowerCase();
+  if (hostname === "localhost" || hostname === "127.0.0.1" || hostname === "::1") {
+    return false;
+  }
+
+  return request.nextUrl.protocol === "https:";
+}
+
+export function setAuthCookie(
+  response: NextResponse,
+  token: string,
+  expiresAt: Date,
+  request?: NextRequest,
+) {
   response.cookies.set(AUTH_COOKIE_NAME, token, {
     httpOnly: true,
     sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
+    secure: shouldUseSecureCookie(request),
     path: "/",
     maxAge: SESSION_TTL_DAYS * 24 * 60 * 60,
     expires: expiresAt,
   });
 }
 
-export function clearAuthCookie(response: NextResponse) {
+export function clearAuthCookie(response: NextResponse, request?: NextRequest) {
   response.cookies.set(AUTH_COOKIE_NAME, "", {
     httpOnly: true,
     sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
+    secure: shouldUseSecureCookie(request),
     path: "/",
     maxAge: 0,
     expires: new Date(0),

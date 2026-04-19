@@ -20,7 +20,7 @@ export async function GET(request: NextRequest) {
 
     // Refresh the cookie expiry whenever the session is actively used.
     if (session) {
-      setAuthCookie(response, session.token, session.expiresAt);
+      setAuthCookie(response, session.token, session.expiresAt, request);
     }
 
     return response;

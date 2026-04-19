@@ -11,7 +11,7 @@ export async function POST(request: NextRequest) {
     const response = NextResponse.json({
       ok: true,
     });
-    clearAuthCookie(response);
+    clearAuthCookie(response, request);
     return response;
   } catch (error) {
     return NextResponse.json(

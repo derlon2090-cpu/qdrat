@@ -1,8 +1,12 @@
 import {
   EMPTY_SECTION_MESSAGE,
-  readingPassages,
   verbalReadingKeywords,
 } from "@/data/manual-question-bank";
+import {
+  findLocalVerbalPassageByIdOrSlug,
+  localVerbalPassages,
+  type LocalVerbalPassage,
+} from "@/data/verbal-passages-local";
 import { quantitativeSections, verbalSections } from "@/data/question-bank-sections";
 import {
   getVerbalQuestionCategory,
@@ -141,26 +145,21 @@ function createSnippet(text: string, query: string, maxLength = 170) {
   return `${prefix}${cleanText.slice(start, end).trim()}${suffix}`;
 }
 
-function getPassagePieceNumber(passageId: string) {
-  const match = passageId.match(/(\d+)$/);
-  return match ? Number(match[1]) : null;
-}
-
-function mapPassageToSummary(passage: (typeof readingPassages)[number]): ReadingPassageSummary {
+function mapPassageToSummary(passage: LocalVerbalPassage): ReadingPassageSummary {
   return {
     id: passage.id,
     title: passage.title,
     sourceName: passage.source,
-    pieceNumber: getPassagePieceNumber(passage.id),
+    pieceNumber: passage.pieceNumber,
     questionCount: passage.questions.length,
-    href: `/exam?section=verbal_reading&passageId=${passage.id}`,
+    href: `/verbal/reading?passage=${encodeURIComponent(passage.slug)}`,
   };
 }
 
-function mapPassageToDetail(passage: (typeof readingPassages)[number]): PassageDetail {
+function mapPassageToDetail(passage: LocalVerbalPassage): PassageDetail {
   return {
     id: passage.id,
-    pieceNumber: getPassagePieceNumber(passage.id),
+    pieceNumber: passage.pieceNumber,
     title: passage.title,
     text: passage.passage,
     difficulty: "غير محدد",
@@ -186,13 +185,13 @@ function getKeywordHaystack(keyword: (typeof verbalReadingKeywords)[number]) {
 
 function resolveKeywordPassage(keyword: (typeof verbalReadingKeywords)[number]) {
   if (keyword.passageId) {
-    return readingPassages.find((passage) => passage.id === keyword.passageId) ?? null;
+    return localVerbalPassages.find((passage) => passage.id === keyword.passageId) ?? null;
   }
 
   const keywordTerms = [keyword.title, ...(keyword.aliases ?? [])].map(normalizeArabic);
 
   return (
-    readingPassages.find((passage) => {
+    localVerbalPassages.find((passage) => {
       const normalizedTitle = normalizeArabic(passage.title);
       return keywordTerms.some(
         (term) => term && (term === normalizedTitle || term.includes(normalizedTitle) || normalizedTitle.includes(term)),
@@ -210,7 +209,7 @@ function mapKeywordToDirectoryItem(
   return {
     id: keyword.id,
     title: keyword.title,
-    href: linkedPassage ? `/exam?section=verbal_reading&passageId=${linkedPassage.id}` : null,
+    href: linkedPassage ? `/verbal/reading?passage=${encodeURIComponent(linkedPassage.slug)}` : null,
     excerpt: linkedPassage
       ? createSnippet(linkedPassage.passage, query || keyword.title)
       : "عنوان محفوظ داخل دليل القطع اللفظية، وسيتم ربط نص القطعة وأسئلتها به عند إضافته يدويًا.",
@@ -223,7 +222,7 @@ function mapKeywordToDirectoryItem(
 }
 
 function mapReadingQuestionsToSearchItems() {
-  return readingPassages.flatMap((passage) =>
+  return localVerbalPassages.flatMap((passage) =>
     passage.questions.map((question, index) => ({
       id: question.id,
       text: question.text,
@@ -234,9 +233,9 @@ function mapReadingQuestionsToSearchItems() {
       difficulty: "غير محدد",
       skill: passage.title,
       state: "جاهزة",
-      href: `/exam?section=verbal_reading&passageId=${passage.id}&question=${index}`,
+      href: `/verbal/reading?passage=${encodeURIComponent(passage.slug)}`,
       kind: "question" as const,
-      pieceNumber: getPassagePieceNumber(passage.id),
+      pieceNumber: passage.pieceNumber,
       needsReview: false,
     })),
   );
@@ -265,12 +264,11 @@ function mapVerbalPracticeQuestionsToSearchItems() {
 }
 
 export function getReadingPassageSummariesSync(): ReadingPassageSummary[] {
-  return readingPassages.map(mapPassageToSummary);
+  return localVerbalPassages.map(mapPassageToSummary);
 }
 
 export function getPassageDetailSync(passageId: string | number) {
-  const normalizedId = String(passageId);
-  const passage = readingPassages.find((item) => item.id === normalizedId);
+  const passage = findLocalVerbalPassageByIdOrSlug(passageId);
   return passage ? mapPassageToDetail(passage) : null;
 }
 
@@ -299,7 +297,7 @@ export async function getBankItems(filters: SearchFilters = {}) {
   const type = filters.type?.trim() ?? "الكل";
 
   const sectionCounts = new Map<string, number>([
-    ["verbal_passages", readingPassages.length],
+    ["verbal_passages", localVerbalPassages.length],
     ["verbal_analogy", verbalMixedPracticeQuestions.filter((question) => question.categoryId === "analogy").length],
     [
       "verbal_sentence_completion",
@@ -348,7 +346,7 @@ export async function getQuestionItems(filters: SearchFilters = {}) {
 
   const passageItems = !query
     ? []
-    : readingPassages
+    : localVerbalPassages
         .filter((passage) => fuzzyMatch(`${passage.title} ${passage.passage}`, query))
         .map((passage) => ({
           id: passage.id,
@@ -360,9 +358,9 @@ export async function getQuestionItems(filters: SearchFilters = {}) {
           difficulty: "غير محدد",
           skill: passage.title,
           state: "جاهزة",
-          href: `/exam?section=verbal_reading&passageId=${passage.id}`,
+          href: `/verbal/reading?passage=${encodeURIComponent(passage.slug)}`,
           kind: "passage" as const,
-          pieceNumber: getPassagePieceNumber(passage.id),
+          pieceNumber: passage.pieceNumber,
           questionCount: passage.questions.length,
           needsReview: false,
         }));
@@ -371,7 +369,7 @@ export async function getQuestionItems(filters: SearchFilters = {}) {
   const keywordItems = !query
     ? []
     : getReadingKeywordDirectory({ query, limit }).flatMap((item) => {
-        if (item.href && passageHrefSet.has(item.href)) {
+        if (!item.href || passageHrefSet.has(item.href)) {
           return [];
         }
 
@@ -382,14 +380,12 @@ export async function getQuestionItems(filters: SearchFilters = {}) {
             title: item.title,
             excerpt: item.excerpt,
             section: "قطع",
-            type: item.kind === "passage" ? "قطعة لفظية" : "عنوان قطعة",
-            difficulty: item.status === "linked" ? "جاهزة" : "بانتظار الإضافة",
+            type: "قطعة لفظية",
+            difficulty: "جاهزة",
             skill: item.title,
-            state: item.status === "linked" ? "مرتبطة" : "كلمة مفتاحية",
-            href:
-              item.href ??
-              `/question-bank?track=verbal&keyword=${encodeURIComponent(item.title)}#verbal-reading-search`,
-            kind: item.kind,
+            state: "مرتبطة",
+            href: item.href,
+            kind: "passage" as const,
             pieceNumber: null,
             questionCount: item.questionCount || undefined,
             needsReview: false,

@@ -125,7 +125,7 @@ export function VerbalReadingFromDocument({
       sourceBank: "بنك القطع اللفظي",
       questionTypeLabel: "لفظي",
       questionText: currentQuestion.text,
-      questionHref: `/exam?section=verbal_reading&passageId=${encodeURIComponent(currentPassage.id)}&question=${questionIndex}`,
+      questionHref: `/verbal/reading?passage=${encodeURIComponent(currentPassage.id)}`,
       metadata: {
         passageTitle: currentPassage.title,
         questionOrder: currentQuestion.order,
@@ -150,7 +150,7 @@ export function VerbalReadingFromDocument({
   const goToPassage = (index: number) => {
     const targetPassage = passages[index];
     if (!targetPassage) return;
-    router.push(`/exam?section=verbal_reading&passageId=${targetPassage.id}`);
+    router.push(targetPassage.href);
   };
 
   const goToNextQuestion = () => {
@@ -172,9 +172,7 @@ export function VerbalReadingFromDocument({
 
     if (currentPassageIndex > 0) {
       const previousPassage = passages[currentPassageIndex - 1];
-      router.push(
-        `/exam?section=verbal_reading&passageId=${previousPassage.id}&question=${Math.max(previousPassage.questionCount - 1, 0)}`,
-      );
+      router.push(previousPassage.href);
     }
   };
 
