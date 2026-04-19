@@ -1,6 +1,24 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import { createSessionForUser, authenticateUser, setAuthCookie } from "@/lib/auth";
+import { authenticateUser, createSessionForUser, setAuthCookie } from "@/lib/auth";
+
+function normalizeLoginError(error: unknown) {
+  if (!(error instanceof Error)) {
+    return "تعذر تسجيل الدخول.";
+  }
+
+  const message = error.message;
+
+  if (
+    message.includes("DATABASE_URL") ||
+    message.includes("POSTGRES_URL") ||
+    message.includes("تعذر العثور على رابط قاعدة البيانات")
+  ) {
+    return "تعذر الاتصال بقاعدة البيانات حاليًا. تأكد من ضبط DATABASE_URL أو POSTGRES_URL في بيئة التشغيل.";
+  }
+
+  return message;
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -26,7 +44,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       {
         ok: false,
-        message: error instanceof Error ? error.message : "تعذر تسجيل الدخول.",
+        message: normalizeLoginError(error),
       },
       { status: 400 },
     );

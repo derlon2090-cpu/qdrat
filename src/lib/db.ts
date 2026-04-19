@@ -22,6 +22,15 @@ const DATABASE_ENV_KEYS = [
   "NEON_DATABASE_URL",
 ] as const;
 
+const ENV_FILE_CANDIDATES = [
+  ".env.local",
+  ".env.development.local",
+  ".env.production.local",
+  ".env",
+  ".env.development",
+  ".env.production",
+] as const;
+
 let cachedDatabaseUrlFromFile: string | undefined;
 
 function stripWrappingQuotes(value: string) {
@@ -33,12 +42,8 @@ function readDatabaseUrlFromEnvFiles() {
     return cachedDatabaseUrlFromFile;
   }
 
-  const candidateFiles = [
-    join(/* turbopackIgnore: true */ process.cwd(), ".env.local"),
-    join(/* turbopackIgnore: true */ process.cwd(), ".env"),
-  ];
-
-  for (const filePath of candidateFiles) {
+  for (const fileName of ENV_FILE_CANDIDATES) {
+    const filePath = join(/* turbopackIgnore: true */ process.cwd(), fileName);
     if (!existsSync(filePath)) continue;
 
     const content = readFileSync(filePath, "utf8");
@@ -48,17 +53,18 @@ function readDatabaseUrlFromEnvFiles() {
       const trimmedLine = line.trim();
       if (!trimmedLine || trimmedLine.startsWith("#")) continue;
 
-      const separatorIndex = trimmedLine.indexOf("=");
+      const normalizedLine = trimmedLine.startsWith("export ") ? trimmedLine.slice(7).trim() : trimmedLine;
+      const separatorIndex = normalizedLine.indexOf("=");
       if (separatorIndex === -1) continue;
 
-      const key = trimmedLine.slice(0, separatorIndex).trim();
+      const key = normalizedLine.slice(0, separatorIndex).trim();
       if (!DATABASE_ENV_KEYS.includes(key as (typeof DATABASE_ENV_KEYS)[number])) continue;
 
-      const value = stripWrappingQuotes(trimmedLine.slice(separatorIndex + 1));
-      if (value) {
-        cachedDatabaseUrlFromFile = value;
-        return value;
-      }
+      const value = stripWrappingQuotes(normalizedLine.slice(separatorIndex + 1));
+      if (!value) continue;
+
+      cachedDatabaseUrlFromFile = value;
+      return value;
     }
   }
 
@@ -81,7 +87,7 @@ export function getSqlClient() {
 
   if (!databaseUrl) {
     throw new Error(
-      "تعذر العثور على رابط قاعدة البيانات. أضف DATABASE_URL أو POSTGRES_URL داخل .env.local ثم أعد تشغيل الخادم إذا لزم.",
+      "تعذر العثور على رابط قاعدة البيانات. أضف DATABASE_URL أو POSTGRES_URL أو POSTGRES_URL_NON_POOLING داخل ملفات البيئة ثم أعد تشغيل الخادم إذا لزم.",
     );
   }
 
@@ -95,7 +101,8 @@ export async function getDatabaseHealth(): Promise<DatabaseHealth> {
     return {
       configured: false,
       connected: false,
-      message: "رابط قاعدة البيانات غير موجود بعد. أضف DATABASE_URL أو POSTGRES_URL داخل .env.local لتفعيل الربط.",
+      message:
+        "رابط قاعدة البيانات غير موجود بعد. أضف DATABASE_URL أو POSTGRES_URL أو POSTGRES_URL_NON_POOLING داخل ملفات البيئة لتفعيل الربط.",
     };
   }
 
@@ -108,6 +115,7 @@ export async function getDatabaseHealth(): Promise<DatabaseHealth> {
       db_user: string;
       checked_at: string;
     }>;
+
     const [row] = rows;
 
     return {

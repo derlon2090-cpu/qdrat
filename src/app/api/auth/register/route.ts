@@ -3,6 +3,28 @@ import { NextRequest, NextResponse } from "next/server";
 import { createSessionForUser, registerUser, setAuthCookie } from "@/lib/auth";
 import type { UserGender } from "@/lib/auth-shared";
 
+function normalizeRegisterError(error: unknown) {
+  if (!(error instanceof Error)) {
+    return "تعذر إنشاء الحساب.";
+  }
+
+  const message = error.message;
+
+  if (message.includes("يوجد حساب")) {
+    return "يوجد حساب تم إنشاؤه من قبل بهذا البريد أو رقم الجوال، يرجى تسجيل الدخول.";
+  }
+
+  if (
+    message.includes("DATABASE_URL") ||
+    message.includes("POSTGRES_URL") ||
+    message.includes("تعذر العثور على رابط قاعدة البيانات")
+  ) {
+    return "تعذر الاتصال بقاعدة البيانات حاليًا. تأكد من ضبط DATABASE_URL أو POSTGRES_URL في بيئة التشغيل.";
+  }
+
+  return message;
+}
+
 export async function POST(request: NextRequest) {
   try {
     const payload = (await request.json()) as {
@@ -33,7 +55,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       {
         ok: false,
-        message: error instanceof Error ? error.message : "تعذر إنشاء الحساب.",
+        message: normalizeRegisterError(error),
       },
       { status: 400 },
     );
