@@ -119,7 +119,7 @@ export const banks = [
   },
   {
     id: 3,
-    title: "قطع — استيعاب المقروء",
+    title: "قطع — القطع اللفظية",
     count: 920,
     level: "متقدم",
     type: "قطع",

@@ -197,7 +197,7 @@ export function VerbalPassageViewer({
     <div dir="rtl" className="space-y-6">
       <div className="rounded-[2rem] border border-slate-200 bg-white p-7 shadow-sm">
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3 text-sm text-slate-500">
-          <div>بنك الأسئلة / استيعاب المقروء</div>
+          <div>بنك الأسئلة / القطع اللفظية</div>
           <div className="rounded-full bg-slate-50 px-4 py-2 ring-1 ring-slate-200">
             {mode === "admin" ? "وضع الإدارة" : "وضع الطالب"}
           </div>

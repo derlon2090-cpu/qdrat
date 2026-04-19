@@ -174,7 +174,7 @@ export function VerbalPracticeBank() {
       <div className="rounded-[1.9rem] border border-[#E8D8B3] bg-white/95 p-6 shadow-soft">
         <div className="display-font text-2xl font-bold text-slate-950">اختر القسم اللفظي الذي تريد التدريب عليه</div>
         <p className="mt-2 max-w-3xl text-sm leading-8 text-slate-600">
-          صنفنا الأسئلة التي أرسلتها إلى تناظر لفظي، إكمال الجمل، الخطأ السياقي، المفردة الشاذة، واستيعاب النصوص القصيرة، مع
+          صنفنا الأسئلة التي أرسلتها إلى تناظر لفظي، إكمال الجمل، الخطأ السياقي، والمفردة الشاذة، مع
           تصحيح بعد تأكيد الإجابة وشرح للإجابة الصحيحة.
         </p>
 

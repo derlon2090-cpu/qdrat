@@ -34,6 +34,7 @@ export type SearchItem = {
   kind?: "question" | "passage" | "keyword";
   title?: string;
   excerpt?: string;
+  keywords?: string[];
   pieceNumber?: number | null;
   questionCount?: number;
   needsReview?: boolean;
@@ -250,6 +251,7 @@ function mapVerbalPracticeQuestionsToSearchItems() {
       text: question.prompt,
       title: question.prompt,
       excerpt: question.explanation,
+      keywords: question.keywords ?? [],
       section: "لفظي",
       type: category.title,
       difficulty: "جاهزة",
@@ -308,10 +310,6 @@ export async function getBankItems(filters: SearchFilters = {}) {
       verbalMixedPracticeQuestions.filter((question) => question.categoryId === "contextual_error").length,
     ],
     ["verbal_odd_word", verbalMixedPracticeQuestions.filter((question) => question.categoryId === "odd_word").length],
-    [
-      "verbal_short_reading",
-      verbalMixedPracticeQuestions.filter((question) => question.categoryId === "short_reading").length,
-    ],
   ]);
 
   const items: BankItem[] = [...verbalSections, ...quantitativeSections].map((section) => ({
@@ -338,7 +336,8 @@ export async function getQuestionItems(filters: SearchFilters = {}) {
 
   const mixedVerbalItems = mapVerbalPracticeQuestionsToSearchItems();
   const questionItems = [...mapReadingQuestionsToSearchItems(), ...mixedVerbalItems].filter((item) => {
-    const matchesQuery = !query || fuzzyMatch(`${item.text} ${item.skill} ${item.excerpt ?? ""}`, query);
+    const keywordText = "keywords" in item && Array.isArray(item.keywords) ? item.keywords.join(" ") : "";
+    const matchesQuery = !query || fuzzyMatch(`${item.text} ${item.skill} ${item.excerpt ?? ""} ${keywordText}`, query);
     const matchesSection = section === "الكل" || item.section === section;
     const matchesType = type === "الكل" || item.type === type;
     return matchesQuery && matchesSection && matchesType;

@@ -4,11 +4,11 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { ArrowUpLeft, Dice5, Search } from "lucide-react";
 
-import samplePassagesData from "../../data/verbal-passages.sample.json";
 import { VerbalPassageViewer } from "@/components/verbal-passage-viewer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { verbalReadingKeywords } from "@/data/manual-question-bank";
+import { localVerbalPassages } from "@/data/verbal-passages-local";
 import { buildPublicApiUrl } from "@/lib/api-base";
 import {
   generatePassageSlug,
@@ -23,27 +23,6 @@ const SEARCH_MIN_CHARS = 3;
 const SEARCH_DEBOUNCE_MS = 400;
 
 type SearchAvailability = "available" | "unavailable";
-
-type SampleQuestionRow = {
-  question_text: string;
-  option_a: string;
-  option_b: string;
-  option_c: string;
-  option_d: string;
-  correct_option: "A" | "B" | "C" | "D";
-  explanation?: string | null;
-};
-
-type SamplePassageRow = {
-  title: string;
-  slug: string;
-  keywords?: string[];
-  passage_text: string;
-  status?: string;
-  version?: number;
-  external_source_id?: string | null;
-  questions?: SampleQuestionRow[];
-};
 
 type SearchCatalogItem = {
   id: string;
@@ -67,43 +46,57 @@ function buildPassageHref(pathname: string, searchParams: URLSearchParams, slug:
   return `${pathname}?${nextParams.toString()}`;
 }
 
-function mapSampleQuestion(
-  question: SampleQuestionRow,
+function mapLocalQuestion(
+  question: (typeof localVerbalPassages)[number]["questions"][number],
   index: number,
   slug: string,
 ): VerbalPassageQuestionRecord {
+  const [optionA, optionB, optionC, optionD] = question.options;
+  const correctOption = (
+    question.correctAnswer === optionA
+      ? "A"
+      : question.correctAnswer === optionB
+        ? "B"
+        : question.correctAnswer === optionC
+          ? "C"
+          : "D"
+  ) as VerbalPassageQuestionRecord["correctOption"];
+
   return {
-    id: `sample-${slug}-question-${index + 1}`,
+    id: question.id || `local-${slug}-question-${index + 1}`,
     questionOrder: index + 1,
-    questionText: question.question_text,
-    optionA: question.option_a,
-    optionB: question.option_b,
-    optionC: question.option_c,
-    optionD: question.option_d,
-    correctOption: question.correct_option,
-    explanation: question.explanation ?? null,
+    questionText: question.text,
+    optionA,
+    optionB,
+    optionC,
+    optionD,
+    correctOption,
+    explanation: question.explanations[question.correctAnswer] ?? null,
   };
 }
 
-function mapSamplePassage(row: SamplePassageRow, index: number): VerbalPassageRecord {
+function mapLocalPassage(
+  passage: (typeof localVerbalPassages)[number],
+  index: number,
+): VerbalPassageRecord {
   return {
-    id: `sample-passage-${index + 1}-${row.slug}`,
-    slug: row.slug,
-    title: row.title,
-    keywords: row.keywords ?? [],
-    passageText: row.passage_text,
-    status: row.status === "draft" ? "draft" : "published",
-    version: typeof row.version === "number" && row.version > 0 ? row.version : 1,
-    externalSourceId: row.external_source_id ?? `sample-json-${row.slug}`,
+    id: passage.id || `local-passage-${index + 1}-${passage.slug}`,
+    slug: passage.slug,
+    title: passage.title,
+    keywords: passage.keywords ?? [],
+    passageText: passage.passage,
+    status: "published",
+    version: 1,
+    externalSourceId: `local-${passage.slug}`,
     createdAt: "",
     updatedAt: "",
-    questions: (row.questions ?? []).map((question, questionIndex) =>
-      mapSampleQuestion(question, questionIndex, row.slug),
+    questions: passage.questions.map((question, questionIndex) =>
+      mapLocalQuestion(question, questionIndex, passage.slug),
     ),
   };
 }
 
-const fallbackPassages = (samplePassagesData as SamplePassageRow[]).map(mapSamplePassage);
+const fallbackPassages = localVerbalPassages.map(mapLocalPassage);
 
 function mergePassageSources(primary: VerbalPassageRecord[], fallback: VerbalPassageRecord[]) {
   const unique = new Map<string, VerbalPassageRecord>();

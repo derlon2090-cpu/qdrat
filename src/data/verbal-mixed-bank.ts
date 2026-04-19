@@ -1,3 +1,5 @@
+import { importedVerbalMixedQuestions } from "./verbal-mixed-imported";
+
 export type VerbalQuestionCategoryId =
   | "analogy"
   | "sentence_completion"
@@ -13,6 +15,7 @@ export type VerbalPracticeQuestion = {
   correctAnswer: string;
   explanation: string;
   source: string;
+  keywords?: string[];
 };
 
 export type VerbalQuestionCategory = {
@@ -144,13 +147,106 @@ export const verbalQuestionCategories: VerbalQuestionCategory[] = [
     description: "اختيار الكلمة المختلفة عن باقي المجموعة.",
     href: "/verbal/practice?category=odd_word",
   },
-  {
-    id: "short_reading",
-    title: "استيعاب النصوص القصيرة",
-    description: "فهم نصوص قصيرة، علاقة الجمل، معاني المفردات، والاستنتاجات اللفظية.",
-    href: "/verbal/practice?category=short_reading",
-  },
 ];
+
+const VERBAL_KEYWORD_STOP_WORDS = new Set([
+  "في",
+  "من",
+  "على",
+  "الى",
+  "إلى",
+  "عن",
+  "ما",
+  "هو",
+  "هي",
+  "هذا",
+  "هذه",
+  "ذلك",
+  "تلك",
+  "ثم",
+  "قد",
+  "لم",
+  "لن",
+  "لا",
+  "إذا",
+  "اذا",
+  "كل",
+  "أي",
+  "اي",
+  "مع",
+  "بين",
+  "بعد",
+  "قبل",
+  "عند",
+  "حتى",
+  "أو",
+  "او",
+  "بل",
+  "أن",
+  "ان",
+  "كان",
+  "كانت",
+  "يكون",
+  "تكون",
+]);
+
+function normalizeKeywordToken(value: string) {
+  return value
+    .toLowerCase()
+    .replace(/[أإآ]/g, "ا")
+    .replace(/ة/g, "ه")
+    .replace(/ى/g, "ي")
+    .replace(/[ً-ْ]/g, "")
+    .replace(/[^\p{L}\p{N}\s]/gu, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function extractKeywordTokens(value: string) {
+  return normalizeKeywordToken(value)
+    .split(" ")
+    .map((token) => token.trim())
+    .filter((token) => token.length >= 2 && !VERBAL_KEYWORD_STOP_WORDS.has(token));
+}
+
+function deriveQuestionKeywords(question: VerbalPracticeQuestion) {
+  const category = verbalQuestionCategories.find((item) => item.id === question.categoryId);
+  const seedValues = [
+    category?.title ?? "",
+    question.prompt,
+    question.correctAnswer,
+    question.source,
+    question.explanation,
+    ...question.options,
+  ];
+
+  const keywords: string[] = [];
+  const seen = new Set<string>();
+
+  for (const value of seedValues) {
+    for (const token of extractKeywordTokens(value)) {
+      if (seen.has(token)) continue;
+      seen.add(token);
+      keywords.push(token);
+      if (keywords.length >= 18) {
+        return keywords;
+      }
+    }
+  }
+
+  return keywords;
+}
+
+function withDerivedKeywords(question: VerbalPracticeQuestion): VerbalPracticeQuestion {
+  if (question.keywords && question.keywords.length > 0) {
+    return question;
+  }
+
+  return {
+    ...question,
+    keywords: deriveQuestionKeywords(question),
+  };
+}
 
 const analogyQuestions: VerbalPracticeQuestion[] = [
   makeAnalogyQuestion(
@@ -1871,6 +1967,11 @@ const shortReadingQuestions: VerbalPracticeQuestion[] = [
   ),
 ];
 
+export const verbalReadingOnlyQuestions: VerbalPracticeQuestion[] = [
+  ...shortReadingQuestions,
+  ...importedVerbalMixedQuestions.filter((question) => question.categoryId === "short_reading"),
+].map(withDerivedKeywords);
+
 export const verbalMixedPracticeQuestions: VerbalPracticeQuestion[] = [
   ...analogyQuestions,
   ...additionalAnalogyQuestions,
@@ -1880,8 +1981,8 @@ export const verbalMixedPracticeQuestions: VerbalPracticeQuestion[] = [
   ...additionalContextualErrorQuestions,
   ...oddWordQuestions,
   ...additionalOddWordQuestions,
-  ...shortReadingQuestions,
-];
+  ...importedVerbalMixedQuestions.filter((question) => question.categoryId !== "short_reading"),
+].map(withDerivedKeywords);
 
 export function getVerbalQuestionCategory(categoryId: string | null | undefined) {
   return verbalQuestionCategories.find((category) => category.id === categoryId) ?? verbalQuestionCategories[0];

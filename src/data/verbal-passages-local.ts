@@ -1,4 +1,5 @@
 import samplePassagesData from "../../data/verbal-passages.sample.json";
+import { importedLocalVerbalPassages } from "./verbal-passages-imported";
 
 export type LocalVerbalPassageQuestion = {
   id: string;
@@ -96,9 +97,17 @@ function mapSamplePassage(row: SamplePassageRow, index: number): LocalVerbalPass
   };
 }
 
-export const localVerbalPassages = (samplePassagesData as SamplePassageRow[]).map(
+const sampleLocalVerbalPassages = (samplePassagesData as SamplePassageRow[]).map(
   mapSamplePassage,
 );
+
+export const localVerbalPassages = [
+  ...sampleLocalVerbalPassages,
+  ...importedLocalVerbalPassages,
+].map((passage, index) => ({
+  ...passage,
+  pieceNumber: index + 1,
+}));
 
 export function findLocalVerbalPassageByIdOrSlug(value: string | number) {
   const normalizedValue = String(value).trim().toLowerCase();

@@ -180,7 +180,7 @@ export function VerbalReadingFromDocument({
     <div dir="rtl" className="min-h-screen bg-slate-100 px-4 py-6 text-slate-900 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-[1600px]">
         <div className="mb-4 flex items-center justify-between text-sm text-slate-600">
-          <div className="font-medium">بنك الأسئلة / استيعاب المقروء</div>
+          <div className="font-medium">بنك الأسئلة / القطع اللفظية</div>
           <div className="rounded-full bg-white px-4 py-2 ring-1 ring-slate-200">
             {currentPassage.sourceName || "المستند / القطع اللفظية"}
           </div>
