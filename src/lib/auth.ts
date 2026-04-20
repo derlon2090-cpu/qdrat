@@ -9,7 +9,12 @@ import {
   type UserGender,
 } from "@/lib/auth-shared";
 import { getSqlClient } from "@/lib/db";
-import { hashPassword, verifyPassword } from "@/lib/password";
+import {
+  hashPassword,
+  isCurrentPasswordHash,
+  normalizePasswordInput,
+  resolveVerifiedPasswordCandidate,
+} from "@/lib/password";
 
 const SESSION_TTL_DAYS = 30;
 const SESSION_TTL_MS = SESSION_TTL_DAYS * 24 * 60 * 60 * 1000;
@@ -43,6 +48,72 @@ function normalizePhone(value: string) {
     return `+${cleaned.slice(1).replace(/\D/g, "")}`;
   }
   return cleaned.replace(/\D/g, "");
+}
+
+function normalizePhoneDigits(value: string) {
+  return value.replace(/\D/g, "");
+}
+
+function extractSaudiMobileDigits(phoneDigits: string) {
+  if (!phoneDigits) return null;
+
+  if (phoneDigits.startsWith("00966")) {
+    const remainingDigits = phoneDigits.slice(5);
+    return /^5\d{8}$/.test(remainingDigits) ? remainingDigits : null;
+  }
+
+  if (phoneDigits.startsWith("966")) {
+    const remainingDigits = phoneDigits.slice(3);
+    return /^5\d{8}$/.test(remainingDigits) ? remainingDigits : null;
+  }
+
+  if (phoneDigits.startsWith("05")) {
+    const remainingDigits = phoneDigits.slice(1);
+    return /^5\d{8}$/.test(remainingDigits) ? remainingDigits : null;
+  }
+
+  return /^5\d{8}$/.test(phoneDigits) ? phoneDigits : null;
+}
+
+function normalizeStoredPhone(value: string) {
+  const normalizedPhone = normalizePhone(value);
+  const saudiMobileDigits = extractSaudiMobileDigits(normalizePhoneDigits(normalizedPhone));
+  return saudiMobileDigits ?? normalizedPhone;
+}
+
+function buildPhoneLookupVariants(value: string) {
+  const exactVariants = new Set<string>();
+  const digitVariants = new Set<string>();
+
+  const addVariant = (candidate: string) => {
+    const normalizedCandidate = candidate.trim();
+    if (!normalizedCandidate) return;
+
+    exactVariants.add(normalizedCandidate);
+
+    const digits = normalizePhoneDigits(normalizedCandidate);
+    if (digits) {
+      digitVariants.add(digits);
+    }
+  };
+
+  const normalizedPhone = normalizePhone(value);
+  addVariant(value);
+  addVariant(normalizedPhone);
+
+  const saudiMobileDigits = extractSaudiMobileDigits(normalizePhoneDigits(normalizedPhone));
+  if (saudiMobileDigits) {
+    addVariant(saudiMobileDigits);
+    addVariant(`0${saudiMobileDigits}`);
+    addVariant(`966${saudiMobileDigits}`);
+    addVariant(`+966${saudiMobileDigits}`);
+    addVariant(`00966${saudiMobileDigits}`);
+  }
+
+  return {
+    exact: Array.from(exactVariants),
+    digits: Array.from(digitVariants),
+  };
 }
 
 function createPlaceholderEmail(phone: string) {
@@ -171,6 +242,7 @@ async function getAuthenticatedSessionFromRequest(request: NextRequest): Promise
   if (!token) return null;
 
   const sql = getSql();
+
   const rows = (await sql.query(
     `
       select
@@ -248,7 +320,9 @@ export async function registerUser(input: {
   const sql = getSql();
   const fullName = input.fullName.trim();
   const email = input.email ? normalizeEmail(input.email) : "";
-  const phone = input.phone ? normalizePhone(input.phone) : "";
+  const phone = input.phone ? normalizeStoredPhone(input.phone) : "";
+  const phoneLookup = buildPhoneLookupVariants(phone);
+  const normalizedPassword = normalizePasswordInput(input.password);
   const gender = input.gender === "male" || input.gender === "female" ? input.gender : null;
 
   if (!fullName) {
@@ -263,7 +337,7 @@ export async function registerUser(input: {
     throw new Error("اختر الجنس قبل إنشاء الحساب.");
   }
 
-  if (input.password.trim().length < 6) {
+  if (normalizedPassword.length < 6) {
     throw new Error("كلمة المرور يجب أن تكون 6 أحرف على الأقل.");
   }
 
@@ -272,10 +346,14 @@ export async function registerUser(input: {
       select id::text, email, phone, full_name, gender, role, password_hash
       from app_users
       where ($1::text <> '' and lower(email) = $1)
-         or ($2::text <> '' and phone = $2)
+         or (cardinality($2::text[]) > 0 and phone = any($2::text[]))
+         or (
+           cardinality($3::text[]) > 0
+           and regexp_replace(coalesce(phone, ''), '[^0-9]', '', 'g') = any($3::text[])
+         )
       limit 1
     `,
-    [email, phone],
+    [email, phoneLookup.exact, phoneLookup.digits],
   )) as DbUserRow[];
 
   if (existingRows[0]) {
@@ -296,7 +374,7 @@ export async function registerUser(input: {
       values ($1, $2, $3, $4::app_user_gender, $5, 'student')
       returning id::text, email, phone, full_name, gender, role, password_hash
     `,
-    [resolvedEmail, phone || null, fullName, gender, hashPassword(input.password)],
+    [resolvedEmail, phone || null, fullName, gender, hashPassword(normalizedPassword)],
   )) as DbUserRow[];
 
   const row = insertedRows[0];
@@ -311,7 +389,8 @@ export async function authenticateUser(input: { identifier: string; password: st
   const sql = getSql();
   const identifier = input.identifier.trim();
   const normalizedEmail = normalizeEmail(identifier);
-  const normalizedPhone = normalizePhone(identifier);
+  const phoneLookup = buildPhoneLookupVariants(identifier);
+  const normalizedPassword = normalizePasswordInput(input.password);
 
   if (!identifier) {
     throw new Error("أدخل البريد الإلكتروني أو رقم الجوال.");
@@ -322,25 +401,50 @@ export async function authenticateUser(input: { identifier: string; password: st
       select id::text, email, phone, full_name, gender, role, password_hash
       from app_users
       where lower(email) = $1
-         or phone = $2
+         or (cardinality($2::text[]) > 0 and phone = any($2::text[]))
+         or (
+           cardinality($3::text[]) > 0
+           and regexp_replace(coalesce(phone, ''), '[^0-9]', '', 'g') = any($3::text[])
+         )
       limit 1
     `,
-    [normalizedEmail, normalizedPhone],
+    [normalizedEmail, phoneLookup.exact, phoneLookup.digits],
   )) as DbUserRow[];
 
   const row = rows[0];
-  if (!row || !verifyPassword(input.password, row.password_hash)) {
+  const verifiedPasswordCandidate = row
+    ? resolveVerifiedPasswordCandidate(input.password, row.password_hash)
+    : null;
+
+  if (!row || !verifiedPasswordCandidate) {
     throw new Error("بيانات تسجيل الدخول غير صحيحة.");
   }
 
-  await sql.query(
-    `
-      update app_users
-      set last_login_at = now()
-      where id = $1::uuid
-    `,
-    [row.id],
-  );
+  const passwordNeedsUpgrade =
+    !isCurrentPasswordHash(row.password_hash) ||
+    verifiedPasswordCandidate !== normalizedPassword;
+
+  if (passwordNeedsUpgrade) {
+    await sql.query(
+      `
+        update app_users
+        set
+          last_login_at = now(),
+          password_hash = $2
+        where id = $1::uuid
+      `,
+      [row.id, hashPassword(normalizedPassword)],
+    );
+  } else {
+    await sql.query(
+      `
+        update app_users
+        set last_login_at = now()
+        where id = $1::uuid
+      `,
+      [row.id],
+    );
+  }
 
   return mapDbUser(row);
 }
