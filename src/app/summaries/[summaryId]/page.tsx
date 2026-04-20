@@ -19,8 +19,6 @@ export default async function SummaryDetailPage({
       iconWrap="bg-[#eef4ff]"
       iconColor="text-[#123B7A]"
       accentClass="shadow-[0_20px_45px_rgba(18,59,122,0.16)]"
-      ctaLabel="العودة إلى المكتبة"
-      ctaHref="/summaries"
     >
       <SummaryWorkspace summaryId={summaryId} />
     </PageShell>

@@ -27,8 +27,8 @@ export function PageShell({
   iconWrap: string;
   iconColor: string;
   accentClass?: string;
-  ctaLabel: string;
-  ctaHref: string;
+  ctaLabel?: string;
+  ctaHref?: string;
   children: React.ReactNode;
 }) {
   return (
@@ -55,9 +55,11 @@ export function PageShell({
                       >
                         <Icon className={`h-9 w-9 ${iconColor}`} />
                       </div>
-                      <Link href={ctaHref}>
-                        <Button>{ctaLabel}</Button>
-                      </Link>
+                      {ctaLabel && ctaHref ? (
+                        <Link href={ctaHref}>
+                          <Button>{ctaLabel}</Button>
+                        </Link>
+                      ) : null}
                     </div>
                   </div>
                 </CardContent>

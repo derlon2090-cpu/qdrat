@@ -531,11 +531,12 @@ export function SummaryWorkspace({ summaryId }: { summaryId: string }) {
         <CardContent className="space-y-4 p-8 text-center">
           <div className="display-font text-2xl font-bold text-rose-700">تعذر فتح الملخص</div>
           <p className="text-sm leading-8 text-rose-700/90">{error}</p>
-          <div className="flex justify-center">
-            <Link href="/summaries">
-              <Button variant="outline">العودة إلى المكتبة</Button>
-            </Link>
-          </div>
+          <Link
+            href="/summaries"
+            className="inline-flex text-sm font-semibold text-rose-700 underline-offset-4 transition hover:underline"
+          >
+            العودة إلى المكتبة
+          </Link>
         </CardContent>
       </Card>
     );
@@ -555,6 +556,12 @@ export function SummaryWorkspace({ summaryId }: { summaryId: string }) {
       <Card className="border border-[#E8D8B3] bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(248,247,244,0.96))]">
         <CardContent className="flex flex-col gap-5 p-7 lg:flex-row lg:items-start lg:justify-between">
           <div>
+            <Link
+              href="/summaries"
+              className="mb-3 inline-flex text-sm font-semibold text-[#123B7A] underline-offset-4 transition hover:underline"
+            >
+              العودة إلى المكتبة
+            </Link>
             <div className="mini-pill bg-[#123B7A]/5 text-[#123B7A]">ملخص تفاعلي محفوظ داخل حسابك</div>
             <h2 className="mt-4 display-font text-3xl font-bold text-slate-950">{summary.fileName}</h2>
             <p className="mt-3 max-w-3xl text-sm leading-8 text-slate-600">
@@ -563,9 +570,6 @@ export function SummaryWorkspace({ summaryId }: { summaryId: string }) {
           </div>
 
           <div className="flex flex-wrap gap-3">
-            <Link href="/summaries">
-              <Button variant="outline">العودة إلى المكتبة</Button>
-            </Link>
             <Button type="button" variant="outline" onClick={exportNotes} className="gap-2">
               <Download className="h-4 w-4" />
               تصدير الملاحظات
