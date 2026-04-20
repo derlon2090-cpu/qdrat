@@ -36,6 +36,24 @@ function loadPdfJsModule() {
   return pdfJsModulePromise;
 }
 
+function getCanvasPixelRatio() {
+  const ratio = window.devicePixelRatio || 1;
+
+  if (!Number.isFinite(ratio) || ratio <= 1) {
+    return 1;
+  }
+
+  return Math.min(2, Math.round(ratio));
+}
+
+function getDocumentFontFaceSet() {
+  if (typeof document === "undefined" || !("fonts" in document)) {
+    return null;
+  }
+
+  return document.fonts;
+}
+
 function summarizeUnexpectedPdfResponse(response: Response, rawText: string) {
   const contentType = response.headers.get("content-type") ?? "";
 
@@ -116,6 +134,10 @@ type ActiveTool = "navigate" | "pen" | "highlighter" | "eraser";
 
 type ChangeMeta = {
   clearRedo?: boolean;
+};
+
+type RenderPdfPageOptions = {
+  allowFontRecovery?: boolean;
 };
 
 type Interaction =
@@ -227,6 +249,7 @@ export function SummaryPageSurface({
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const pdfDocumentRef = useRef<PDFDocumentProxy | null>(null);
   const renderTaskRef = useRef<RenderTask | null>(null);
+  const fontRecoveryKeyRef = useRef<string | null>(null);
   const pageNumberRef = useRef(pageNumber);
   const pageStateRef = useRef(pageState);
   const interactionRef = useRef<Interaction | null>(null);
@@ -257,7 +280,7 @@ export function SummaryPageSurface({
     if (!canvas || !surface) return;
 
     const rect = surface.getBoundingClientRect();
-    const pixelRatio = window.devicePixelRatio || 1;
+    const pixelRatio = getCanvasPixelRatio();
     canvas.width = Math.max(1, Math.round(rect.width * pixelRatio));
     canvas.height = Math.max(1, Math.round(rect.height * pixelRatio));
     canvas.style.width = `${rect.width}px`;
@@ -305,10 +328,15 @@ export function SummaryPageSurface({
   }, []);
 
   const renderPdfPage = useCallback(
-    async (documentOverride?: PDFDocumentProxy | null, targetPageNumber = 1) => {
+    async (
+      documentOverride?: PDFDocumentProxy | null,
+      targetPageNumber = 1,
+      options?: RenderPdfPageOptions,
+    ) => {
       const pdfDocument = documentOverride ?? pdfDocumentRef.current;
       const surface = surfaceRef.current;
       const pdfCanvas = pdfCanvasRef.current;
+      const allowFontRecovery = options?.allowFontRecovery ?? true;
 
       if (!pdfDocument || !surface || !pdfCanvas) {
         return;
@@ -323,7 +351,7 @@ export function SummaryPageSurface({
         const surfaceWidth = Math.max(1, surface.getBoundingClientRect().width || viewport.width);
         const scale = surfaceWidth / viewport.width;
         const scaledViewport = page.getViewport({ scale });
-        const outputScale = window.devicePixelRatio || 1;
+        const outputScale = getCanvasPixelRatio();
         const context = pdfCanvas.getContext("2d");
 
         if (!context) {
@@ -348,6 +376,8 @@ export function SummaryPageSurface({
         pdfCanvas.height = Math.max(1, Math.floor(scaledViewport.height * outputScale));
         pdfCanvas.style.width = `${scaledViewport.width}px`;
         pdfCanvas.style.height = `${scaledViewport.height}px`;
+        context.setTransform(1, 0, 0, 1, 0, 0);
+        context.clearRect(0, 0, pdfCanvas.width, pdfCanvas.height);
 
         renderTaskRef.current?.cancel();
         renderTaskRef.current = page.render({
@@ -358,9 +388,46 @@ export function SummaryPageSurface({
         });
 
         await renderTaskRef.current.promise;
+        renderTaskRef.current = null;
+        page.cleanup();
+
+        const fontFaceSet = getDocumentFontFaceSet();
+        const renderKey = `${summaryId}:${fileUrl}:${targetPageNumber}`;
+
+        if (
+          allowFontRecovery &&
+          fontFaceSet &&
+          fontFaceSet.status !== "loaded" &&
+          fontRecoveryKeyRef.current !== renderKey
+        ) {
+          fontRecoveryKeyRef.current = renderKey;
+          void fontFaceSet.ready
+            .then(() => {
+              if (fontRecoveryKeyRef.current !== renderKey) {
+                return;
+              }
+
+              fontRecoveryKeyRef.current = null;
+
+              if (!pdfDocumentRef.current || pageNumberRef.current !== targetPageNumber) {
+                return;
+              }
+
+              void renderPdfPage(undefined, targetPageNumber, {
+                allowFontRecovery: false,
+              });
+            })
+            .catch(() => {
+              if (fontRecoveryKeyRef.current === renderKey) {
+                fontRecoveryKeyRef.current = null;
+              }
+            });
+        }
+
         setIsPdfLoading(false);
       } catch (error) {
         const errorName = error instanceof Error ? error.name : "";
+        renderTaskRef.current = null;
         if (errorName === "RenderingCancelledException") {
           return;
         }
@@ -369,7 +436,7 @@ export function SummaryPageSurface({
         setIsPdfLoading(false);
       }
     },
-    [],
+    [fileUrl, summaryId],
   );
 
   useEffect(() => {
@@ -405,6 +472,7 @@ export function SummaryPageSurface({
     let isActive = true;
     const previousDocument = pdfDocumentRef.current;
 
+    fontRecoveryKeyRef.current = null;
     renderTaskRef.current?.cancel();
     renderTaskRef.current = null;
     pdfDocumentRef.current = null;
@@ -425,6 +493,8 @@ export function SummaryPageSurface({
           cMapPacked: true,
           standardFontDataUrl: "/pdfjs/standard_fonts/",
           wasmUrl: "/pdfjs/wasm/",
+          disableFontFace: false,
+          useSystemFonts: true,
           useWorkerFetch: false,
           useWasm: false,
           isOffscreenCanvasSupported: false,
@@ -451,6 +521,7 @@ export function SummaryPageSurface({
 
     return () => {
       isActive = false;
+      fontRecoveryKeyRef.current = null;
       renderTaskRef.current?.cancel();
       renderTaskRef.current = null;
 
