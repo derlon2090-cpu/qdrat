@@ -24,6 +24,7 @@ import {
 } from "lucide-react";
 
 import { SummaryPageSurface } from "@/components/summary-page-surface";
+import { StudentAccessCard } from "@/components/student-access-card";
 import { useAuthSession } from "@/hooks/use-auth-session";
 import type { SummaryDetail, SummaryPageState } from "@/lib/summaries";
 import { Button } from "@/components/ui/button";
@@ -107,7 +108,7 @@ function BackToSummariesLink({
 
   return (
     <div className={cn("relative z-20", centered ? "flex justify-center" : "")}>
-      <a
+      <Link
         href="/summaries"
         onClick={(event) => event.stopPropagation()}
         className={cn(
@@ -128,7 +129,7 @@ function BackToSummariesLink({
           <span className="text-sm font-bold">العودة إلى مكتبة الملخصات</span>
           <span className={cn("text-xs", subTextClass)}>جميع الملخصات المحفوظة</span>
         </span>
-      </a>
+      </Link>
     </div>
   );
 }
@@ -219,6 +220,30 @@ export function SummaryWorkspace({ summaryId }: { summaryId: string }) {
       aborted = true;
     };
   }, [status, summaryId]);
+
+  useEffect(() => {
+    if (status !== "authenticated" || !user || !summary) {
+      return;
+    }
+
+    const timerId = window.setTimeout(() => {
+      void fetch("/api/student/activity", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          label: `فتح ملخص ${summary.fileName}`,
+          path: `/summaries/${summary.id}`,
+          summaryId: summary.id,
+          summaryName: summary.fileName,
+          summaryPage: currentPage,
+        }),
+      }).catch(() => undefined);
+    }, 300);
+
+    return () => window.clearTimeout(timerId);
+  }, [currentPage, status, summary, user]);
 
   useEffect(() => {
     function handlePageHide() {
@@ -546,27 +571,11 @@ export function SummaryWorkspace({ summaryId }: { summaryId: string }) {
 
   if (status !== "authenticated" || !user) {
     return (
-      <Card className="border border-dashed border-[#d8c7a7] bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(247,241,229,0.9))]">
-        <CardContent className="space-y-6 p-8 text-center">
-          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-[1.4rem] bg-[#fff7ed] text-[#C99A43]">
-            <NotebookPen className="h-8 w-8" />
-          </div>
-          <div>
-            <h2 className="display-font text-2xl font-bold text-slate-950">هذا الملخص يحتاج تسجيل دخول</h2>
-            <p className="mt-3 text-sm leading-8 text-slate-600">
-              يجب إنشاء حساب وتسجيل الدخول لاستخدام قسم الملخصات وحفظ ملفاتك وملاحظاتك.
-            </p>
-          </div>
-          <div className="flex flex-wrap justify-center gap-3">
-            <Link href={`/login?next=/summaries/${summaryId}`}>
-              <Button variant="outline">تسجيل الدخول</Button>
-            </Link>
-            <Link href={`/register?next=/summaries/${summaryId}`}>
-              <Button>إنشاء حساب</Button>
-            </Link>
-          </div>
-        </CardContent>
-      </Card>
+      <StudentAccessCard
+        title="هذا الملخص يحتاج تسجيل دخول"
+        description="يجب إنشاء حساب وتسجيل الدخول لاستخدام الملخص التفاعلي وحفظ ملاحظاتك ورسوماتك ومساحات الحل داخل مكتبتك."
+        next={`/summaries/${summaryId}`}
+      />
     );
   }
 

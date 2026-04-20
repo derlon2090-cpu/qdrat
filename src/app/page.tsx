@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Star } from "lucide-react";
 
+import { HomeAuthRedirect } from "@/components/home-auth-redirect";
 import { HeroShowcase } from "@/components/hero-showcase";
 import { Reveal } from "@/components/reveal";
 import { SectionTitle } from "@/components/section-title";
@@ -58,6 +59,7 @@ const productShots = [
 export default function HomePage() {
   return (
     <div className="min-h-screen">
+      <HomeAuthRedirect />
       <SiteHeader ctaHref="/diagnostic" ctaLabel="ابدأ الآن" />
 
       <main>

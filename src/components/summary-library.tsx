@@ -2,10 +2,11 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState, type ChangeEvent } from "react";
-import { FilePlus2, FileText, Loader2, NotebookText, UploadCloud } from "lucide-react";
+import { FilePlus2, FileText, Loader2, UploadCloud } from "lucide-react";
 
 import { useAuthSession } from "@/hooks/use-auth-session";
 import type { SummaryListItem } from "@/lib/summaries";
+import { StudentAccessCard } from "@/components/student-access-card";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 
@@ -141,27 +142,11 @@ export function SummaryLibrary() {
 
   if (status !== "authenticated" || !user) {
     return (
-      <Card className="border border-dashed border-[#d8c7a7] bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(247,241,229,0.9))]">
-        <CardContent className="space-y-6 p-8 text-center">
-          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-[1.4rem] bg-[#fff7ed] text-[#C99A43]">
-            <NotebookText className="h-8 w-8" />
-          </div>
-          <div>
-            <h2 className="display-font text-2xl font-bold text-slate-950">قسم الملخصات مرتبط بحسابك</h2>
-            <p className="mt-3 text-sm leading-8 text-slate-600">
-              يجب إنشاء حساب وتسجيل الدخول لاستخدام قسم الملخصات وحفظ ملفاتك وملاحظاتك.
-            </p>
-          </div>
-          <div className="flex flex-wrap justify-center gap-3">
-            <Link href="/login?next=/summaries">
-              <Button variant="outline">تسجيل الدخول</Button>
-            </Link>
-            <Link href="/register?next=/summaries">
-              <Button>إنشاء حساب</Button>
-            </Link>
-          </div>
-        </CardContent>
-      </Card>
+      <StudentAccessCard
+        title="قسم الملخصات مرتبط بحسابك"
+        description="يجب إنشاء حساب وتسجيل الدخول لاستخدام قسم الملخصات وحفظ ملفاتك وملاحظاتك والرجوع لها لاحقًا من مكتبتك الخاصة."
+        next="/summaries"
+      />
     );
   }
 

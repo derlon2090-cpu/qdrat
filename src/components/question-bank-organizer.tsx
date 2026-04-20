@@ -354,6 +354,44 @@ export function QuestionBankOrganizer() {
           : [],
     [track],
   );
+  const activityPath = useMemo(() => {
+    if (track === "mistakes") {
+      return "/question-bank?track=mistakes";
+    }
+
+    if (track === "quant") {
+      return "/question-bank?track=quant";
+    }
+
+    return debouncedKeywordQuery
+      ? `/question-bank?track=verbal&keyword=${encodeURIComponent(debouncedKeywordQuery)}`
+      : "/question-bank?track=verbal";
+  }, [debouncedKeywordQuery, track]);
+  const activityMeta = useMemo(() => {
+    if (track === "mistakes") {
+      return {
+        label: "متابعة قسم الأخطاء",
+        bankLabel: "الأخطاء",
+        bankHref: "/question-bank?track=mistakes",
+      };
+    }
+
+    if (track === "quant") {
+      return {
+        label: "فتح بنك الكمي",
+        bankLabel: "بنك الأسئلة - الكمي",
+        bankHref: "/question-bank?track=quant",
+      };
+    }
+
+    return {
+      label: "فتح بنك اللفظي",
+      bankLabel: "بنك الأسئلة - اللفظي",
+      bankHref: debouncedKeywordQuery
+        ? `/question-bank?track=verbal&keyword=${encodeURIComponent(debouncedKeywordQuery)}`
+        : "/question-bank?track=verbal",
+    };
+  }, [debouncedKeywordQuery, track]);
 
   const showMistakesCard = true;
   const normalizedKeywordLength = useMemo(
@@ -363,6 +401,29 @@ export function QuestionBankOrganizer() {
   const canSearchVerbalKeywords =
     normalizedKeywordLength >= MIN_VERBAL_SEARCH_CHARS;
   const isDebouncingKeywordQuery = keywordQuery !== debouncedKeywordQuery;
+
+  useEffect(() => {
+    if (authStatus !== "authenticated" || !user) {
+      return;
+    }
+
+    const timerId = window.setTimeout(() => {
+      void fetch("/api/student/activity", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          label: activityMeta.label,
+          path: activityPath,
+          bankLabel: activityMeta.bankLabel,
+          bankHref: activityMeta.bankHref,
+        }),
+      }).catch(() => undefined);
+    }, 300);
+
+    return () => window.clearTimeout(timerId);
+  }, [activityMeta, activityPath, authStatus, user]);
 
   const verbalKeywordResults = useMemo(
     () =>

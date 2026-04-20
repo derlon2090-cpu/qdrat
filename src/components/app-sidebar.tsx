@@ -4,7 +4,8 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 
-import { productSidebarItems } from "@/lib/site-nav";
+import { useAuthSession } from "@/hooks/use-auth-session";
+import { studentSidebarItems } from "@/lib/site-nav";
 import { cn } from "@/lib/utils";
 
 function isNavItemActive(pathname: string, currentSearch: string, href: string) {
@@ -30,22 +31,27 @@ function isNavItemActive(pathname: string, currentSearch: string, href: string) 
 
 export function AppSidebar() {
   const pathname = usePathname();
+  const { status, user } = useAuthSession();
   const [currentSearch, setCurrentSearch] = useState("");
 
   useEffect(() => {
     setCurrentSearch(window.location.search);
   }, []);
 
+  if (status !== "authenticated" || !user) {
+    return null;
+  }
+
   return (
     <aside className="hidden xl:block xl:w-[280px]">
       <div className="sticky top-28 rounded-[2rem] border border-white/80 bg-white/94 p-4 shadow-soft">
         <div className="mb-4 px-3">
-          <div className="text-xs font-semibold tracking-[0.18em] text-slate-400">PRODUCT MENU</div>
-          <div className="mt-2 display-font text-xl font-bold text-slate-950">رحلتك داخل معيار</div>
+          <div className="text-xs font-semibold tracking-[0.18em] text-slate-400">STUDENT SPACE</div>
+          <div className="mt-2 display-font text-xl font-bold text-slate-950">مساحتك داخل معيار</div>
         </div>
 
         <div className="space-y-2">
-          {productSidebarItems.map((item) => {
+          {studentSidebarItems.map((item) => {
             const Icon = item.icon;
             const active = isNavItemActive(pathname, currentSearch, item.href);
 

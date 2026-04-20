@@ -4,7 +4,9 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+
+import { useAuthSession } from "@/hooks/use-auth-session";
 
 type Mode = "login" | "register";
 type GenderValue = "" | "male" | "female";
@@ -72,7 +74,8 @@ function PasswordField({
 export function AuthFormCard({ mode }: { mode: Mode }) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const next = searchParams.get("next") || "/question-bank?track=mistakes";
+  const next = searchParams.get("next") || "/dashboard";
+  const { status } = useAuthSession();
 
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
@@ -85,6 +88,12 @@ export function AuthFormCard({ mode }: { mode: Mode }) {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
+
+  useEffect(() => {
+    if (status === "authenticated") {
+      router.replace(next);
+    }
+  }, [next, router, status]);
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();

@@ -1,23 +1,16 @@
+"use client";
+
 import Link from "next/link";
 import { ArrowUp, Download, MessageCircleMore, Newspaper, ShieldCheck, Smartphone } from "lucide-react";
 
 import { MiyaarLogo } from "@/components/miyaar-logo";
-
-const footerLinks = [
-  { href: "/summaries", label: "الملخصات" },
-  { href: "/diagnostic", label: "التشخيص" },
-  { href: "/my-plan", label: "خطتي" },
-  { href: "/question-bank", label: "بنك الأسئلة" },
-  { href: "/updates", label: "الإصدارات" },
-  { href: "/paper-models", label: "نماذج الورقي" },
-  { href: "/wall-of-love", label: "جدار الحب" },
-  { href: "/golden-guarantee", label: "الضمان الذهبي" },
-  { href: "/pricing", label: "الأسعار" },
-  { href: "/faq", label: "الأسئلة الشائعة" },
-  { href: "/contact", label: "تواصل معنا" },
-];
+import { useAuthSession } from "@/hooks/use-auth-session";
+import { publicFooterLinks, studentFooterLinks } from "@/lib/site-nav";
 
 export function SiteFooter() {
+  const { status, user } = useAuthSession();
+  const footerLinks = status === "authenticated" && user ? studentFooterLinks : publicFooterLinks;
+
   return (
     <footer className="mt-16 bg-[linear-gradient(180deg,#102955,#123b7a_58%,#173f82)] text-white">
       <div className="mx-auto w-[min(calc(100%-2rem),1180px)] py-8">
@@ -49,7 +42,7 @@ export function SiteFooter() {
         </div>
 
         <div className="mt-6 rounded-[1.2rem] border border-white/12 bg-[#0E2A56] px-5 py-4 text-center text-lg font-semibold">
-          معيار منصة سعودية للتحضير للقدرات الكمي واللفظي بخطة يومية واضحة، بحث مباشر، واختبارات ومراجعة مركزة.
+          معيار منصة سعودية للتحضير للقدرات الكمي واللفظي بخطة يومية واضحة، وبنك أسئلة وملخصات ومراجعة مركزة.
         </div>
 
         <div className="mt-6 grid gap-4 md:grid-cols-3">
@@ -59,17 +52,17 @@ export function SiteFooter() {
               <span className="text-sm font-semibold">تواصل سريع</span>
             </div>
             <p className="mt-3 text-sm leading-7 text-white/85">
-              إذا كان عندك سؤال عن الاشتراك أو نقطة البداية أو الضمان، صفحة التواصل جاهزة لك.
+              إذا كان عندك سؤال عن الاشتراك أو نقطة البداية أو الدعم، ستجد كل ما تحتاجه في صفحات واضحة ومباشرة.
             </p>
           </div>
 
           <div className="rounded-[1.4rem] border border-white/12 bg-white/10 p-5 backdrop-blur">
             <div className="flex items-center gap-2 text-[#FFE1A8]">
               <Newspaper className="h-4 w-4" />
-              <span className="text-sm font-semibold">صفحات أوضح</span>
+              <span className="text-sm font-semibold">واجهتان أوضح</span>
             </div>
             <p className="mt-3 text-sm leading-7 text-white/85">
-              نقلنا التفاصيل إلى صفحات مستقلة مثل خطتي، بنك الأسئلة، والنماذج حتى تبقى الواجهة الرئيسية أخف.
+              الزائر يرى منصة تعريفية مرتبة، والطالب يرى لوحة عملية تبدأ بخطة اليوم ثم تعيده لما كان يعمل عليه.
             </p>
           </div>
 
@@ -79,14 +72,14 @@ export function SiteFooter() {
               <span className="text-sm font-semibold">ثقة وتنظيم</span>
             </div>
             <p className="mt-3 text-sm leading-7 text-white/85">
-              لكل صفحة أيقونة وهوية مساعدة ومسار واضح، بدل حشر كل شيء في الصفحة الرئيسية.
+              كل قسم صار في مكانه الصحيح مع انتقالات أوضح وأزرار أسهل سواء كنت زائرًا أو طالبًا داخل المنصة.
             </p>
           </div>
         </div>
 
         <div className="mt-6 flex flex-col gap-3 border-t border-white/15 pt-5 text-sm text-white/75 md:flex-row md:items-center md:justify-between">
           <div>© 2026 معيار. جميع الحقوق محفوظة.</div>
-          <div>مبني لطلاب القدرات الكمي واللفظي بواجهة أوضح ومسار أنظف.</div>
+          <div>مبني لطلاب القدرات الكمي واللفظي بواجهة أوضح ومسار يومي أذكى.</div>
         </div>
       </div>
     </footer>

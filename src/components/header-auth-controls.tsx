@@ -2,21 +2,21 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Loader2, LogOut } from "lucide-react";
+import { House, Loader2, LogOut } from "lucide-react";
 
 import { useAuthSession } from "@/hooks/use-auth-session";
 import { Button } from "@/components/ui/button";
 
-const LOGIN_LABEL = "\u062a\u0633\u062c\u064a\u0644 \u0627\u0644\u062f\u062e\u0648\u0644";
-const REGISTER_LABEL = "\u0625\u0646\u0634\u0627\u0621 \u062d\u0633\u0627\u0628";
-const LOGOUT_LABEL = "\u062a\u0633\u062c\u064a\u0644 \u0627\u0644\u062e\u0631\u0648\u062c";
+const LOGIN_LABEL = "تسجيل الدخول";
+const REGISTER_LABEL = "إنشاء حساب";
+const LOGOUT_LABEL = "تسجيل الخروج";
 
 export function HeaderAuthControls({
   ctaHref,
   ctaLabel,
 }: {
-  ctaHref: string;
-  ctaLabel: string;
+  ctaHref?: string;
+  ctaLabel?: string;
 }) {
   const router = useRouter();
   const { status, user, refreshSession } = useAuthSession();
@@ -28,6 +28,7 @@ export function HeaderAuthControls({
 
     if (response.ok) {
       await refreshSession();
+      router.replace("/");
       router.refresh();
     }
   }
@@ -38,9 +39,6 @@ export function HeaderAuthControls({
         <div className="search-btn-header">
           <Loader2 className="h-4 w-4 animate-spin text-[#123B7A]" />
         </div>
-        <Link href={ctaHref}>
-          <Button>{ctaLabel}</Button>
-        </Link>
       </div>
     );
   }
@@ -51,6 +49,12 @@ export function HeaderAuthControls({
         <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700">
           {user.fullName}
         </div>
+        <Link href="/dashboard">
+          <Button variant="outline" className="gap-2">
+            <House className="h-4 w-4" />
+            لوحة الطالب
+          </Button>
+        </Link>
         <button
           type="button"
           onClick={handleLogout}
@@ -77,9 +81,11 @@ export function HeaderAuthControls({
       >
         {REGISTER_LABEL}
       </Link>
-      <Link href={ctaHref}>
-        <Button>{ctaLabel}</Button>
-      </Link>
+      {ctaHref && ctaLabel ? (
+        <Link href={ctaHref}>
+          <Button>{ctaLabel}</Button>
+        </Link>
+      ) : null}
     </div>
   );
 }

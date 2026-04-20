@@ -33,7 +33,7 @@ export function PageShell({
 }) {
   return (
     <div className="min-h-screen">
-      <SiteHeader ctaHref={ctaHref} ctaLabel="ابدأ الآن" />
+      <SiteHeader ctaHref={ctaHref} ctaLabel={ctaLabel} />
       <main className="section-shell pt-10 md:pt-14">
         <div className="mx-auto flex w-[min(calc(100%-2rem),1280px)] gap-8">
           <AppSidebar />
