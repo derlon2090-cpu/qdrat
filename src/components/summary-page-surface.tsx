@@ -9,7 +9,6 @@ import {
   type PointerEvent as ReactPointerEvent,
 } from "react";
 import { Grip, Loader2, Minimize2, Move, SquarePen } from "lucide-react";
-import type { PDFDocumentProxy, RenderTask } from "pdfjs-dist/types/src/pdf";
 
 import type {
   SummaryDrawingPoint,
@@ -21,21 +20,6 @@ import type {
 } from "@/lib/summaries";
 import { cn } from "@/lib/utils";
 
-type PdfJsModule = typeof import("pdfjs-dist");
-
-let pdfJsModulePromise: Promise<PdfJsModule> | null = null;
-
-function loadPdfJsModule() {
-  if (!pdfJsModulePromise) {
-    pdfJsModulePromise = import("pdfjs-dist/legacy/build/pdf.mjs").then((module) => {
-      module.GlobalWorkerOptions.workerSrc = "/pdfjs/pdf.worker.min.mjs";
-      return module;
-    });
-  }
-
-  return pdfJsModulePromise;
-}
-
 function getCanvasPixelRatio() {
   const ratio = window.devicePixelRatio || 1;
 
@@ -46,98 +30,10 @@ function getCanvasPixelRatio() {
   return Math.min(2, Math.round(ratio));
 }
 
-function getDocumentFontFaceSet() {
-  if (typeof document === "undefined" || !("fonts" in document)) {
-    return null;
-  }
-
-  return document.fonts;
-}
-
-function summarizeUnexpectedPdfResponse(response: Response, rawText: string) {
-  const contentType = response.headers.get("content-type") ?? "";
-
-  if (contentType.includes("application/json")) {
-    try {
-      const parsed = JSON.parse(rawText) as { message?: string };
-      if (typeof parsed.message === "string" && parsed.message.trim()) {
-        return parsed.message.trim();
-      }
-    } catch {
-      // Ignore malformed JSON and fall through to text handling.
-    }
-  }
-
-  const normalizedText = rawText.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
-  const lowerText = normalizedText.toLowerCase();
-
-  if (response.status === 401) {
-    return "انتهت جلسة تسجيل الدخول. أعد تحميل الصفحة وسجل الدخول مرة أخرى لفتح الملف.";
-  }
-
-  if (response.status === 403 || lowerText.includes("request forbidden") || lowerText.includes("forbidden")) {
-    return "تم رفض الوصول إلى هذا الملف من الخادم أو من طبقة الحماية.";
-  }
-
-  if (response.status === 404) {
-    return "تعذر العثور على ملف هذا الملخص.";
-  }
-
-  if (response.status === 413 || lowerText.includes("request entity too large")) {
-    return "الخادم رفض الطلب لأن حجمه كبير جدًا.";
-  }
-
-  if (!normalizedText) {
-    return `HTTP ${response.status}`;
-  }
-
-  return normalizedText.slice(0, 220);
-}
-
-async function loadSummaryPdfData(fileUrl: string) {
-  const response = await fetch(fileUrl, {
-    cache: "no-store",
-    credentials: "same-origin",
-  });
-
-  if (!response.ok) {
-    const rawText = await response.text();
-    throw new Error(summarizeUnexpectedPdfResponse(response, rawText));
-  }
-
-  const contentType = response.headers.get("content-type") ?? "";
-  if (!contentType.includes("application/pdf")) {
-    const rawText = await response.text();
-    throw new Error(summarizeUnexpectedPdfResponse(response, rawText));
-  }
-
-  return new Uint8Array(await response.arrayBuffer());
-}
-
-function formatPdfRenderError(error: unknown) {
-  if (error instanceof Error) {
-    const message = error.message.trim();
-
-    if (message.includes("Invalid PDF")) {
-      return "تعذر قراءة ملف PDF. قد يكون الملف غير مكتمل أو أن الخادم أعاد استجابة غير صحيحة.";
-    }
-
-    if (message) {
-      return message.slice(0, 220);
-    }
-  }
-
-  return "تعذر عرض هذه الصفحة حاليًا.";
-}
-
 type ActiveTool = "navigate" | "pen" | "highlighter" | "eraser";
 
 type ChangeMeta = {
   clearRedo?: boolean;
-};
-
-type RenderPdfPageOptions = {
-  allowFontRecovery?: boolean;
 };
 
 type Interaction =
@@ -245,12 +141,7 @@ export function SummaryPageSurface({
   onChange,
 }: SummaryPageSurfaceProps) {
   const surfaceRef = useRef<HTMLDivElement | null>(null);
-  const pdfCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const pdfDocumentRef = useRef<PDFDocumentProxy | null>(null);
-  const renderTaskRef = useRef<RenderTask | null>(null);
-  const fontRecoveryKeyRef = useRef<string | null>(null);
-  const pageNumberRef = useRef(pageNumber);
   const pageStateRef = useRef(pageState);
   const interactionRef = useRef<Interaction | null>(null);
   const previewStrokeRef = useRef<SummaryDrawingStroke | null>(null);
@@ -265,14 +156,14 @@ export function SummaryPageSurface({
   }, [pageState]);
 
   useEffect(() => {
-    pageNumberRef.current = pageNumber;
-  }, [pageNumber]);
-
-  useEffect(() => {
     setResolvedPageDimension(pageDimension);
   }, [pageDimension, pageNumber, summaryId]);
 
   const directPageUrl = useMemo(() => `${fileUrl}?download=1`, [fileUrl]);
+  const previewImageUrl = useMemo(
+    () => `/api/summaries/${summaryId}/pages/${pageNumber}/preview?width=1800`,
+    [pageNumber, summaryId],
+  );
 
   const renderCanvas = useCallback(() => {
     const canvas = canvasRef.current;
@@ -327,6 +218,7 @@ export function SummaryPageSurface({
     }
   }, []);
 
+  /*
   const renderPdfPage = useCallback(
     async (
       documentOverride?: PDFDocumentProxy | null,
@@ -534,6 +426,39 @@ export function SummaryPageSurface({
   useEffect(() => {
     void renderPdfPage(undefined, pageNumber);
   }, [pageNumber, renderPdfPage]);
+  */
+
+  useEffect(() => {
+    renderCanvas();
+  }, [pageState.drawings, renderCanvas]);
+
+  useEffect(() => {
+    const handleResize = () => {
+      renderCanvas();
+    };
+    window.addEventListener("resize", handleResize);
+
+    const observer =
+      typeof ResizeObserver !== "undefined" && surfaceRef.current
+        ? new ResizeObserver(() => {
+            renderCanvas();
+          })
+        : null;
+
+    if (observer && surfaceRef.current) {
+      observer.observe(surfaceRef.current);
+    }
+
+    return () => {
+      window.removeEventListener("resize", handleResize);
+      observer?.disconnect();
+    };
+  }, [renderCanvas]);
+
+  useEffect(() => {
+    setIsPdfLoading(true);
+    setPdfError(null);
+  }, [previewImageUrl]);
 
   const updateSolutionBoxes = useCallback(
     (updater: (boxes: SummarySolutionBox[]) => SummarySolutionBox[]) => {
@@ -863,10 +788,20 @@ export function SummaryPageSurface({
           aspectRatio: `${resolvedPageDimension.width} / ${resolvedPageDimension.height}`,
         }}
       >
-        <canvas
-          key={`${summaryId}-${pageNumber}-pdf`}
-          ref={pdfCanvasRef}
-          className="absolute inset-0 h-full w-full bg-white"
+        <img
+          key={previewImageUrl}
+          src={previewImageUrl}
+          alt={`صفحة ${pageNumber}`}
+          className="absolute inset-0 h-full w-full select-none bg-white object-fill"
+          draggable={false}
+          onLoad={() => {
+            setIsPdfLoading(false);
+            setPdfError(null);
+          }}
+          onError={() => {
+            setIsPdfLoading(false);
+            setPdfError("تعذر عرض هذه الصفحة الآن. جرّب فتح الصفحة مباشرة أو إعادة تحميل الملخص.");
+          }}
         />
 
         <canvas
