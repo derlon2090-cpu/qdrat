@@ -88,6 +88,51 @@ function noteBadgeText(state: SummaryPageState) {
   return "جديدة";
 }
 
+function BackToSummariesLink({
+  centered = false,
+  tone = "primary",
+}: {
+  centered?: boolean;
+  tone?: "primary" | "danger";
+}) {
+  const frameClass =
+    tone === "danger"
+      ? "border-rose-200 bg-white text-rose-700 shadow-[0_12px_28px_rgba(225,29,72,0.08)] hover:border-rose-300 hover:bg-rose-50/80"
+      : "border-[#d7e3f7] bg-white text-[#123B7A] shadow-[0_14px_32px_rgba(18,59,122,0.1)] hover:border-[#123B7A]/30 hover:bg-[#f7faff]";
+  const iconClass =
+    tone === "danger"
+      ? "border-rose-200 bg-rose-50 text-rose-700"
+      : "border-[#d7e3f7] bg-[#eef4ff] text-[#123B7A]";
+  const subTextClass = tone === "danger" ? "text-rose-600/80" : "text-slate-500";
+
+  return (
+    <div className={cn("relative z-20", centered ? "flex justify-center" : "")}>
+      <a
+        href="/summaries"
+        onClick={(event) => event.stopPropagation()}
+        className={cn(
+          "pointer-events-auto group inline-flex w-fit cursor-pointer items-center gap-3 rounded-[1.15rem] border px-4 py-3 text-right transition hover:-translate-y-0.5",
+          frameClass,
+        )}
+        aria-label="الانتقال إلى مكتبة الملخصات"
+      >
+        <span
+          className={cn(
+            "flex h-10 w-10 items-center justify-center rounded-full border transition group-hover:scale-105",
+            iconClass,
+          )}
+        >
+          <ArrowRight className="h-4 w-4" />
+        </span>
+        <span className="flex flex-col leading-6">
+          <span className="text-sm font-bold">العودة إلى مكتبة الملخصات</span>
+          <span className={cn("text-xs", subTextClass)}>جميع الملخصات المحفوظة</span>
+        </span>
+      </a>
+    </div>
+  );
+}
+
 function downloadTextFile(fileName: string, content: string) {
   const blob = new Blob([content], {
     type: "text/markdown;charset=utf-8",
@@ -531,12 +576,7 @@ export function SummaryWorkspace({ summaryId }: { summaryId: string }) {
         <CardContent className="space-y-4 p-8 text-center">
           <div className="display-font text-2xl font-bold text-rose-700">تعذر فتح الملخص</div>
           <p className="text-sm leading-8 text-rose-700/90">{error}</p>
-          <Link
-            href="/summaries"
-            className="inline-flex text-sm font-semibold text-rose-700 underline-offset-4 transition hover:underline"
-          >
-            العودة إلى المكتبة
-          </Link>
+          <BackToSummariesLink centered tone="danger" />
         </CardContent>
       </Card>
     );
@@ -556,12 +596,7 @@ export function SummaryWorkspace({ summaryId }: { summaryId: string }) {
       <Card className="border border-[#E8D8B3] bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(248,247,244,0.96))]">
         <CardContent className="flex flex-col gap-5 p-7 lg:flex-row lg:items-start lg:justify-between">
           <div>
-            <Link
-              href="/summaries"
-              className="mb-3 inline-flex text-sm font-semibold text-[#123B7A] underline-offset-4 transition hover:underline"
-            >
-              العودة إلى المكتبة
-            </Link>
+            <BackToSummariesLink />
             <div className="mini-pill bg-[#123B7A]/5 text-[#123B7A]">ملخص تفاعلي محفوظ داخل حسابك</div>
             <h2 className="mt-4 display-font text-3xl font-bold text-slate-950">{summary.fileName}</h2>
             <p className="mt-3 max-w-3xl text-sm leading-8 text-slate-600">
