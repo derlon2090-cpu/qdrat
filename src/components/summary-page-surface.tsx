@@ -534,16 +534,16 @@ export function SummaryPageSurface({
         points: [point, point],
       };
 
-      event.currentTarget.setPointerCapture(event.pointerId);
       renderCanvas();
     },
     [activeTool, removeStrokeNearPoint, renderCanvas, strokeColor, strokeWidth],
   );
 
   const continueDrawing = useCallback(
-    (event: ReactPointerEvent<HTMLCanvasElement>) => {
+    (event: PointerEvent | ReactPointerEvent<HTMLCanvasElement>) => {
       const interaction = interactionRef.current;
       if (!interaction || interaction.kind !== "draw") return;
+      if (interaction.pointerId !== event.pointerId) return;
       if (!surfaceRef.current || !previewStrokeRef.current) return;
 
       const point = createPointFromEvent(event, surfaceRef.current.getBoundingClientRect());
@@ -557,11 +557,11 @@ export function SummaryPageSurface({
   );
 
   const finishDrawing = useCallback(
-    (event: ReactPointerEvent<HTMLCanvasElement>) => {
+    (event: PointerEvent | ReactPointerEvent<HTMLCanvasElement>) => {
       const interaction = interactionRef.current;
       if (!interaction || interaction.kind !== "draw") return;
+      if (interaction.pointerId !== event.pointerId) return;
 
-      event.currentTarget.releasePointerCapture?.(event.pointerId);
       interactionRef.current = null;
 
       if (previewStrokeRef.current && previewStrokeRef.current.points.length > 1) {
@@ -602,7 +602,6 @@ export function SummaryPageSurface({
         startY: point.y,
       };
 
-      event.currentTarget.setPointerCapture(event.pointerId);
     },
     [],
   );
@@ -629,7 +628,6 @@ export function SummaryPageSurface({
         startY: point.y,
       };
 
-      event.currentTarget.setPointerCapture(event.pointerId);
     },
     [],
   );
@@ -656,7 +654,6 @@ export function SummaryPageSurface({
         startY: point.y,
       };
 
-      event.currentTarget.setPointerCapture(event.pointerId);
     },
     [],
   );
@@ -683,7 +680,6 @@ export function SummaryPageSurface({
         startY: point.y,
       };
 
-      event.currentTarget.setPointerCapture(event.pointerId);
     },
     [],
   );
@@ -693,6 +689,7 @@ export function SummaryPageSurface({
       const interaction = interactionRef.current;
       if (!interaction || !surfaceRef.current) return;
       if (interaction.kind === "draw") return;
+      if (interaction.pointerId !== event.pointerId) return;
 
       const point = createPointFromEvent(event, surfaceRef.current.getBoundingClientRect());
 
@@ -763,21 +760,75 @@ export function SummaryPageSurface({
     [updateHideRegions, updateSolutionBoxes],
   );
 
-  const finishBoxInteraction = useCallback(() => {
+  const finishBoxInteraction = useCallback((event?: PointerEvent) => {
+    const interaction = interactionRef.current;
+    if (!interaction || interaction.kind === "draw") {
+      return;
+    }
+
+    if (event && interaction.pointerId !== event.pointerId) {
+      return;
+    }
+
     interactionRef.current = null;
   }, []);
 
   useEffect(() => {
-    window.addEventListener("pointermove", continueBoxInteraction);
-    window.addEventListener("pointerup", finishBoxInteraction);
-    window.addEventListener("pointercancel", finishBoxInteraction);
+    const handlePointerMove = (event: PointerEvent) => {
+      const interaction = interactionRef.current;
+      if (!interaction) return;
+
+      if (interaction.kind === "draw") {
+        continueDrawing(event);
+        return;
+      }
+
+      continueBoxInteraction(event);
+    };
+
+    const handlePointerUp = (event: PointerEvent) => {
+      const interaction = interactionRef.current;
+      if (!interaction) return;
+
+      if (interaction.kind === "draw") {
+        finishDrawing(event);
+        return;
+      }
+
+      finishBoxInteraction(event);
+    };
+
+    const handlePointerCancel = (event: PointerEvent) => {
+      const interaction = interactionRef.current;
+      if (!interaction) return;
+
+      if (interaction.kind === "draw") {
+        previewStrokeRef.current = null;
+        finishDrawing(event);
+        return;
+      }
+
+      finishBoxInteraction(event);
+    };
+
+    const handleWindowBlur = () => {
+      interactionRef.current = null;
+      previewStrokeRef.current = null;
+      renderCanvas();
+    };
+
+    window.addEventListener("pointermove", handlePointerMove);
+    window.addEventListener("pointerup", handlePointerUp);
+    window.addEventListener("pointercancel", handlePointerCancel);
+    window.addEventListener("blur", handleWindowBlur);
 
     return () => {
-      window.removeEventListener("pointermove", continueBoxInteraction);
-      window.removeEventListener("pointerup", finishBoxInteraction);
-      window.removeEventListener("pointercancel", finishBoxInteraction);
+      window.removeEventListener("pointermove", handlePointerMove);
+      window.removeEventListener("pointerup", handlePointerUp);
+      window.removeEventListener("pointercancel", handlePointerCancel);
+      window.removeEventListener("blur", handleWindowBlur);
     };
-  }, [continueBoxInteraction, finishBoxInteraction]);
+  }, [continueBoxInteraction, continueDrawing, finishBoxInteraction, finishDrawing, renderCanvas]);
 
   return (
     <div className="space-y-4">
@@ -792,7 +843,7 @@ export function SummaryPageSurface({
           key={previewImageUrl}
           src={previewImageUrl}
           alt={`صفحة ${pageNumber}`}
-          className="absolute inset-0 h-full w-full select-none bg-white object-fill"
+          className="pointer-events-none absolute inset-0 h-full w-full select-none bg-white object-fill"
           draggable={false}
           onLoad={() => {
             setIsPdfLoading(false);
@@ -811,13 +862,10 @@ export function SummaryPageSurface({
             activeTool === "navigate" ? "pointer-events-none" : "pointer-events-auto",
           )}
           onPointerDown={startDrawing}
-          onPointerMove={continueDrawing}
-          onPointerUp={finishDrawing}
-          onPointerCancel={finishDrawing}
         />
 
         {isPdfLoading ? (
-          <div className="absolute inset-0 z-50 flex items-center justify-center bg-white/88 text-sm font-semibold text-slate-600 backdrop-blur-[1px]">
+          <div className="pointer-events-none absolute inset-0 z-50 flex items-center justify-center bg-white/88 text-sm font-semibold text-slate-600 backdrop-blur-[1px]">
             <span className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 shadow-sm">
               <Loader2 className="h-4 w-4 animate-spin" />
               جارٍ تجهيز الصفحة...
@@ -826,7 +874,7 @@ export function SummaryPageSurface({
         ) : null}
 
         {pdfError ? (
-          <div className="absolute inset-0 z-50 flex items-center justify-center bg-white/92 px-6 text-center">
+          <div className="pointer-events-none absolute inset-0 z-50 flex items-center justify-center bg-white/92 px-6 text-center">
             <div className="max-w-md rounded-[1.6rem] border border-rose-200 bg-rose-50 px-5 py-5 text-sm font-semibold leading-7 text-rose-700 shadow-sm">
               {pdfError}
             </div>

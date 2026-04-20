@@ -110,7 +110,6 @@ function BackToSummariesLink({
     <div className={cn("relative z-20", centered ? "flex justify-center" : "")}>
       <Link
         href="/summaries"
-        onClick={(event) => event.stopPropagation()}
         className={cn(
           "pointer-events-auto group inline-flex w-fit cursor-pointer items-center gap-3 rounded-[1.15rem] border px-4 py-3 text-right transition hover:-translate-y-0.5",
           frameClass,
