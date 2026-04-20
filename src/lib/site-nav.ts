@@ -6,6 +6,7 @@ import {
   ClipboardList,
   Coins,
   FileHeart,
+  FileText,
   Files,
   House,
   NotebookPen,
@@ -51,6 +52,13 @@ export const topNavItems: SiteNavItem[] = [
     iconWrap: "bg-[#fff7ed]",
   },
   {
+    href: "/summaries",
+    label: "الملخصات",
+    icon: FileText,
+    accent: "text-[#123B7A]",
+    iconWrap: "bg-[#eef4ff]",
+  },
+  {
     href: "/paper-models",
     label: "النماذج",
     icon: Files,
@@ -90,6 +98,14 @@ export const productSidebarItems: SiteNavItem[] = [
     accent: "text-[#d97706]",
     iconWrap: "bg-[#fff7ed]",
     description: "تدريب وبحث",
+  },
+  {
+    href: "/summaries",
+    label: "الملخصات",
+    icon: FileText,
+    accent: "text-[#123B7A]",
+    iconWrap: "bg-[#eef4ff]",
+    description: "PDF وملاحظاتك",
   },
   {
     href: "/question-bank?track=mistakes",

@@ -10,8 +10,11 @@ import type { VerbalPassageRecord } from "@/lib/verbal-passages";
 
 type ViewerMode = "student" | "admin";
 type SavedAnswerMap = Record<string, "A" | "B" | "C" | "D" | undefined>;
+type SavedSubmissionMap = Record<string, boolean | undefined>;
+type PassageQuestionProgressState = "current" | "correct" | "incorrect" | "unanswered";
 
 const SAVED_ANSWERS_KEY = "miyaar-verbal-reading-answers";
+const SAVED_SUBMISSIONS_KEY = "miyaar-verbal-reading-submissions";
 
 function getChoiceLabel(index: number) {
   return ["أ", "ب", "ج", "د"][index] ?? String(index + 1);
@@ -58,6 +61,24 @@ function persistSavedAnswers(value: SavedAnswerMap) {
   window.sessionStorage.setItem(SAVED_ANSWERS_KEY, JSON.stringify(value));
 }
 
+function readSavedSubmissions() {
+  if (typeof window === "undefined") return {};
+
+  try {
+    const raw = window.sessionStorage.getItem(SAVED_SUBMISSIONS_KEY);
+    if (!raw) return {};
+    const parsed = JSON.parse(raw) as unknown;
+    return parsed && typeof parsed === "object" ? (parsed as SavedSubmissionMap) : {};
+  } catch {
+    return {};
+  }
+}
+
+function persistSavedSubmissions(value: SavedSubmissionMap) {
+  if (typeof window === "undefined") return;
+  window.sessionStorage.setItem(SAVED_SUBMISSIONS_KEY, JSON.stringify(value));
+}
+
 function getCorrectExplanation(question: VerbalPassageRecord["questions"][number]) {
   return (
     question.explanation?.trim() ||
@@ -91,17 +112,17 @@ export function VerbalPassageViewer({
 }) {
   const [questionIndex, setQuestionIndex] = useState(0);
   const [selectedAnswers, setSelectedAnswers] = useState<SavedAnswerMap>({});
-  const [submittedAnswers, setSubmittedAnswers] = useState<Record<string, boolean>>({});
+  const [submittedAnswers, setSubmittedAnswers] = useState<SavedSubmissionMap>({});
   const [authPromptQuestionId, setAuthPromptQuestionId] = useState<string | null>(null);
   const { status: authStatus } = useAuthSession();
 
   useEffect(() => {
     setSelectedAnswers(readSavedAnswers());
+    setSubmittedAnswers(readSavedSubmissions());
   }, []);
 
   useEffect(() => {
     setQuestionIndex(0);
-    setSubmittedAnswers({});
     setAuthPromptQuestionId(null);
   }, [passage.id]);
 
@@ -110,12 +131,13 @@ export function VerbalPassageViewer({
 
   const currentQuestionKey = `${passage.slug}:${currentQuestion.id}`;
   const selectedKey = selectedAnswers[currentQuestionKey];
-  const submitted = Boolean(submittedAnswers[currentQuestion.id]);
+  const submitted = Boolean(submittedAnswers[currentQuestionKey]);
   const isCorrect = submitted && selectedKey === currentQuestion.correctOption;
 
   const submittedCount = useMemo(
-    () => passage.questions.filter((question) => submittedAnswers[question.id]).length,
-    [passage.questions, submittedAnswers],
+    () =>
+      passage.questions.filter((question) => submittedAnswers[`${passage.slug}:${question.id}`]).length,
+    [passage.questions, passage.slug, submittedAnswers],
   );
 
   const isPassageCompleted =
@@ -123,13 +145,54 @@ export function VerbalPassageViewer({
     passage.questions.length > 0 &&
     submittedCount === passage.questions.length;
 
+  function getQuestionProgressState(
+    question: VerbalPassageRecord["questions"][number],
+    index: number,
+  ): PassageQuestionProgressState {
+    const questionKey = `${passage.slug}:${question.id}`;
+    const isSubmitted = Boolean(submittedAnswers[questionKey]);
+    const answer = selectedAnswers[questionKey];
+
+    if (isSubmitted && answer) {
+      return answer === question.correctOption ? "correct" : "incorrect";
+    }
+
+    return index === questionIndex ? "current" : "unanswered";
+  }
+
+  function getQuestionProgressClasses(status: PassageQuestionProgressState, active: boolean) {
+    if (status === "correct") {
+      return active
+        ? "border-emerald-600 bg-emerald-600 text-white ring-4 ring-emerald-100"
+        : "border-emerald-200 bg-emerald-50 text-emerald-800";
+    }
+
+    if (status === "incorrect") {
+      return active
+        ? "border-rose-600 bg-rose-600 text-white ring-4 ring-rose-100"
+        : "border-rose-200 bg-rose-50 text-rose-800";
+    }
+
+    if (status === "current") {
+      return "border-slate-900 bg-slate-900 text-white";
+    }
+
+    return active
+      ? "border-[#123B7A] bg-[#eef4ff] text-[#123B7A]"
+      : "border-slate-200 bg-white text-slate-700";
+  }
+
   async function confirmCurrentAnswer() {
     if (!selectedKey) return;
 
-    setSubmittedAnswers((previous) => ({
-      ...previous,
-      [currentQuestion.id]: true,
-    }));
+    setSubmittedAnswers((previous) => {
+      const next = {
+        ...previous,
+        [currentQuestionKey]: true,
+      };
+      persistSavedSubmissions(next);
+      return next;
+    });
 
     const trackingResult = await trackMistakeFromClient({
       questionKey: currentQuestionKey,
@@ -163,10 +226,14 @@ export function VerbalPassageViewer({
 
     setSelectedAnswers(nextAnswers);
     persistSavedAnswers(nextAnswers);
-    setSubmittedAnswers((previous) => ({
-      ...previous,
-      [currentQuestion.id]: false,
-    }));
+    setSubmittedAnswers((previous) => {
+      const next = {
+        ...previous,
+        [currentQuestionKey]: false,
+      };
+      persistSavedSubmissions(next);
+      return next;
+    });
     setAuthPromptQuestionId((current) => (current === currentQuestion.id ? null : current));
   }
 
@@ -234,48 +301,7 @@ export function VerbalPassageViewer({
         </div>
       </div>
 
-      <div className="grid gap-6 xl:grid-cols-[360px_1fr]">
-        <aside className="rounded-[1.9rem] border border-slate-200 bg-white p-4 shadow-sm">
-          <div className="px-3 pb-4">
-            <div className="text-sm font-semibold text-slate-500">أسئلة القطعة</div>
-            <div className="display-font mt-2 text-2xl font-bold text-slate-950">
-              {passage.title}
-            </div>
-            <div className="mt-2 text-sm leading-7 text-slate-500">
-              اختر سؤالًا من نفس القطعة مباشرة، وسيبقى السؤال الحالي مميزًا
-              والسؤال الذي أُجيب عنه ظاهرًا بلون مختلف.
-            </div>
-          </div>
-
-          <div className="max-h-[720px] space-y-2 overflow-y-auto px-1 pb-1">
-            {passage.questions.map((question, index) => {
-              const key = `${passage.slug}:${question.id}`;
-              const active = index === questionIndex;
-              const answered = Boolean(selectedAnswers[key]);
-
-              return (
-                <button
-                  key={question.id}
-                  type="button"
-                  onClick={() => goToQuestion(index)}
-                  className={`w-full rounded-[1.25rem] border px-4 py-4 text-right transition ${
-                    active
-                      ? "border-[#123B7A] bg-[#eef4ff] text-[#123B7A]"
-                      : answered
-                        ? "border-emerald-200 bg-emerald-50 text-emerald-800"
-                        : "border-slate-200 bg-slate-50/70 text-slate-700 hover:bg-white"
-                  }`}
-                >
-                  <div className="text-xs font-semibold opacity-80">سؤال {index + 1}</div>
-                  <div className="mt-2 line-clamp-2 text-sm leading-7">
-                    {question.questionText}
-                  </div>
-                </button>
-              );
-            })}
-          </div>
-        </aside>
-
+      <div>
         <section className="rounded-[1.9rem] border border-slate-200 bg-white p-6 shadow-sm md:p-8">
           <div className="flex flex-wrap items-start justify-between gap-4 border-b border-slate-200 pb-5">
             <div>
@@ -426,26 +452,35 @@ export function VerbalPassageViewer({
             </div>
           ) : null}
 
-          <div className="mt-8 grid gap-4 lg:grid-cols-2">
+          <div className="mt-8 grid gap-4 lg:grid-cols-[minmax(0,1.5fr)_minmax(320px,1fr)]">
             <div className="rounded-[1.4rem] border border-slate-200 bg-slate-50/70 p-5">
-              <div className="mb-3 text-lg font-bold text-slate-900">
-                الانتقال إلى سؤال آخر داخل نفس القطعة
+              <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+                <div className="text-lg font-bold text-slate-900">
+                  أسئلة القطعة
+                </div>
+                <div className="text-xs font-semibold text-slate-500">
+                  الأخضر صحيح، الأحمر خطأ
+                </div>
               </div>
-              <div className="flex flex-wrap gap-2">
-                {passage.questions.map((question, index) => (
-                  <button
-                    key={`jump-${question.id}`}
-                    type="button"
-                    onClick={() => goToQuestion(index)}
-                    className={`rounded-xl px-4 py-3 text-sm font-bold ${
-                      index === questionIndex
-                        ? "bg-slate-900 text-white"
-                        : "bg-white text-slate-700 ring-1 ring-slate-200"
-                    }`}
-                  >
-                    سؤال {index + 1}
-                  </button>
-                ))}
+              <div className="flex flex-wrap gap-3">
+                {passage.questions.map((question, index) => {
+                  const status = getQuestionProgressState(question, index);
+                  const active = index === questionIndex;
+
+                  return (
+                    <button
+                      key={`jump-${question.id}`}
+                      type="button"
+                      onClick={() => goToQuestion(index)}
+                      className={`min-w-[108px] rounded-[999px] border px-5 py-4 text-base font-bold transition ${getQuestionProgressClasses(
+                        status,
+                        active,
+                      )}`}
+                    >
+                      سؤال {index + 1}
+                    </button>
+                  );
+                })}
               </div>
             </div>
 

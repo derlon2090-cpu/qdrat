@@ -655,6 +655,46 @@ create table if not exists app_verbal_passage_questions (
 create index if not exists idx_app_verbal_passage_questions_passage
   on app_verbal_passage_questions (passage_id, question_order);
 
+create table if not exists app_user_summaries (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references app_users(id) on delete cascade,
+  file_name varchar(255) not null,
+  file_mime_type varchar(120) not null default 'application/pdf',
+  file_size_bytes integer not null default 0,
+  file_data_base64 text not null,
+  page_count integer not null default 1,
+  page_dimensions jsonb not null default '[]'::jsonb,
+  last_opened_page integer not null default 1,
+  last_used_at timestamptz not null default now(),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create index if not exists idx_app_user_summaries_user_last_used
+  on app_user_summaries (user_id, last_used_at desc);
+
+create table if not exists app_user_summary_page_states (
+  id uuid primary key default gen_random_uuid(),
+  summary_id uuid not null references app_user_summaries(id) on delete cascade,
+  user_id uuid not null references app_users(id) on delete cascade,
+  page_number integer not null,
+  note_text text not null default '',
+  reviewed boolean not null default false,
+  page_color varchar(20),
+  hide_regions jsonb not null default '[]'::jsonb,
+  solution_boxes jsonb not null default '[]'::jsonb,
+  drawings jsonb not null default '[]'::jsonb,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  unique (summary_id, page_number)
+);
+
+create index if not exists idx_app_user_summary_page_states_summary_page
+  on app_user_summary_page_states (summary_id, page_number);
+
+create index if not exists idx_app_user_summary_page_states_user_updated
+  on app_user_summary_page_states (user_id, updated_at desc);
+
 do $$
 begin
   if not exists (select 1 from pg_constraint where conname = 'chk_app_users_email_not_blank') then

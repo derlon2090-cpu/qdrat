@@ -4,6 +4,7 @@ import { ArrowUp, Download, MessageCircleMore, Newspaper, ShieldCheck, Smartphon
 import { MiyaarLogo } from "@/components/miyaar-logo";
 
 const footerLinks = [
+  { href: "/summaries", label: "الملخصات" },
   { href: "/diagnostic", label: "التشخيص" },
   { href: "/my-plan", label: "خطتي" },
   { href: "/question-bank", label: "بنك الأسئلة" },

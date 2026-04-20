@@ -14,6 +14,7 @@ import {
 import { Button } from "@/components/ui/button";
 
 type SavedAnswerMap = Record<string, string>;
+type QuestionProgressState = "current" | "correct" | "incorrect" | "unanswered";
 
 const SAVED_ANSWERS_KEY = "miyaar-verbal-practice-answers";
 
@@ -107,6 +108,41 @@ export function VerbalPracticeBank() {
       explanation: currentQuestion.explanation,
     };
   }, [currentQuestion, selectedAnswer, submitted]);
+
+  function getQuestionProgressState(
+    question: (typeof questions)[number],
+    index: number,
+  ): QuestionProgressState {
+    const savedAnswer = savedAnswers[`${currentCategory.id}-${question.id}`];
+
+    if (savedAnswer) {
+      return savedAnswer === question.correctAnswer ? "correct" : "incorrect";
+    }
+
+    return index === currentQuestionIndex ? "current" : "unanswered";
+  }
+
+  function getQuestionProgressClasses(status: QuestionProgressState, active: boolean) {
+    if (status === "correct") {
+      return active
+        ? "border-emerald-600 bg-emerald-600 text-white ring-4 ring-emerald-100"
+        : "border-emerald-200 bg-emerald-50 text-emerald-800";
+    }
+
+    if (status === "incorrect") {
+      return active
+        ? "border-rose-600 bg-rose-600 text-white ring-4 ring-rose-100"
+        : "border-rose-200 bg-rose-50 text-rose-800";
+    }
+
+    if (status === "current") {
+      return "border-slate-900 bg-slate-900 text-white";
+    }
+
+    return active
+      ? "border-[#123B7A] bg-[#eef4ff] text-[#123B7A]"
+      : "border-slate-200 bg-white text-slate-700";
+  }
 
   function openQuestion(categoryId: string, questionId: string) {
     router.replace(buildPracticeHref(pathname, new URLSearchParams(searchParams.toString()), categoryId, questionId), {
@@ -204,40 +240,7 @@ export function VerbalPracticeBank() {
         </div>
       </div>
 
-      <div className="grid gap-6 xl:grid-cols-[360px_1fr]">
-        <aside className="rounded-[1.9rem] border border-slate-200 bg-white p-4 shadow-sm">
-          <div className="px-3 pb-4">
-            <div className="text-sm font-semibold text-slate-500">القسم الحالي</div>
-            <div className="display-font mt-2 text-2xl font-bold text-slate-950">{currentCategory.title}</div>
-            <div className="mt-2 text-sm leading-7 text-slate-500">{currentCategory.description}</div>
-          </div>
-
-          <div className="max-h-[700px] space-y-2 overflow-y-auto px-1 pb-1">
-            {questions.map((question, index) => {
-              const isActive = index === currentQuestionIndex;
-              const saved = savedAnswers[`${currentCategory.id}-${question.id}`];
-
-              return (
-                <button
-                  key={question.id}
-                  type="button"
-                  onClick={() => openQuestion(currentCategory.id, question.id)}
-                  className={`w-full rounded-[1.25rem] border px-4 py-4 text-right transition ${
-                    isActive
-                      ? "border-[#123B7A] bg-[#eef4ff] text-[#123B7A]"
-                      : saved
-                        ? "border-emerald-200 bg-emerald-50 text-emerald-800"
-                        : "border-slate-200 bg-slate-50/70 text-slate-700 hover:bg-white"
-                  }`}
-                >
-                  <div className="text-xs font-semibold opacity-80">سؤال {index + 1}</div>
-                  <div className="mt-2 line-clamp-2 text-sm leading-7">{question.prompt}</div>
-                </button>
-              );
-            })}
-          </div>
-        </aside>
-
+      <div>
         <section className="rounded-[1.9rem] border border-slate-200 bg-white p-6 shadow-sm md:p-8">
           <div className="flex flex-wrap items-start justify-between gap-4 border-b border-slate-200 pb-5">
             <div>
@@ -344,22 +347,33 @@ export function VerbalPracticeBank() {
             </div>
           ) : null}
 
-          <div className="mt-8 grid gap-4 lg:grid-cols-2">
+          <div className="mt-8 grid gap-4 lg:grid-cols-[minmax(0,1.5fr)_minmax(320px,1fr)]">
             <div className="rounded-[1.4rem] border border-slate-200 bg-slate-50/70 p-5">
-              <div className="mb-3 text-lg font-bold text-slate-900">الانتقال إلى سؤال آخر</div>
-              <div className="flex flex-wrap gap-2">
-                {questions.map((question, index) => (
-                  <button
-                    key={`jump-${question.id}`}
-                    type="button"
-                    onClick={() => openQuestion(currentCategory.id, question.id)}
-                    className={`rounded-xl px-4 py-3 text-sm font-bold ${
-                      index === currentQuestionIndex ? "bg-slate-900 text-white" : "bg-white text-slate-700 ring-1 ring-slate-200"
-                    }`}
-                  >
-                    سؤال {index + 1}
-                  </button>
-                ))}
+              <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+                <div className="text-lg font-bold text-slate-900">أسئلة القسم</div>
+                <div className="text-xs font-semibold text-slate-500">
+                  الأخضر صحيح، الأحمر خطأ
+                </div>
+              </div>
+              <div className="flex flex-wrap gap-3">
+                {questions.map((question, index) => {
+                  const status = getQuestionProgressState(question, index);
+                  const active = index === currentQuestionIndex;
+
+                  return (
+                    <button
+                      key={`jump-${question.id}`}
+                      type="button"
+                      onClick={() => openQuestion(currentCategory.id, question.id)}
+                      className={`min-w-[108px] rounded-[999px] border px-5 py-4 text-base font-bold transition ${getQuestionProgressClasses(
+                        status,
+                        active,
+                      )}`}
+                    >
+                      سؤال {index + 1}
+                    </button>
+                  );
+                })}
               </div>
             </div>
 
