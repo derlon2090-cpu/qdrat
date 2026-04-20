@@ -8,7 +8,8 @@ import {
   useState,
   type PointerEvent as ReactPointerEvent,
 } from "react";
-import { Grip, Minimize2, Move, SquarePen } from "lucide-react";
+import { Grip, Loader2, Minimize2, Move, SquarePen } from "lucide-react";
+import type { PDFDocumentProxy, RenderTask } from "pdfjs-dist/types/src/pdf";
 
 import type {
   SummaryDrawingPoint,
@@ -19,6 +20,97 @@ import type {
   SummarySolutionBox,
 } from "@/lib/summaries";
 import { cn } from "@/lib/utils";
+
+type PdfJsModule = typeof import("pdfjs-dist");
+
+let pdfJsModulePromise: Promise<PdfJsModule> | null = null;
+
+function loadPdfJsModule() {
+  if (!pdfJsModulePromise) {
+    pdfJsModulePromise = import("pdfjs-dist/legacy/build/pdf.mjs").then((module) => {
+      module.GlobalWorkerOptions.workerSrc = "/pdfjs/pdf.worker.min.mjs";
+      return module;
+    });
+  }
+
+  return pdfJsModulePromise;
+}
+
+function summarizeUnexpectedPdfResponse(response: Response, rawText: string) {
+  const contentType = response.headers.get("content-type") ?? "";
+
+  if (contentType.includes("application/json")) {
+    try {
+      const parsed = JSON.parse(rawText) as { message?: string };
+      if (typeof parsed.message === "string" && parsed.message.trim()) {
+        return parsed.message.trim();
+      }
+    } catch {
+      // Ignore malformed JSON and fall through to text handling.
+    }
+  }
+
+  const normalizedText = rawText.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+  const lowerText = normalizedText.toLowerCase();
+
+  if (response.status === 401) {
+    return "انتهت جلسة تسجيل الدخول. أعد تحميل الصفحة وسجل الدخول مرة أخرى لفتح الملف.";
+  }
+
+  if (response.status === 403 || lowerText.includes("request forbidden") || lowerText.includes("forbidden")) {
+    return "تم رفض الوصول إلى هذا الملف من الخادم أو من طبقة الحماية.";
+  }
+
+  if (response.status === 404) {
+    return "تعذر العثور على ملف هذا الملخص.";
+  }
+
+  if (response.status === 413 || lowerText.includes("request entity too large")) {
+    return "الخادم رفض الطلب لأن حجمه كبير جدًا.";
+  }
+
+  if (!normalizedText) {
+    return `HTTP ${response.status}`;
+  }
+
+  return normalizedText.slice(0, 220);
+}
+
+async function loadSummaryPdfData(fileUrl: string) {
+  const response = await fetch(fileUrl, {
+    cache: "no-store",
+    credentials: "same-origin",
+  });
+
+  if (!response.ok) {
+    const rawText = await response.text();
+    throw new Error(summarizeUnexpectedPdfResponse(response, rawText));
+  }
+
+  const contentType = response.headers.get("content-type") ?? "";
+  if (!contentType.includes("application/pdf")) {
+    const rawText = await response.text();
+    throw new Error(summarizeUnexpectedPdfResponse(response, rawText));
+  }
+
+  return new Uint8Array(await response.arrayBuffer());
+}
+
+function formatPdfRenderError(error: unknown) {
+  if (error instanceof Error) {
+    const message = error.message.trim();
+
+    if (message.includes("Invalid PDF")) {
+      return "تعذر قراءة ملف PDF. قد يكون الملف غير مكتمل أو أن الخادم أعاد استجابة غير صحيحة.";
+    }
+
+    if (message) {
+      return message.slice(0, 220);
+    }
+  }
+
+  return "تعذر عرض هذه الصفحة حاليًا.";
+}
 
 type ActiveTool = "navigate" | "pen" | "highlighter" | "eraser";
 
@@ -131,10 +223,17 @@ export function SummaryPageSurface({
   onChange,
 }: SummaryPageSurfaceProps) {
   const surfaceRef = useRef<HTMLDivElement | null>(null);
+  const pdfCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const pdfDocumentRef = useRef<PDFDocumentProxy | null>(null);
+  const renderTaskRef = useRef<RenderTask | null>(null);
+  const pageNumberRef = useRef(pageNumber);
   const pageStateRef = useRef(pageState);
   const interactionRef = useRef<Interaction | null>(null);
   const previewStrokeRef = useRef<SummaryDrawingStroke | null>(null);
+  const [resolvedPageDimension, setResolvedPageDimension] = useState(pageDimension);
+  const [isPdfLoading, setIsPdfLoading] = useState(true);
+  const [pdfError, setPdfError] = useState<string | null>(null);
   const [selectedSolutionId, setSelectedSolutionId] = useState<string | null>(null);
   const [selectedHideId, setSelectedHideId] = useState<string | null>(null);
 
@@ -142,11 +241,15 @@ export function SummaryPageSurface({
     pageStateRef.current = pageState;
   }, [pageState]);
 
-  const iframeSrc = useMemo(
-    () =>
-      `${fileUrl}#page=${pageNumber}&toolbar=0&navpanes=0&scrollbar=0&view=FitH`,
-    [fileUrl, pageNumber],
-  );
+  useEffect(() => {
+    pageNumberRef.current = pageNumber;
+  }, [pageNumber]);
+
+  useEffect(() => {
+    setResolvedPageDimension(pageDimension);
+  }, [pageDimension, pageNumber, summaryId]);
+
+  const directPageUrl = useMemo(() => `${fileUrl}?download=1`, [fileUrl]);
 
   const renderCanvas = useCallback(() => {
     const canvas = canvasRef.current;
@@ -201,17 +304,91 @@ export function SummaryPageSurface({
     }
   }, []);
 
+  const renderPdfPage = useCallback(
+    async (documentOverride?: PDFDocumentProxy | null, targetPageNumber = 1) => {
+      const pdfDocument = documentOverride ?? pdfDocumentRef.current;
+      const surface = surfaceRef.current;
+      const pdfCanvas = pdfCanvasRef.current;
+
+      if (!pdfDocument || !surface || !pdfCanvas) {
+        return;
+      }
+
+      try {
+        setIsPdfLoading(true);
+        setPdfError(null);
+
+        const page = await pdfDocument.getPage(targetPageNumber);
+        const viewport = page.getViewport({ scale: 1 });
+        const surfaceWidth = Math.max(1, surface.getBoundingClientRect().width || viewport.width);
+        const scale = surfaceWidth / viewport.width;
+        const scaledViewport = page.getViewport({ scale });
+        const outputScale = window.devicePixelRatio || 1;
+        const context = pdfCanvas.getContext("2d");
+
+        if (!context) {
+          throw new Error("تعذر تجهيز مساحة عرض الصفحة.");
+        }
+
+        setResolvedPageDimension((current) => {
+          const nextWidth = Math.max(1, Math.round(viewport.width));
+          const nextHeight = Math.max(1, Math.round(viewport.height));
+
+          if (current.width === nextWidth && current.height === nextHeight) {
+            return current;
+          }
+
+          return {
+            width: nextWidth,
+            height: nextHeight,
+          };
+        });
+
+        pdfCanvas.width = Math.max(1, Math.floor(scaledViewport.width * outputScale));
+        pdfCanvas.height = Math.max(1, Math.floor(scaledViewport.height * outputScale));
+        pdfCanvas.style.width = `${scaledViewport.width}px`;
+        pdfCanvas.style.height = `${scaledViewport.height}px`;
+
+        renderTaskRef.current?.cancel();
+        renderTaskRef.current = page.render({
+          canvas: pdfCanvas,
+          canvasContext: context,
+          viewport: scaledViewport,
+          transform: outputScale === 1 ? undefined : [outputScale, 0, 0, outputScale, 0, 0],
+        });
+
+        await renderTaskRef.current.promise;
+        setIsPdfLoading(false);
+      } catch (error) {
+        const errorName = error instanceof Error ? error.name : "";
+        if (errorName === "RenderingCancelledException") {
+          return;
+        }
+
+        setPdfError(formatPdfRenderError(error));
+        setIsPdfLoading(false);
+      }
+    },
+    [],
+  );
+
   useEffect(() => {
     renderCanvas();
   }, [pageState.drawings, renderCanvas]);
 
   useEffect(() => {
-    const handleResize = () => renderCanvas();
+    const handleResize = () => {
+      renderCanvas();
+      void renderPdfPage(undefined, pageNumber);
+    };
     window.addEventListener("resize", handleResize);
 
     const observer =
       typeof ResizeObserver !== "undefined" && surfaceRef.current
-        ? new ResizeObserver(() => renderCanvas())
+        ? new ResizeObserver(() => {
+            renderCanvas();
+            void renderPdfPage(undefined, pageNumber);
+          })
         : null;
 
     if (observer && surfaceRef.current) {
@@ -222,7 +399,70 @@ export function SummaryPageSurface({
       window.removeEventListener("resize", handleResize);
       observer?.disconnect();
     };
-  }, [renderCanvas]);
+  }, [pageNumber, renderCanvas, renderPdfPage]);
+
+  useEffect(() => {
+    let isActive = true;
+    const previousDocument = pdfDocumentRef.current;
+
+    renderTaskRef.current?.cancel();
+    renderTaskRef.current = null;
+    pdfDocumentRef.current = null;
+    void previousDocument?.destroy();
+    setIsPdfLoading(true);
+    setPdfError(null);
+
+    void (async () => {
+      try {
+        const [pdfJsModule, pdfData] = await Promise.all([
+          loadPdfJsModule(),
+          loadSummaryPdfData(fileUrl),
+        ]);
+
+        const loadingTask = pdfJsModule.getDocument({
+          data: pdfData,
+          cMapUrl: "/pdfjs/cmaps/",
+          cMapPacked: true,
+          standardFontDataUrl: "/pdfjs/standard_fonts/",
+          wasmUrl: "/pdfjs/wasm/",
+          useWorkerFetch: false,
+          useWasm: false,
+          isOffscreenCanvasSupported: false,
+          isImageDecoderSupported: false,
+        });
+        const pdfDocument = await loadingTask.promise;
+
+        if (!isActive) {
+          await pdfDocument.destroy();
+          return;
+        }
+
+        pdfDocumentRef.current = pdfDocument;
+        await renderPdfPage(pdfDocument, pageNumberRef.current);
+      } catch (error) {
+        if (!isActive) {
+          return;
+        }
+
+        setPdfError(formatPdfRenderError(error));
+        setIsPdfLoading(false);
+      }
+    })();
+
+    return () => {
+      isActive = false;
+      renderTaskRef.current?.cancel();
+      renderTaskRef.current = null;
+
+      const document = pdfDocumentRef.current;
+      pdfDocumentRef.current = null;
+      void document?.destroy();
+    };
+  }, [fileUrl, renderPdfPage]);
+
+  useEffect(() => {
+    void renderPdfPage(undefined, pageNumber);
+  }, [pageNumber, renderPdfPage]);
 
   const updateSolutionBoxes = useCallback(
     (updater: (boxes: SummarySolutionBox[]) => SummarySolutionBox[]) => {
@@ -549,13 +789,12 @@ export function SummaryPageSurface({
         ref={surfaceRef}
         className="relative mx-auto w-full max-w-[900px] overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-[0_20px_70px_rgba(15,23,42,0.08)]"
         style={{
-          aspectRatio: `${pageDimension.width} / ${pageDimension.height}`,
+          aspectRatio: `${resolvedPageDimension.width} / ${resolvedPageDimension.height}`,
         }}
       >
-        <iframe
-          key={`${summaryId}-${pageNumber}`}
-          src={iframeSrc}
-          title={`صفحة ${pageNumber}`}
+        <canvas
+          key={`${summaryId}-${pageNumber}-pdf`}
+          ref={pdfCanvasRef}
           className="absolute inset-0 h-full w-full bg-white"
         />
 
@@ -570,6 +809,23 @@ export function SummaryPageSurface({
           onPointerUp={finishDrawing}
           onPointerCancel={finishDrawing}
         />
+
+        {isPdfLoading ? (
+          <div className="absolute inset-0 z-50 flex items-center justify-center bg-white/88 text-sm font-semibold text-slate-600 backdrop-blur-[1px]">
+            <span className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 shadow-sm">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              جارٍ تجهيز الصفحة...
+            </span>
+          </div>
+        ) : null}
+
+        {pdfError ? (
+          <div className="absolute inset-0 z-50 flex items-center justify-center bg-white/92 px-6 text-center">
+            <div className="max-w-md rounded-[1.6rem] border border-rose-200 bg-rose-50 px-5 py-5 text-sm font-semibold leading-7 text-rose-700 shadow-sm">
+              {pdfError}
+            </div>
+          </div>
+        ) : null}
 
         {pageState.hideRegions.map((region) => (
           <div
@@ -664,12 +920,12 @@ export function SummaryPageSurface({
 
       <div className="flex justify-center">
         <a
-          href={iframeSrc}
+          href={directPageUrl}
           target="_blank"
           rel="noreferrer"
           className="rounded-full border border-slate-200 bg-white px-4 py-2 text-xs font-semibold text-slate-600 transition hover:border-[#123B7A]/20 hover:text-[#123B7A]"
         >
-          فتح الصفحة مباشرة
+          تنزيل الملف الأصلي
         </a>
       </div>
     </div>

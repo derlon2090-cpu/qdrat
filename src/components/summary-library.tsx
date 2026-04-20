@@ -10,6 +10,30 @@ import { StudentAccessCard } from "@/components/student-access-card";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 
+type ApiPayload = {
+  ok?: boolean;
+  message?: string;
+};
+
+type SummaryUploadSessionPayload = ApiPayload & {
+  session?: {
+    sessionId: string;
+    chunkSizeBytes: number;
+    totalChunks: number;
+  };
+};
+
+type SummaryUploadChunkPayload = ApiPayload & {
+  progress?: {
+    uploadedChunks: number;
+    totalChunks: number;
+  };
+};
+
+type SummaryUploadCompletePayload = ApiPayload & {
+  item?: SummaryListItem;
+};
+
 function formatFileSize(bytes: number) {
   if (bytes < 1024 * 1024) {
     return `${Math.max(1, Math.round(bytes / 1024))} ك.ب`;
@@ -34,16 +58,110 @@ function formatRelativeDate(value: string) {
   return new Intl.RelativeTimeFormat("ar", { numeric: "auto" }).format(diffDays, "day");
 }
 
+function summarizeUnexpectedResponse(response: Response, rawText: string) {
+  const normalizedText = rawText.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+  const lowerText = normalizedText.toLowerCase();
+
+  if (response.status === 413 || lowerText.includes("request entity too large")) {
+    return "الخادم رفض الطلب لأن حجمه كبير جدًا. تم التحويل إلى الرفع المجزأ لتجاوز هذا القيد، فحاول مرة أخرى.";
+  }
+
+  if (response.status === 403 || lowerText.includes("request forbidden") || lowerText.includes("forbidden")) {
+    return "تم رفض الطلب من الخادم أو من طبقة الحماية. أعد تحميل الصفحة وسجل الدخول مجددًا ثم حاول مرة أخرى.";
+  }
+
+  if (!normalizedText) {
+    return `HTTP ${response.status}`;
+  }
+
+  return normalizedText.slice(0, 220);
+}
+
+async function readApiPayload<T>(response: Response) {
+  const contentType = response.headers.get("content-type") ?? "";
+
+  if (contentType.includes("application/json")) {
+    return (await response.json()) as T;
+  }
+
+  const rawText = await response.text();
+
+  return {
+    ok: false,
+    message: summarizeUnexpectedResponse(response, rawText),
+  } as T;
+}
+
+async function uploadSummaryFile(
+  file: File,
+  onProgress: (nextProgress: number) => void,
+) {
+  const sessionResponse = await fetch("/api/summaries/uploads", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      fileName: file.name,
+      fileMimeType: file.type || "application/pdf",
+      fileSizeBytes: file.size,
+    }),
+  });
+
+  const sessionPayload = await readApiPayload<SummaryUploadSessionPayload>(sessionResponse);
+
+  if (!sessionResponse.ok || !sessionPayload.session) {
+    throw new Error(sessionPayload.message || "تعذر بدء رفع الملف.");
+  }
+
+  const { sessionId, chunkSizeBytes, totalChunks } = sessionPayload.session;
+
+  for (let chunkIndex = 0; chunkIndex < totalChunks; chunkIndex += 1) {
+    const start = chunkIndex * chunkSizeBytes;
+    const end = Math.min(file.size, start + chunkSizeBytes);
+    const formData = new FormData();
+    formData.set("chunk", file.slice(start, end), file.name);
+    formData.set("chunkIndex", String(chunkIndex));
+
+    const chunkResponse = await fetch(`/api/summaries/uploads/${sessionId}`, {
+      method: "POST",
+      body: formData,
+    });
+
+    const chunkPayload = await readApiPayload<SummaryUploadChunkPayload>(chunkResponse);
+
+    if (!chunkResponse.ok || !chunkPayload.progress) {
+      throw new Error(chunkPayload.message || "تعذر رفع جزء من الملف.");
+    }
+
+    const nextProgress = Math.round(
+      (chunkPayload.progress.uploadedChunks / chunkPayload.progress.totalChunks) * 100,
+    );
+    onProgress(Math.min(100, Math.max(0, nextProgress)));
+  }
+
+  const finalizeResponse = await fetch(`/api/summaries/uploads/${sessionId}`, {
+    method: "PATCH",
+  });
+  const finalizePayload = await readApiPayload<SummaryUploadCompletePayload>(finalizeResponse);
+
+  if (!finalizeResponse.ok || !finalizePayload.item) {
+    throw new Error(finalizePayload.message || "تعذر إكمال رفع الملف.");
+  }
+
+  return finalizePayload.item;
+}
+
 async function readSummaries() {
   const response = await fetch("/api/summaries", {
     cache: "no-store",
   });
 
-  const payload = (await response.json()) as {
+  const payload = await readApiPayload<{
     ok?: boolean;
     items?: SummaryListItem[];
     message?: string;
-  };
+  }>(response);
 
   if (!response.ok || !Array.isArray(payload.items)) {
     throw new Error(payload.message || "تعذر جلب الملخصات.");
@@ -58,6 +176,7 @@ export function SummaryLibrary() {
   const [items, setItems] = useState<SummaryListItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState<number | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -97,34 +216,19 @@ export function SummaryLibrary() {
     if (!file) return;
 
     setIsUploading(true);
+    setUploadProgress(0);
     setMessage(null);
     setError(null);
 
     try {
-      const formData = new FormData();
-      formData.set("file", file);
-
-      const response = await fetch("/api/summaries", {
-        method: "POST",
-        body: formData,
-      });
-
-      const payload = (await response.json()) as {
-        ok?: boolean;
-        item?: SummaryListItem;
-        message?: string;
-      };
-
-      if (!response.ok || !payload.item) {
-        throw new Error(payload.message || "تعذر رفع الملف.");
-      }
-
-      setItems((current) => [payload.item!, ...current.filter((item) => item.id !== payload.item!.id)]);
+      const uploadedItem = await uploadSummaryFile(file, setUploadProgress);
+      setItems((current) => [uploadedItem, ...current.filter((item) => item.id !== uploadedItem.id)]);
       setMessage("تم رفع الملخص بنجاح وإضافته إلى مكتبتك.");
     } catch (uploadError) {
       setError(uploadError instanceof Error ? uploadError.message : "تعذر رفع الملف.");
     } finally {
       setIsUploading(false);
+      setUploadProgress(null);
       event.target.value = "";
     }
   }
@@ -186,6 +290,12 @@ export function SummaryLibrary() {
       {message ? (
         <div className="rounded-[1.4rem] border border-emerald-200 bg-emerald-50 px-5 py-4 text-sm font-semibold text-emerald-700">
           {message}
+        </div>
+      ) : null}
+
+      {isUploading && uploadProgress !== null ? (
+        <div className="rounded-[1.4rem] border border-sky-200 bg-sky-50 px-5 py-4 text-sm font-semibold text-sky-700">
+          جارٍ رفع الملف على دفعات آمنة... {uploadProgress}%
         </div>
       ) : null}
 

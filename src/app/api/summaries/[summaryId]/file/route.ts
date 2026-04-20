@@ -27,12 +27,14 @@ export async function GET(
   try {
     const { summaryId } = await params;
     const payload = await getSummaryFilePayload(user.id, summaryId);
+    const shouldDownload = request.nextUrl.searchParams.get("download") === "1";
+    const disposition = shouldDownload ? "attachment" : "inline";
 
     return new NextResponse(payload.fileBuffer, {
       status: 200,
       headers: {
         "Content-Type": payload.fileMimeType,
-        "Content-Disposition": `inline; filename*=UTF-8''${createSafeFileName(payload.fileName)}`,
+        "Content-Disposition": `${disposition}; filename*=UTF-8''${createSafeFileName(payload.fileName)}`,
         "Cache-Control": "private, no-store, max-age=0",
       },
     });

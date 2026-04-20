@@ -2,9 +2,18 @@ import PDFParser from "pdf2json";
 
 import { getSqlClient } from "@/lib/db";
 
-const MAX_SUMMARY_FILE_SIZE_BYTES = 15 * 1024 * 1024;
+const MAX_SUMMARY_FILE_SIZE_BYTES = 25 * 1024 * 1024;
+export const SUMMARY_UPLOAD_CHUNK_SIZE_BYTES = 2 * 1024 * 1024;
 const DEFAULT_PAGE_WIDTH = 210;
 const DEFAULT_PAGE_HEIGHT = 297;
+
+const ACCEPTED_SUMMARY_FILE_MIME_TYPES = new Set([
+  "application/pdf",
+  "application/x-pdf",
+  "application/acrobat",
+  "applications/vnd.pdf",
+  "text/pdf",
+]);
 
 type SummaryRow = {
   id: string;
@@ -38,6 +47,21 @@ type SummaryPageStateRow = {
   drawings: unknown;
   created_at: string;
   updated_at: string;
+};
+
+type SummaryUploadSessionRow = {
+  id: string;
+  user_id: string;
+  file_name: string;
+  file_mime_type: string;
+  file_size_bytes: number;
+  total_chunks: number;
+  status: string;
+};
+
+type SummaryUploadChunkRow = {
+  chunk_index: number;
+  chunk_data_base64: string;
 };
 
 export type SummaryPageDimension = {
@@ -135,6 +159,16 @@ function clampUnit(value: number) {
 function normalizeInteger(value: number, fallback: number, min = 1) {
   const normalized = Number.isFinite(value) ? Math.round(value) : fallback;
   return Math.max(min, normalized);
+}
+
+function normalizeSummaryFileName(fileName: string) {
+  const trimmed = fileName.trim().slice(0, 255) || "ملخص جديد.pdf";
+  return trimmed.toLowerCase().endsWith(".pdf") ? trimmed : `${trimmed}.pdf`;
+}
+
+function isAcceptedPdfFile(fileName: string, fileMimeType: string | null | undefined) {
+  const normalizedMimeType = (fileMimeType ?? "").trim().toLowerCase();
+  return ACCEPTED_SUMMARY_FILE_MIME_TYPES.has(normalizedMimeType) || fileName.trim().toLowerCase().endsWith(".pdf");
 }
 
 function parseJsonArray<T>(value: unknown, fallback: T[]): T[] {
@@ -412,6 +446,30 @@ async function ensureSummaryTables() {
     `);
 
     await sql.query(`
+      create table if not exists app_user_summary_upload_sessions (
+        id uuid primary key default gen_random_uuid(),
+        user_id uuid not null references app_users(id) on delete cascade,
+        file_name varchar(255) not null,
+        file_mime_type varchar(120) not null default 'application/pdf',
+        file_size_bytes integer not null default 0,
+        total_chunks integer not null,
+        status varchar(20) not null default 'uploading',
+        created_at timestamptz not null default now(),
+        updated_at timestamptz not null default now()
+      );
+    `);
+
+    await sql.query(`
+      create table if not exists app_user_summary_upload_chunks (
+        session_id uuid not null references app_user_summary_upload_sessions(id) on delete cascade,
+        chunk_index integer not null,
+        chunk_data_base64 text not null,
+        created_at timestamptz not null default now(),
+        primary key (session_id, chunk_index)
+      );
+    `);
+
+    await sql.query(`
       create index if not exists idx_app_user_summaries_user_last_used
         on app_user_summaries (user_id, last_used_at desc);
     `);
@@ -424,6 +482,11 @@ async function ensureSummaryTables() {
     await sql.query(`
       create index if not exists idx_app_user_summary_page_states_user_page
         on app_user_summary_page_states (user_id, updated_at desc);
+    `);
+
+    await sql.query(`
+      create index if not exists idx_app_user_summary_upload_sessions_user_created
+        on app_user_summary_upload_sessions (user_id, created_at desc);
     `);
   })();
 
@@ -499,19 +562,24 @@ export async function listUserSummaries(userId: string) {
   return rows.map(mapSummaryRow);
 }
 
-export async function createUserSummary(userId: string, file: File) {
+async function createSummaryRecordFromBuffer(input: {
+  userId: string;
+  fileName: string;
+  fileMimeType: string;
+  fileBuffer: Buffer;
+}) {
   await ensureSummaryTables();
 
-  if (file.type !== "application/pdf") {
+  if (!isAcceptedPdfFile(input.fileName, input.fileMimeType)) {
     throw new Error("يجب رفع ملف PDF فقط داخل قسم الملخصات.");
   }
 
-  const buffer = Buffer.from(await file.arrayBuffer());
+  const buffer = input.fileBuffer;
   if (buffer.length > MAX_SUMMARY_FILE_SIZE_BYTES) {
-    throw new Error("حجم الملف كبير جدًا. الحد الحالي 15 ميجابايت لكل ملخص.");
+    throw new Error("حجم الملف كبير جدًا. الحد الحالي 25 ميجابايت لكل ملخص.");
   }
 
-  const normalizedFileName = file.name.trim().slice(0, 255) || "ملخص جديد.pdf";
+  const normalizedFileName = normalizeSummaryFileName(input.fileName);
   const metadata = await parsePdfMetadata(buffer);
   const fileDataBase64 = buffer.toString("base64");
   const sql = getSql();
@@ -554,9 +622,9 @@ export async function createUserSummary(userId: string, file: File) {
         updated_at::text
     `,
     [
-      userId,
+      input.userId,
       normalizedFileName,
-      file.type,
+      input.fileMimeType || "application/pdf",
       buffer.length,
       fileDataBase64,
       metadata.pageCount,
@@ -577,6 +645,243 @@ export async function createUserSummary(userId: string, file: File) {
     }),
     pageStates: [] as SummaryPageState[],
   } satisfies SummaryDetail;
+}
+
+export async function createUserSummary(userId: string, file: File) {
+  const normalizedFileName = normalizeSummaryFileName(file.name);
+  const fileMimeType = file.type?.trim() || "application/pdf";
+
+  return createSummaryRecordFromBuffer({
+    userId,
+    fileName: normalizedFileName,
+    fileMimeType,
+    fileBuffer: Buffer.from(await file.arrayBuffer()),
+  });
+}
+
+export async function createSummaryUploadSession(input: {
+  userId: string;
+  fileName: string;
+  fileMimeType: string;
+  fileSizeBytes: number;
+}) {
+  await ensureSummaryTables();
+
+  const normalizedFileName = normalizeSummaryFileName(input.fileName);
+  const normalizedMimeType = input.fileMimeType?.trim() || "application/pdf";
+  const normalizedFileSize = Math.max(1, Math.round(input.fileSizeBytes));
+  const normalizedTotalChunks = Math.max(1, Math.ceil(normalizedFileSize / SUMMARY_UPLOAD_CHUNK_SIZE_BYTES));
+
+  if (!isAcceptedPdfFile(normalizedFileName, normalizedMimeType)) {
+    throw new Error("يجب رفع ملف PDF فقط داخل قسم الملخصات.");
+  }
+
+  if (normalizedFileSize > MAX_SUMMARY_FILE_SIZE_BYTES) {
+    throw new Error("حجم الملف كبير جدًا. الحد الحالي 25 ميجابايت لكل ملخص.");
+  }
+
+  const sql = getSql();
+  const rows = (await sql.query(
+    `
+      insert into app_user_summary_upload_sessions (
+        user_id,
+        file_name,
+        file_mime_type,
+        file_size_bytes,
+        total_chunks,
+        status
+      )
+      values ($1::uuid, $2, $3, $4, $5, 'uploading')
+      returning
+        id::text,
+        user_id::text,
+        file_name,
+        file_mime_type,
+        file_size_bytes,
+        total_chunks,
+        status
+    `,
+    [
+      input.userId,
+      normalizedFileName,
+      normalizedMimeType,
+      normalizedFileSize,
+      normalizedTotalChunks,
+    ],
+  )) as SummaryUploadSessionRow[];
+
+  const row = rows[0];
+  if (!row) {
+    throw new Error("تعذر بدء جلسة رفع الملف حاليًا.");
+  }
+
+  return {
+    sessionId: row.id,
+    chunkSizeBytes: SUMMARY_UPLOAD_CHUNK_SIZE_BYTES,
+    totalChunks: row.total_chunks,
+  };
+}
+
+async function getSummaryUploadSession(userId: string, sessionId: string) {
+  await ensureSummaryTables();
+  const sql = getSql();
+  const rows = (await sql.query(
+    `
+      select
+        id::text,
+        user_id::text,
+        file_name,
+        file_mime_type,
+        file_size_bytes,
+        total_chunks,
+        status
+      from app_user_summary_upload_sessions
+      where id = $1::uuid
+        and user_id = $2::uuid
+      limit 1
+    `,
+    [sessionId, userId],
+  )) as SummaryUploadSessionRow[];
+
+  const row = rows[0];
+  if (!row) {
+    throw new Error("تعذر العثور على جلسة رفع هذا الملخص.");
+  }
+
+  return row;
+}
+
+export async function saveSummaryUploadChunk(input: {
+  userId: string;
+  sessionId: string;
+  chunkIndex: number;
+  chunkBuffer: Buffer;
+}) {
+  const session = await getSummaryUploadSession(input.userId, input.sessionId);
+  const normalizedChunkIndex = Math.max(0, Math.round(input.chunkIndex));
+
+  if (session.status !== "uploading") {
+    throw new Error("جلسة الرفع لم تعد متاحة لاستقبال أجزاء جديدة.");
+  }
+
+  if (normalizedChunkIndex >= session.total_chunks) {
+    throw new Error("رقم جزء الملف غير صالح.");
+  }
+
+  if (!input.chunkBuffer.length) {
+    throw new Error("تم إرسال جزء فارغ من الملف.");
+  }
+
+  if (input.chunkBuffer.length > SUMMARY_UPLOAD_CHUNK_SIZE_BYTES + 16 * 1024) {
+    throw new Error("حجم جزء الملف أكبر من الحد المسموح.");
+  }
+
+  const sql = getSql();
+  await sql.query(
+    `
+      insert into app_user_summary_upload_chunks (
+        session_id,
+        chunk_index,
+        chunk_data_base64
+      )
+      values ($1::uuid, $2, $3)
+      on conflict (session_id, chunk_index)
+      do update set
+        chunk_data_base64 = excluded.chunk_data_base64,
+        created_at = now()
+    `,
+    [
+      input.sessionId,
+      normalizedChunkIndex,
+      input.chunkBuffer.toString("base64"),
+    ],
+  );
+
+  await sql.query(
+    `
+      update app_user_summary_upload_sessions
+      set updated_at = now()
+      where id = $1::uuid
+        and user_id = $2::uuid
+    `,
+    [input.sessionId, input.userId],
+  );
+
+  const progressRows = (await sql.query(
+    `
+      select count(*)::integer as uploaded_chunks
+      from app_user_summary_upload_chunks
+      where session_id = $1::uuid
+    `,
+    [input.sessionId],
+  )) as Array<{ uploaded_chunks: number }>;
+
+  return {
+    uploadedChunks: Number(progressRows[0]?.uploaded_chunks ?? 0),
+    totalChunks: session.total_chunks,
+  };
+}
+
+export async function finalizeSummaryUploadSession(userId: string, sessionId: string) {
+  const session = await getSummaryUploadSession(userId, sessionId);
+  const sql = getSql();
+  const chunkRows = (await sql.query(
+    `
+      select
+        chunk_index,
+        chunk_data_base64
+      from app_user_summary_upload_chunks
+      where session_id = $1::uuid
+      order by chunk_index asc
+    `,
+    [sessionId],
+  )) as SummaryUploadChunkRow[];
+
+  if (chunkRows.length !== session.total_chunks) {
+    throw new Error("رفع الملف لم يكتمل بعد. حاول مجددًا بعد انتهاء إرسال جميع الأجزاء.");
+  }
+
+  const fileBuffer = Buffer.concat(
+    chunkRows.map((row, index) => {
+      if (row.chunk_index !== index) {
+        throw new Error("أجزاء الملف غير مرتبة بشكل صحيح. أعد رفع الملف مرة أخرى.");
+      }
+
+      return Buffer.from(row.chunk_data_base64, "base64");
+    }),
+  );
+
+  if (fileBuffer.length !== session.file_size_bytes) {
+    throw new Error("تم رفع ملف غير مكتمل. أعد محاولة الرفع من جديد.");
+  }
+
+  await sql.query(
+    `
+      update app_user_summary_upload_sessions
+      set status = 'processing', updated_at = now()
+      where id = $1::uuid
+        and user_id = $2::uuid
+    `,
+    [sessionId, userId],
+  );
+
+  const createdSummary = await createSummaryRecordFromBuffer({
+    userId,
+    fileName: session.file_name,
+    fileMimeType: session.file_mime_type,
+    fileBuffer,
+  });
+
+  await sql.query(
+    `
+      delete from app_user_summary_upload_sessions
+      where id = $1::uuid
+        and user_id = $2::uuid
+    `,
+    [sessionId, userId],
+  );
+
+  return createdSummary;
 }
 
 export async function getSummaryDetail(userId: string, summaryId: string) {
