@@ -121,9 +121,155 @@ const importedPassageDefinitions: ImportedPassageDefinition[] = [
   },
 ];
 
-const knownPassageSources = new Set(
-  importedPassageDefinitions.map((definition) => definition.source),
-);
+const PASSAGE_MATCH_STOP_WORDS = new Set([
+  "في",
+  "من",
+  "على",
+  "إلى",
+  "الى",
+  "عن",
+  "هو",
+  "هي",
+  "هذا",
+  "هذه",
+  "ذلك",
+  "تلك",
+  "حسب",
+  "وفقا",
+  "وفقًا",
+  "وفق",
+  "نص",
+  "قطعة",
+  "الفقرة",
+  "السؤال",
+  "العنوان",
+  "معنى",
+  "العلاقة",
+  "أنسب",
+  "أفضل",
+  "يفهم",
+  "نفهم",
+  "نستنتج",
+  "كان",
+  "كانت",
+  "يكون",
+  "تكون",
+  "التي",
+  "الذي",
+  "على",
+  "أو",
+  "او",
+  "ما",
+  "لم",
+  "لن",
+  "لا",
+]);
+
+function normalizeArabicForMatch(value: string) {
+  return value
+    .toLowerCase()
+    .replace(/[أإآ]/g, "ا")
+    .replace(/ة/g, "ه")
+    .replace(/ى/g, "ي")
+    .replace(/[ً-ْ]/g, "")
+    .replace(/[^\p{L}\p{N}\s]/gu, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function extractMatchTokens(value: string) {
+  return normalizeArabicForMatch(value)
+    .split(" ")
+    .map((token) => token.trim())
+    .filter(
+      (token) => token.length >= 3 && !PASSAGE_MATCH_STOP_WORDS.has(token),
+    );
+}
+
+function getDefinitionMatchScore(
+  question: VerbalPracticeQuestion,
+  definition: ImportedPassageDefinition,
+) {
+  const normalizedSource = normalizeArabicForMatch(question.source);
+  const normalizedDefinitionSource = normalizeArabicForMatch(definition.source);
+  const normalizedDefinitionTitle = normalizeArabicForMatch(definition.title);
+  const normalizedQuery = normalizeArabicForMatch(
+    [
+      question.prompt,
+      question.explanation,
+      question.correctAnswer,
+      ...(question.keywords ?? []),
+    ].join(" "),
+  );
+  const definitionTokens = new Set(
+    extractMatchTokens(
+      [definition.title, definition.source, ...definition.keywords].join(" "),
+    ),
+  );
+  const definitionPassage = normalizeArabicForMatch(definition.passage);
+  const questionTokens = extractMatchTokens(
+    [question.prompt, question.correctAnswer, question.explanation].join(" "),
+  );
+
+  let score = 0;
+
+  if (
+    normalizedSource &&
+    (normalizedSource === normalizedDefinitionSource ||
+      normalizedSource === normalizedDefinitionTitle)
+  ) {
+    score += 240;
+  }
+
+  if (
+    normalizedQuery.includes(normalizedDefinitionTitle) ||
+    normalizedQuery.includes(normalizedDefinitionSource)
+  ) {
+    score += 90;
+  }
+
+  for (const keyword of definition.keywords) {
+    const normalizedKeyword = normalizeArabicForMatch(keyword);
+    if (!normalizedKeyword) continue;
+    if (normalizedQuery.includes(normalizedKeyword)) {
+      score += 54;
+    }
+  }
+
+  for (const token of questionTokens) {
+    if (definitionTokens.has(token)) {
+      score += token.length >= 5 ? 26 : 16;
+      continue;
+    }
+
+    if (definitionPassage.includes(token)) {
+      score += token.length >= 5 ? 13 : 8;
+    }
+  }
+
+  if (
+    question.correctAnswer &&
+    definitionPassage.includes(normalizeArabicForMatch(question.correctAnswer))
+  ) {
+    score += 18;
+  }
+
+  return score;
+}
+
+function resolveImportedPassageDefinition(
+  question: VerbalPracticeQuestion,
+): ImportedPassageDefinition | null {
+  const scoredDefinitions = importedPassageDefinitions
+    .map((definition) => ({
+      definition,
+      score: getDefinitionMatchScore(question, definition),
+    }))
+    .sort((left, right) => right.score - left.score);
+
+  const bestMatch = scoredDefinitions[0];
+  return bestMatch && bestMatch.score >= 48 ? bestMatch.definition : null;
+}
 
 const fallbackQuestionMarkers = [
   "أفضل عنوان",
@@ -199,11 +345,28 @@ function splitPromptIntoPassageAndQuestion(prompt: string) {
   };
 }
 
-const readingQuestionsBySource = verbalReadingOnlyQuestions.reduce(
+const resolvedReadingQuestionDefinitions = new Map<
+  string,
+  ImportedPassageDefinition | null
+>();
+
+for (const question of verbalReadingOnlyQuestions) {
+  resolvedReadingQuestionDefinitions.set(
+    question.id,
+    resolveImportedPassageDefinition(question),
+  );
+}
+
+const readingQuestionsByDefinitionSlug = verbalReadingOnlyQuestions.reduce(
   (map, question) => {
-    const items = map.get(question.source) ?? [];
+    const definition = resolvedReadingQuestionDefinitions.get(question.id);
+    if (!definition) {
+      return map;
+    }
+
+    const items = map.get(definition.slug) ?? [];
     items.push(question);
-    map.set(question.source, items);
+    map.set(definition.slug, items);
     return map;
   },
   new Map<string, VerbalPracticeQuestion[]>(),
@@ -211,7 +374,7 @@ const readingQuestionsBySource = verbalReadingOnlyQuestions.reduce(
 
 const groupedImportedPassages: ImportedLocalVerbalPassage[] = importedPassageDefinitions
   .map((definition, definitionIndex) => {
-    const questions = readingQuestionsBySource.get(definition.source) ?? [];
+    const questions = readingQuestionsByDefinitionSlug.get(definition.slug) ?? [];
     if (!questions.length) return null;
 
     return {
@@ -228,12 +391,21 @@ const groupedImportedPassages: ImportedLocalVerbalPassage[] = importedPassageDef
   .filter((passage): passage is ImportedLocalVerbalPassage => Boolean(passage));
 
 const uncoveredReadingQuestions = verbalReadingOnlyQuestions.filter(
-  (question) => !knownPassageSources.has(question.source),
+  (question) => !resolvedReadingQuestionDefinitions.get(question.id),
 );
 
 const derivedSingleQuestionPassages: ImportedLocalVerbalPassage[] =
   uncoveredReadingQuestions.map((question, index) => {
     const splitPrompt = splitPromptIntoPassageAndQuestion(question.prompt);
+    const normalizedPrompt = normalizeSpaces(question.prompt);
+    const hasRealPassageText =
+      splitPrompt.passageText.length >= 80 &&
+      splitPrompt.passageText !== normalizedPrompt;
+
+    if (!hasRealPassageText) {
+      return null;
+    }
+
     const title = deriveFallbackTitle(question, index);
 
     return {
@@ -254,7 +426,7 @@ const derivedSingleQuestionPassages: ImportedLocalVerbalPassage[] =
         },
       ],
     };
-  });
+  }).filter((passage): passage is ImportedLocalVerbalPassage => Boolean(passage));
 
 export const importedLocalVerbalPassages: ImportedLocalVerbalPassage[] = [
   ...groupedImportedPassages,

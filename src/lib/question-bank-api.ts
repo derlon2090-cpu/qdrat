@@ -244,7 +244,13 @@ function mapReadingQuestionsToSearchItems() {
 }
 
 function mapVerbalPracticeQuestionsToSearchItems() {
-  return verbalMixedPracticeQuestions.map((question, index) => {
+  return verbalMixedPracticeQuestions
+    .filter(
+      (question) =>
+        question.categoryId !== "reading_comprehension" &&
+        question.categoryId !== "short_reading",
+    )
+    .map((question, index) => {
     const category = getVerbalQuestionCategory(question.categoryId);
 
     return {
@@ -263,7 +269,7 @@ function mapVerbalPracticeQuestionsToSearchItems() {
       pieceNumber: index + 1,
       needsReview: false,
     };
-  });
+    });
 }
 
 export function getReadingPassageSummariesSync(): ReadingPassageSummary[] {

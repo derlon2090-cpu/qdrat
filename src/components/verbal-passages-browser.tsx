@@ -56,6 +56,43 @@ function buildPassageHref(
   return `${pathname}?${nextParams.toString()}`;
 }
 
+const QUESTION_LIKE_TEXT_MARKERS = [
+  "أنسب عنوان",
+  "أفضل عنوان",
+  "يفهم من النص",
+  "نفهم من النص",
+  "نستنتج من النص",
+  "معنى",
+  "المقصود",
+  "العلاقة",
+  "تدل الفقرة",
+  "أي الآتي",
+  "لماذا",
+];
+
+function looksLikeBrokenDerivedPassage(passage: VerbalPassageRecord) {
+  const normalizedText = normalizeArabicText(passage.passageText);
+  const normalizedTitle = normalizeArabicText(passage.title);
+  const questionLike = QUESTION_LIKE_TEXT_MARKERS.some((marker) =>
+    normalizedText.startsWith(normalizeArabicText(marker)),
+  );
+  const titleContainsText =
+    normalizedText.length > 0 && normalizedTitle.includes(normalizedText);
+
+  return (
+    passage.slug.startsWith("derived-reading-") &&
+    passage.questions.length <= 1 &&
+    questionLike &&
+    titleContainsText
+  );
+}
+
+function extractLegacyQuestionIdFromSlug(slug: string) {
+  return slug.startsWith("derived-reading-")
+    ? slug.slice("derived-reading-".length).trim()
+    : "";
+}
+
 function mapLocalQuestion(
   question: (typeof localVerbalPassages)[number]["questions"][number],
   index: number,
@@ -112,6 +149,10 @@ function mergePassageSources(primary: VerbalPassageRecord[], fallback: VerbalPas
   const unique = new Map<string, VerbalPassageRecord>();
 
   for (const passage of [...primary, ...fallback]) {
+    if (looksLikeBrokenDerivedPassage(passage)) {
+      continue;
+    }
+
     const key = [
       normalizeArabicText(passage.title),
       normalizeArabicText(passage.passageText.slice(0, 240)),
@@ -209,6 +250,7 @@ export function VerbalPassagesBrowser({ mode = "student" }: { mode?: "student" |
 
   const requestedSlug = searchParams.get("passage")?.trim().toLowerCase() ?? "";
   const requestedQuestionId = searchParams.get("question")?.trim() ?? "";
+  const legacyRequestedQuestionId = extractLegacyQuestionIdFromSlug(requestedSlug);
 
   useEffect(() => {
     const timeoutId = window.setTimeout(() => {
@@ -391,7 +433,9 @@ export function VerbalPassagesBrowser({ mode = "student" }: { mode?: "student" |
 
     const matchedQuestion = requestedQuestionId
       ? findPassageQuestionMatch(visiblePassages, requestedQuestionId)
-      : null;
+      : legacyRequestedQuestionId
+        ? findPassageQuestionMatch(visiblePassages, legacyRequestedQuestionId)
+        : null;
 
     if (matchedQuestion) {
       if (currentPassageSlug !== matchedQuestion.passage.slug) {
