@@ -461,6 +461,38 @@ create index if not exists idx_app_user_mistakes_user_section
 create index if not exists idx_app_user_mistakes_question_key
   on app_user_mistakes (question_key);
 
+create table if not exists app_user_question_progress (
+  id bigserial primary key,
+  user_id uuid not null references app_users(id) on delete cascade,
+  question_key varchar(255) not null,
+  question_id bigint,
+  section app_bank_section not null,
+  source_bank varchar(180) not null,
+  category_id varchar(80),
+  category_title varchar(180),
+  question_type_label varchar(180) not null,
+  question_text text not null,
+  question_href text,
+  selected_answer text,
+  correct_answer text,
+  attempts_count integer not null default 0,
+  correct_attempts_count integer not null default 0,
+  is_solved boolean not null default false,
+  xp_earned integer not null default 0,
+  metadata jsonb not null default '{}'::jsonb,
+  first_solved_at timestamptz,
+  last_attempt_at timestamptz,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  unique (user_id, question_key)
+);
+
+create index if not exists idx_app_user_question_progress_user_solved
+  on app_user_question_progress (user_id, is_solved, updated_at desc);
+
+create index if not exists idx_app_user_question_progress_user_category
+  on app_user_question_progress (user_id, section, category_id);
+
 create table if not exists app_study_plans (
   id bigserial primary key,
   user_id uuid not null references app_users(id) on delete cascade,
@@ -591,6 +623,35 @@ alter table if exists app_questions
 alter table if exists app_question_choices
   add column if not exists color_hint varchar(80);
 
+alter table if exists app_student_profiles
+  add column if not exists onboarding_completed boolean not null default false,
+  add column if not exists plan_type varchar(20) not null default 'medium',
+  add column if not exists quant_remaining_sections integer,
+  add column if not exists verbal_remaining_sections integer,
+  add column if not exists last_activity_at timestamptz,
+  add column if not exists last_activity_label varchar(160),
+  add column if not exists last_opened_summary_id uuid,
+  add column if not exists last_opened_summary_name varchar(255),
+  add column if not exists last_opened_summary_page integer,
+  add column if not exists last_opened_bank_href text,
+  add column if not exists last_opened_bank_label varchar(160),
+  add column if not exists last_opened_path text;
+
+alter table if exists app_user_question_progress
+  add column if not exists question_id bigint,
+  add column if not exists category_id varchar(80),
+  add column if not exists category_title varchar(180),
+  add column if not exists selected_answer text,
+  add column if not exists correct_answer text,
+  add column if not exists attempts_count integer not null default 0,
+  add column if not exists correct_attempts_count integer not null default 0,
+  add column if not exists is_solved boolean not null default false,
+  add column if not exists xp_earned integer not null default 0,
+  add column if not exists metadata jsonb not null default '{}'::jsonb,
+  add column if not exists first_solved_at timestamptz,
+  add column if not exists last_attempt_at timestamptz,
+  add column if not exists updated_at timestamptz not null default now();
+
 create table if not exists app_verbal_passages (
   id uuid primary key default gen_random_uuid(),
   slug varchar(180),
@@ -695,6 +756,29 @@ create index if not exists idx_app_user_summary_page_states_summary_page
 create index if not exists idx_app_user_summary_page_states_user_updated
   on app_user_summary_page_states (user_id, updated_at desc);
 
+create table if not exists app_user_summary_upload_sessions (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references app_users(id) on delete cascade,
+  file_name varchar(255) not null,
+  file_mime_type varchar(120) not null default 'application/pdf',
+  file_size_bytes integer not null default 0,
+  total_chunks integer not null,
+  status varchar(20) not null default 'uploading',
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create table if not exists app_user_summary_upload_chunks (
+  session_id uuid not null references app_user_summary_upload_sessions(id) on delete cascade,
+  chunk_index integer not null,
+  chunk_data_base64 text not null,
+  created_at timestamptz not null default now(),
+  primary key (session_id, chunk_index)
+);
+
+create index if not exists idx_app_user_summary_upload_sessions_user_created
+  on app_user_summary_upload_sessions (user_id, created_at desc);
+
 do $$
 begin
   if not exists (select 1 from pg_constraint where conname = 'chk_app_users_email_not_blank') then
@@ -710,6 +794,20 @@ begin
     alter table app_user_mistakes
       add constraint chk_app_user_mistakes_counts_nonnegative check (
         correct_count >= 0 and removal_threshold > 0 and correct_count <= removal_threshold
+      );
+  end if;
+end
+$$;
+
+do $$
+begin
+  if not exists (select 1 from pg_constraint where conname = 'chk_app_user_question_progress_counts_nonnegative') then
+    alter table app_user_question_progress
+      add constraint chk_app_user_question_progress_counts_nonnegative check (
+        attempts_count >= 0
+        and correct_attempts_count >= 0
+        and correct_attempts_count <= attempts_count
+        and xp_earned >= 0
       );
   end if;
 end
@@ -787,6 +885,29 @@ $$;
 
 do $$
 begin
+  if not exists (select 1 from pg_constraint where conname = 'chk_app_user_summary_upload_sessions_numbers_nonnegative') then
+    alter table app_user_summary_upload_sessions
+      add constraint chk_app_user_summary_upload_sessions_numbers_nonnegative check (
+        file_size_bytes >= 0 and total_chunks > 0
+      );
+  end if;
+
+  if not exists (select 1 from pg_constraint where conname = 'chk_app_user_summary_upload_sessions_status') then
+    alter table app_user_summary_upload_sessions
+      add constraint chk_app_user_summary_upload_sessions_status check (
+        status in ('uploading', 'completed', 'cancelled')
+      );
+  end if;
+
+  if not exists (select 1 from pg_constraint where conname = 'chk_app_user_summary_upload_chunks_index_nonnegative') then
+    alter table app_user_summary_upload_chunks
+      add constraint chk_app_user_summary_upload_chunks_index_nonnegative check (chunk_index >= 0);
+  end if;
+end
+$$;
+
+do $$
+begin
   if not exists (select 1 from pg_constraint where conname = 'chk_app_verbal_passages_version_positive') then
     alter table app_verbal_passages
       add constraint chk_app_verbal_passages_version_positive check (version > 0);
@@ -827,6 +948,10 @@ drop trigger if exists trg_app_user_mistakes_updated_at on app_user_mistakes;
 create trigger trg_app_user_mistakes_updated_at before update on app_user_mistakes
 for each row execute function set_updated_at();
 
+drop trigger if exists trg_app_user_question_progress_updated_at on app_user_question_progress;
+create trigger trg_app_user_question_progress_updated_at before update on app_user_question_progress
+for each row execute function set_updated_at();
+
 drop trigger if exists trg_app_student_profiles_updated_at on app_student_profiles;
 create trigger trg_app_student_profiles_updated_at before update on app_student_profiles
 for each row execute function set_updated_at();
@@ -865,6 +990,18 @@ for each row execute function set_updated_at();
 
 drop trigger if exists trg_app_verbal_passage_questions_updated_at on app_verbal_passage_questions;
 create trigger trg_app_verbal_passage_questions_updated_at before update on app_verbal_passage_questions
+for each row execute function set_updated_at();
+
+drop trigger if exists trg_app_user_summaries_updated_at on app_user_summaries;
+create trigger trg_app_user_summaries_updated_at before update on app_user_summaries
+for each row execute function set_updated_at();
+
+drop trigger if exists trg_app_user_summary_page_states_updated_at on app_user_summary_page_states;
+create trigger trg_app_user_summary_page_states_updated_at before update on app_user_summary_page_states
+for each row execute function set_updated_at();
+
+drop trigger if exists trg_app_user_summary_upload_sessions_updated_at on app_user_summary_upload_sessions;
+create trigger trg_app_user_summary_upload_sessions_updated_at before update on app_user_summary_upload_sessions
 for each row execute function set_updated_at();
 
 drop view if exists app_user_accounts_overview;

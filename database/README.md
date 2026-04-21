@@ -1,56 +1,67 @@
 # Miyaar Database
 
-هذا المجلد يحتوي على بنية قاعدة البيانات الأساسية لمنصة **معيار** على Neon/PostgreSQL.
+هذا المجلد يحتوي على السكيمة الرسمية لقاعدة بيانات منصة **مِعيار** على Neon / PostgreSQL.
 
 ## الملفات
 
 - `schema.sql`
-  يبني الجداول والأنواع والفهارس الأساسية للمستخدمين والباقات والاشتراكات وبنوك الأسئلة والقطع والأسئلة والمحاولات والخطط.
+  يبني الجداول والأنواع والفهارس والقيود والمشاهدات الأساسية للمشروع.
 - `seed.sql`
-  يضيف الباقات الأساسية، Features الباقات، المهارات الرئيسية، والمجموعات الأولى لبنوك الكمي واللفظي والقطع.
+  يضيف بيانات أولية للباقات وبعض بنوك المحتوى والقطع اللفظية التجريبية.
 
-## كيف تشغله على Neon
+## التشغيل على Neon
 
-1. أضف `DATABASE_URL` في `.env.local`.
-2. افتح SQL Editor داخل Neon.
-3. انسخ محتوى `schema.sql` ونفّذه.
-4. بعده نفّذ `seed.sql` لإضافة البيانات الأولية.
+1. أضف `DATABASE_URL` داخل `.env.local` محليًا، وداخل متغيرات البيئة في Vercel للإنتاج.
+2. افتح SQL Editor في Neon.
+3. نفّذ `schema.sql`.
+4. بعد اكتمال السكيمة، نفّذ `seed.sql` إذا كنت تريد بيانات أولية.
 
-## لماذا هذه البنية
+## ما الذي تشملُه السكيمة الآن
 
-- تدعم **اللفظي** و**الكمي** في نفس المنصة.
-- تفصل **القطع** عن **الأسئلة** حتى لا يتكرر النص ملايين المرات.
-- تدعم بنوك ضخمة جدًا عبر:
-  - `bigserial` للكيانات الكبيرة
-  - فهارس فلترة
-  - `pg_trgm` للبحث التقريبي
-  - `GIN` full-text search داخل نص السؤال
-- تدعم الاشتراكات والباقات والخطط اليومية والمراجعة الذكية.
+السكيمة الرسمية أصبحت تغطي الجداول التي كان جزء منها يُنشأ وقت التشغيل من داخل التطبيق، ومنها:
 
-## الجداول الأساسية
+- الحسابات والجلسات:
+  - `app_users`
+  - `app_user_sessions`
+  - `app_user_accounts_overview`
+- ملف الطالب والخطة:
+  - `app_student_profiles`
+  - `app_study_plans`
+  - `app_study_plan_tasks`
+- التقدّم والأخطاء:
+  - `app_user_question_progress`
+  - `app_user_mistakes`
+- بنوك الأسئلة والمحتوى:
+  - `app_question_banks`
+  - `app_passages`
+  - `app_questions`
+  - `app_question_choices`
+  - `app_verbal_passages`
+  - `app_verbal_passage_questions`
+- الملخصات:
+  - `app_user_summaries`
+  - `app_user_summary_page_states`
+  - `app_user_summary_upload_sessions`
+  - `app_user_summary_upload_chunks`
 
-- `app_users`
-- `app_student_profiles`
-- `app_subscription_plans`
-- `app_user_subscriptions`
-- `app_question_banks`
-- `app_passages`
-- `app_questions`
-- `app_question_choices`
-- `app_attempts`
-- `app_attempt_answers`
-- `app_review_queue`
-- `app_study_plans`
-- `app_study_plan_tasks`
-- `app_subscription_plan_features`
-- `app_question_sources`
-- `app_import_batches`
+## ملاحظات مهمة
 
-## ملاحظة
+- السكيمة **idempotent** قدر الإمكان:
+  - تستخدم `create table if not exists`
+  - وتستخدم `alter table ... add column if not exists`
+  - وتستخدم `create index if not exists`
+- تم تضمين:
+  - قيود تحقق للأعداد والحالات المهمة
+  - Triggers موحدة لتحديث `updated_at`
+  - فهارس مساعدة للبحث والتصفية والأداء
 
-هذه البنية جاهزة كبداية قوية جدًا، والخطوة التالية الأفضل هي إضافة:
+## ترتيب النشر
 
-- seed data للباقات
-- seed data لبنوك أولية
-- migration لاحقة لربط Auth الفعلي
-- API routes لقراءة البيانات من Neon بدل البيانات الثابتة الحالية
+عند تجهيز بيئة جديدة:
+
+1. طبّق `schema.sql`
+2. أضف متغيرات البيئة
+3. انشر التطبيق
+4. اختياريًا طبّق `seed.sql`
+
+بهذا لن يعتمد التطبيق على إنشاء الجداول عند أول تشغيل، وستكون قاعدة البيانات مرتبة وجاهزة من البداية.
