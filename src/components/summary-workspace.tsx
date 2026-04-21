@@ -27,7 +27,7 @@ import { SummaryPageSurface } from "@/components/summary-page-surface";
 import { StudentAccessCard } from "@/components/student-access-card";
 import { useAuthSession } from "@/hooks/use-auth-session";
 import type { SummaryDetail, SummaryPageState } from "@/lib/summaries";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
@@ -618,14 +618,20 @@ export function SummaryWorkspace({ summaryId }: { summaryId: string }) {
               <Download className="h-4 w-4" />
               تصدير الملاحظات
             </Button>
-            <a href={`/api/summaries/${summary.id}/export`}>
-              <Button type="button" variant="outline" className="gap-2">
-                <Download className="h-4 w-4" />
-                تنزيل PDF مشروح
-              </Button>
+            <a
+              href={`/api/summaries/${summary.id}/export`}
+              className={cn(buttonVariants({ variant: "outline" }), "gap-2")}
+            >
+              <Download className="h-4 w-4" />
+              تنزيل PDF مشروح
             </a>
-            <a href={`/api/summaries/${summary.id}/file`} target="_blank" rel="noreferrer">
-              <Button variant="outline">عرض الملف الأصلي</Button>
+            <a
+              href={`/api/summaries/${summary.id}/file`}
+              target="_blank"
+              rel="noreferrer"
+              className={buttonVariants({ variant: "outline" })}
+            >
+              عرض الملف الأصلي
             </a>
           </div>
         </CardContent>

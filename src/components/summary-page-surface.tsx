@@ -183,7 +183,7 @@ export function SummaryPageSurface({
     resolvedPageDimension.height,
     resolvedPageDimension.width,
   ]);
-  const surfacePaddingTop = useMemo(() => `${surfaceAspectRatio * 100}%`, [surfaceAspectRatio]);
+  const surfaceAspectCss = useMemo(() => `1 / ${surfaceAspectRatio}`, [surfaceAspectRatio]);
 
   const renderCanvas = useCallback(() => {
     const canvas = canvasRef.current;
@@ -874,12 +874,11 @@ export function SummaryPageSurface({
 
   return (
     <div className="space-y-4">
-      <div className="pointer-events-none relative mx-auto w-full max-w-[900px]">
-        <div aria-hidden="true" className="pointer-events-none block w-full" style={{ paddingTop: surfacePaddingTop }} />
-
+      <div className="mx-auto w-full max-w-[900px]">
         <div
           ref={surfaceRef}
-          className="pointer-events-auto absolute inset-0 z-0 isolate overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-[0_20px_70px_rgba(15,23,42,0.08)]"
+          className="relative isolate overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-[0_20px_70px_rgba(15,23,42,0.08)]"
+          style={{ aspectRatio: surfaceAspectCss, minHeight: "520px" }}
         >
           <img
             key={previewImageUrl}

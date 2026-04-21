@@ -7,8 +7,9 @@ import { FilePlus2, FileText, Loader2, UploadCloud } from "lucide-react";
 import { useAuthSession } from "@/hooks/use-auth-session";
 import type { SummaryListItem } from "@/lib/summaries";
 import { StudentAccessCard } from "@/components/student-access-card";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
 
 type ApiPayload = {
   ok?: boolean;
@@ -354,14 +355,17 @@ export function SummaryLibrary() {
                 </div>
 
                 <div className="flex flex-wrap gap-3">
-                  <Link href={`/summaries/${item.id}`}>
-                    <Button className="gap-2">
-                      <FilePlus2 className="h-4 w-4" />
-                      افتح الملخص
-                    </Button>
+                  <Link href={`/summaries/${item.id}`} className={cn(buttonVariants(), "gap-2")}>
+                    <FilePlus2 className="h-4 w-4" />
+                    افتح الملخص
                   </Link>
-                  <a href={`/api/summaries/${item.id}/file`} target="_blank" rel="noreferrer">
-                    <Button variant="outline">عرض الملف الأصلي</Button>
+                  <a
+                    href={`/api/summaries/${item.id}/file`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className={buttonVariants({ variant: "outline" })}
+                  >
+                    عرض الملف الأصلي
                   </a>
                 </div>
               </CardContent>
