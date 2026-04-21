@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useRef, useState, type ChangeEvent } from "react";
 import { FilePlus2, FileText, Loader2, UploadCloud } from "lucide-react";
 
@@ -256,7 +255,7 @@ export function SummaryLibrary() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="relative isolate z-0 space-y-6">
       <Card className="border border-[#E8D8B3] bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(248,247,244,0.96))]">
         <CardContent className="flex flex-col gap-5 p-7 md:flex-row md:items-center md:justify-between">
           <div>
@@ -355,10 +354,10 @@ export function SummaryLibrary() {
                 </div>
 
                 <div className="flex flex-wrap gap-3">
-                  <Link href={`/summaries/${item.id}`} className={cn(buttonVariants(), "gap-2")}>
+                  <a href={`/summaries/${item.id}`} className={cn(buttonVariants(), "gap-2")}>
                     <FilePlus2 className="h-4 w-4" />
                     افتح الملخص
-                  </Link>
+                  </a>
                   <a
                     href={`/api/summaries/${item.id}/file`}
                     target="_blank"

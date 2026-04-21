@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ArrowLeft,
@@ -108,9 +107,8 @@ function BackToSummariesLink({
 
   return (
     <div className={cn("relative z-[90]", centered ? "flex justify-center" : "")}>
-      <Link
+      <a
         href="/summaries"
-        prefetch
         className={cn(
           "pointer-events-auto group inline-flex min-h-[5.5rem] w-full max-w-[23rem] cursor-pointer items-center justify-between gap-4 rounded-[1.55rem] border px-5 py-4 text-right transition duration-200 hover:-translate-y-0.5",
           frameClass,
@@ -129,7 +127,7 @@ function BackToSummariesLink({
         >
           <ArrowRight className="h-5 w-5" />
         </span>
-      </Link>
+      </a>
     </div>
   );
 }
@@ -601,7 +599,7 @@ export function SummaryWorkspace({ summaryId }: { summaryId: string }) {
   const notesAreTemporarilyHidden = reviewMode && hideNotesInReview;
 
   return (
-    <div className="relative z-10 space-y-6">
+    <div className="relative isolate z-10 space-y-6">
       <Card className="relative z-[80] border border-[#E8D8B3] bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(248,247,244,0.96))]">
         <CardContent className="flex flex-col gap-5 p-7 lg:flex-row lg:items-start lg:justify-between">
           <div>
@@ -725,7 +723,7 @@ export function SummaryWorkspace({ summaryId }: { summaryId: string }) {
           </CardContent>
         </Card>
 
-        <div className="space-y-6">
+        <div className="relative isolate z-0 space-y-6">
           <Card className="relative z-[70] border-white/80 bg-white/96 shadow-soft">
             <CardContent className="space-y-5 p-6">
               <div className="flex flex-wrap items-center justify-between gap-3">
@@ -936,19 +934,21 @@ export function SummaryWorkspace({ summaryId }: { summaryId: string }) {
             </div>
           ) : null}
 
-          <SummaryPageSurface
-            key={`${summary.id}-${currentPage}`}
-            summaryId={summary.id}
-            pageNumber={currentPage}
-            pageState={currentState}
-            pageDimension={pageDimension}
-            fileUrl={`/api/summaries/${summary.id}/file`}
-            hideAnswers={effectiveHideAnswers}
-            activeTool={activeTool}
-            strokeColor={strokeColor}
-            strokeWidth={strokeWidth}
-            onChange={(nextState, meta) => updatePageState(currentPage, nextState, meta)}
-          />
+          <div className="relative isolate z-0">
+            <SummaryPageSurface
+              key={`${summary.id}-${currentPage}`}
+              summaryId={summary.id}
+              pageNumber={currentPage}
+              pageState={currentState}
+              pageDimension={pageDimension}
+              fileUrl={`/api/summaries/${summary.id}/file`}
+              hideAnswers={effectiveHideAnswers}
+              activeTool={activeTool}
+              strokeColor={strokeColor}
+              strokeWidth={strokeWidth}
+              onChange={(nextState, meta) => updatePageState(currentPage, nextState, meta)}
+            />
+          </div>
 
           <Card className="relative z-[20] border-white/80 bg-white/96 shadow-soft">
             <CardContent className="grid gap-6 p-6 lg:grid-cols-[1fr,220px]">

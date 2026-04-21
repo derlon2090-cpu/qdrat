@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import {
   useCallback,
   useEffect,
@@ -853,18 +852,18 @@ export function SummaryPageSurface({
 
   if (pdfError) {
     return (
-      <div className="space-y-4">
-        <div className="mx-auto w-full max-w-[900px] rounded-[2rem] border border-rose-200 bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(255,247,247,0.98))] p-8 text-center shadow-[0_20px_55px_rgba(225,29,72,0.08)]">
+      <div className="relative isolate z-0 space-y-4">
+        <div className="pointer-events-auto mx-auto w-full max-w-[900px] rounded-[2rem] border border-rose-200 bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(255,247,247,0.98))] p-8 text-center shadow-[0_20px_55px_rgba(225,29,72,0.08)]">
           <div className="mx-auto max-w-2xl rounded-[1.6rem] border border-rose-200 bg-rose-50 px-5 py-5 text-sm font-semibold leading-8 text-rose-700 shadow-sm">
             {pdfError}
           </div>
           <div className="mt-5 flex flex-wrap justify-center gap-3">
-            <Link
+            <a
               href="/summaries"
               className="rounded-full border border-rose-200 bg-white px-5 py-2.5 text-sm font-bold text-rose-700 transition hover:border-rose-300 hover:bg-rose-50"
             >
               العودة إلى مكتبة الملخصات
-            </Link>
+            </a>
             <a
               href={directPageUrl}
               target="_blank"
@@ -880,11 +879,11 @@ export function SummaryPageSurface({
   }
 
   return (
-    <div className="space-y-4">
-      <div className="mx-auto w-full max-w-[900px]">
+    <div className="relative isolate z-0 space-y-4">
+      <div className="pointer-events-none mx-auto w-full max-w-[900px]">
         <div
           ref={surfaceRef}
-          className="relative isolate overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-[0_20px_70px_rgba(15,23,42,0.08)]"
+          className="pointer-events-auto relative isolate overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-[0_20px_70px_rgba(15,23,42,0.08)]"
           style={{ aspectRatio: surfaceAspectCss, minHeight: "520px" }}
         >
           <img
@@ -1013,7 +1012,7 @@ export function SummaryPageSurface({
         </div>
       </div>
 
-      <div className="flex justify-center">
+      <div className="pointer-events-auto flex justify-center">
         <a
           href={directPageUrl}
           target="_blank"
