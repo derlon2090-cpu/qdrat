@@ -1,14 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect } from "react";
-import { useRouter } from "next/navigation";
 import { ArrowLeft, BarChart3, ClipboardList, FileText, TriangleAlert } from "lucide-react";
 
 import { StudentAccessCard } from "@/components/student-access-card";
 import {
   StudentPortalErrorCard,
   StudentPortalLoadingCard,
+  StudentPlanSetupNotice,
   formatDaysLeft,
   formatLastActivity,
   planTypeLabels,
@@ -45,15 +44,8 @@ const performanceCards = [
 ] as const;
 
 export function StudentStatistics() {
-  const router = useRouter();
   const { status, user } = useAuthSession();
   const { status: portalStatus, data, error, refresh } = useStudentPortal(status === "authenticated");
-
-  useEffect(() => {
-    if (portalStatus === "ready" && data && !data.onboardingCompleted) {
-      router.replace("/onboarding");
-    }
-  }, [data, portalStatus, router]);
 
   if (status === "loading") {
     return <StudentPortalLoadingCard label="جارٍ تجهيز الإحصائيات..." />;
@@ -87,6 +79,8 @@ export function StudentStatistics() {
 
   return (
     <div className="space-y-6">
+      <StudentPlanSetupNotice onboardingCompleted={data.onboardingCompleted} />
+
       <Card className="surface-dark border-0">
         <CardContent className="space-y-5 p-8">
           <div className="flex flex-wrap items-start justify-between gap-4">

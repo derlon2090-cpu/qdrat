@@ -181,6 +181,54 @@ function mapPassageToDetail(passage: LocalVerbalPassage): PassageDetail {
   };
 }
 
+function buildPassageSearchKeywords(passage: LocalVerbalPassage) {
+  return Array.from(
+    new Set(
+      [
+        passage.title,
+        passage.slug,
+        passage.source,
+        ...(passage.keywords ?? []),
+        ...passage.questions.map((question) => question.text),
+        ...passage.questions.flatMap((question) => [...question.options, question.correctAnswer]),
+      ]
+        .map((value) => String(value ?? "").trim())
+        .filter(Boolean),
+    ),
+  );
+}
+
+function buildPassageSearchText(passage: LocalVerbalPassage) {
+  return [passage.title, passage.passage, ...buildPassageSearchKeywords(passage)].join(" ");
+}
+
+function createPassageSearchExcerpt(passage: LocalVerbalPassage, query: string) {
+  if (!query.trim()) {
+    return createSnippet(passage.passage, "", 170);
+  }
+
+  if (fuzzyMatch(passage.passage, query)) {
+    return createSnippet(passage.passage, query, 170);
+  }
+
+  const matchedQuestion = passage.questions.find(
+    (question) =>
+      fuzzyMatch(question.text, query) ||
+      question.options.some((option) => fuzzyMatch(option, query)) ||
+      fuzzyMatch(question.correctAnswer, query),
+  );
+
+  if (matchedQuestion) {
+    return createSnippet(
+      [matchedQuestion.text, ...matchedQuestion.options].join(" - "),
+      query,
+      170,
+    );
+  }
+
+  return createSnippet(buildPassageSearchText(passage), query, 170);
+}
+
 function getKeywordHaystack(keyword: (typeof verbalReadingKeywords)[number]) {
   return [keyword.title, ...(keyword.aliases ?? [])].join(" ");
 }
@@ -229,7 +277,13 @@ function mapReadingQuestionsToSearchItems() {
       id: question.id,
       text: question.text,
       title: question.text,
-      excerpt: createSnippet(passage.passage, question.text),
+      excerpt: createPassageSearchExcerpt(passage, question.text),
+      keywords: [
+        ...buildPassageSearchKeywords(passage),
+        question.text,
+        ...question.options,
+        question.correctAnswer,
+      ],
       section: "الاستيعاب المقروء",
       type: "الاستيعاب المقروء",
       difficulty: "غير محدد",
@@ -353,12 +407,13 @@ export async function getQuestionItems(filters: SearchFilters = {}) {
   const passageItems = !query
     ? []
     : localVerbalPassages
-        .filter((passage) => fuzzyMatch(`${passage.title} ${passage.passage}`, query))
+        .filter((passage) => fuzzyMatch(buildPassageSearchText(passage), query))
         .map((passage) => ({
           id: passage.id,
           text: passage.title,
           title: passage.title,
-          excerpt: createSnippet(passage.passage, query),
+          excerpt: createPassageSearchExcerpt(passage, query),
+          keywords: buildPassageSearchKeywords(passage),
           section: "الاستيعاب المقروء",
           type: "الاستيعاب المقروء",
           difficulty: "غير محدد",

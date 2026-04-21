@@ -1,8 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useMemo, useState } from "react";
 import {
   ArrowLeft,
   BarChart3,
@@ -22,6 +21,7 @@ import { StudentAchievementsPanel } from "@/components/student-achievements-pane
 import {
   StudentPortalErrorCard,
   StudentPortalLoadingCard,
+  StudentPlanSetupNotice,
   formatDaysLeft,
   formatLastActivity,
   formatPortalDate,
@@ -179,18 +179,11 @@ function TaskRow({
 }
 
 export function StudentDashboard() {
-  const router = useRouter();
   const { status, user } = useAuthSession();
   const { status: portalStatus, data, error, refresh, setData } = useStudentPortal(status === "authenticated");
   const [taskState, setTaskState] = useState<Record<number, boolean>>({});
   const [actionState, setActionState] = useState<ActionState>("idle");
   const [actionError, setActionError] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (portalStatus === "ready" && data && !data.onboardingCompleted) {
-      router.replace("/onboarding");
-    }
-  }, [data, portalStatus, router]);
 
   const pressure = data ? pressureConfig[data.planPressure] : null;
   const completedToday = useMemo(
@@ -248,6 +241,8 @@ export function StudentDashboard() {
 
   return (
     <div className="space-y-6">
+      <StudentPlanSetupNotice onboardingCompleted={data.onboardingCompleted} />
+
       <Card className="surface-dark border-0">
         <CardContent className="space-y-6 p-8">
           <div className="flex flex-wrap items-start justify-between gap-4">

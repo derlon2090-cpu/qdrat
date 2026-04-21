@@ -222,6 +222,16 @@ function mergePassageSources(
   return Array.from(unique.values());
 }
 
+function getPassageDirectorySearchText(passage: VerbalPassageRecord) {
+  return [
+    passage.title,
+    passage.slug,
+    passage.passageText,
+    ...(passage.keywords ?? []),
+    ...passage.questions.map((question) => question.questionText),
+  ].join(" ");
+}
+
 function EmptySectionCard({
   title,
   description,
@@ -426,24 +436,52 @@ export function QuestionBankOrganizer() {
   }, [activityMeta, activityPath, authStatus, user]);
 
   const verbalKeywordResults = useMemo(
-    () =>
-      verbalReadingKeywords
-        .filter(
-          (keyword) =>
-            !debouncedKeywordQuery ||
-            fuzzyMatch(
-              [keyword.title, ...(keyword.aliases ?? [])].join(" "),
-              debouncedKeywordQuery,
-            ),
+    () => {
+      if (!debouncedKeywordQuery.trim()) {
+        return [] as KeywordDirectoryItem[];
+      }
+
+      const keywordItems = verbalReadingKeywords
+        .filter((keyword) =>
+          fuzzyMatch(
+            [keyword.title, ...(keyword.aliases ?? [])].join(" "),
+            debouncedKeywordQuery,
+          ),
         )
-        .map((keyword) => mapKeywordToDirectoryItem(keyword, verbalPassages))
+        .map((keyword) => mapKeywordToDirectoryItem(keyword, verbalPassages));
+
+      const passageItems = verbalPassages
+        .filter((passage) =>
+          fuzzyMatch(getPassageDirectorySearchText(passage), debouncedKeywordQuery),
+        )
+        .map((passage) => ({
+          id: `passage-${passage.id}`,
+          title: passage.title,
+          slug: passage.slug,
+          href: `/verbal/reading?passage=${encodeURIComponent(passage.slug)}`,
+          status: "linked" as const,
+        }));
+
+      const merged = new Map<string, KeywordDirectoryItem>();
+
+      for (const item of [...keywordItems, ...passageItems]) {
+        const key = normalizeArabic(`${item.slug} ${item.title}`);
+        const existing = merged.get(key);
+
+        if (!existing || (existing.status !== "linked" && item.status === "linked")) {
+          merged.set(key, item);
+        }
+      }
+
+      return Array.from(merged.values())
         .sort((left, right) => {
           if (left.status !== right.status) {
             return left.status === "linked" ? -1 : 1;
           }
           return left.title.localeCompare(right.title, "ar");
         })
-        .slice(0, 10),
+        .slice(0, 10);
+    },
     [debouncedKeywordQuery, verbalPassages],
   );
 

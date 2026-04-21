@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { AlertTriangle, Loader2 } from "lucide-react";
 
 import type { PlanPressure, StudentPlanType } from "@/lib/student-portal";
@@ -88,6 +89,36 @@ export function formatDaysLeft(daysLeft: number | null) {
   }
 
   return `${daysLeft} يوم`;
+}
+
+export function StudentPlanSetupNotice({
+  onboardingCompleted,
+}: {
+  onboardingCompleted: boolean;
+}) {
+  if (onboardingCompleted) {
+    return null;
+  }
+
+  return (
+    <Card className="border border-[#E8D8B3] bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(248,247,244,0.96))] shadow-soft">
+      <CardContent className="flex flex-wrap items-center justify-between gap-4 p-6">
+        <div className="space-y-2">
+          <div className="display-font text-2xl font-bold text-slate-950">
+            إعداد الخطة صار اختياريًا
+          </div>
+          <p className="max-w-3xl text-sm leading-8 text-slate-600">
+            تقدر تستخدم المنصة مباشرة بعد التسجيل، ثم تكمل إعداد الخطة أو تعدلها
+            لاحقًا من صفحة الإعداد وقت ما يناسبك.
+          </p>
+        </div>
+
+        <Link href="/onboarding" className="shrink-0">
+          <Button type="button">إعداد الخطة لاحقًا</Button>
+        </Link>
+      </CardContent>
+    </Card>
+  );
 }
 
 export function StudentPortalLoadingCard({

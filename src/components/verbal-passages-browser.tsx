@@ -165,6 +165,21 @@ function mergePassageSources(primary: VerbalPassageRecord[], fallback: VerbalPas
   return Array.from(unique.values()).sort((left, right) => left.title.localeCompare(right.title, "ar"));
 }
 
+function getPassageSearchKeywords(passage: VerbalPassageRecord) {
+  return Array.from(
+    new Set(
+      [
+        passage.title,
+        passage.slug,
+        ...(passage.keywords ?? []),
+        ...passage.questions.map((question) => question.questionText),
+      ]
+        .map((value) => value.trim())
+        .filter(Boolean),
+    ),
+  );
+}
+
 function resolveKeywordPassage(title: string, passages: VerbalPassageRecord[]) {
   const normalizedTitle = normalizeArabicText(title);
 
@@ -324,7 +339,11 @@ export function VerbalPassagesBrowser({ mode = "student" }: { mode?: "student" |
         slug: linkedPassage?.slug ?? generatePassageSlug({ title: keyword.title }),
         availability: linkedPassage ? "available" : "unavailable",
         linkedPassageSlug: linkedPassage?.slug ?? null,
-        keywords: [keyword.title, ...(keyword.aliases ?? []), linkedPassage?.title ?? "", ...(linkedPassage?.keywords ?? [])].filter(Boolean),
+        keywords: [
+          keyword.title,
+          ...(keyword.aliases ?? []),
+          ...(linkedPassage ? getPassageSearchKeywords(linkedPassage) : []),
+        ].filter(Boolean),
         excerpt: linkedPassage ? createExcerpt(linkedPassage.passageText) : "غير متاحة حاليًا داخل البنك.",
       } satisfies SearchCatalogItem;
     });
@@ -341,7 +360,7 @@ export function VerbalPassagesBrowser({ mode = "student" }: { mode?: "student" |
         slug: passage.slug,
         availability: "available",
         linkedPassageSlug: passage.slug,
-        keywords: [passage.title, passage.slug, ...(passage.keywords ?? [])],
+        keywords: getPassageSearchKeywords(passage),
         excerpt: createExcerpt(passage.passageText),
       });
     }
@@ -386,7 +405,6 @@ export function VerbalPassagesBrowser({ mode = "student" }: { mode?: "student" |
     ) => {
       if (!slug || isNavigating) return;
 
-      setCurrentPassageSlug(slug);
       setHasInitializedSelection(true);
 
       if (options?.clearSearch) {
@@ -405,15 +423,13 @@ export function VerbalPassagesBrowser({ mode = "student" }: { mode?: "student" |
         options?.questionId ?? null,
       );
 
+      if (typeof window !== "undefined") {
+        window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+      }
+
       startNavigation(() => {
         router.replace(nextHref, { scroll: false });
       });
-
-      if (typeof window !== "undefined") {
-        window.requestAnimationFrame(() => {
-          window.scrollTo({ top: 0, behavior: "smooth" });
-        });
-      }
     },
     [isNavigating, pathname, router, searchParams, startNavigation],
   );
@@ -674,6 +690,7 @@ export function VerbalPassagesBrowser({ mode = "student" }: { mode?: "student" |
       <section className="min-w-0">
         {currentPassage ? (
           <VerbalPassageViewer
+            key={currentPassage.slug}
             passage={currentPassage}
             mode={mode}
             initialQuestionId={requestedQuestionId || null}

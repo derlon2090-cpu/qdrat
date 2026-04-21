@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { RotateCcw, Sparkles } from "lucide-react";
 
@@ -166,7 +166,6 @@ export function VerbalPassageViewer({
   const [submittedAnswers, setSubmittedAnswers] = useState<SavedSubmissionMap>({});
   const [authPromptQuestionId, setAuthPromptQuestionId] = useState<string | null>(null);
   const [progressFeedback, setProgressFeedback] = useState<ProgressFeedback>(null);
-  const viewerRef = useRef<HTMLDivElement | null>(null);
   const { status: authStatus } = useAuthSession();
 
   useEffect(() => {
@@ -180,13 +179,6 @@ export function VerbalPassageViewer({
     setAuthPromptQuestionId(null);
     setProgressFeedback(null);
   }, [initialQuestionId, passage]);
-
-  useEffect(() => {
-    viewerRef.current?.scrollIntoView({
-      behavior: "smooth",
-      block: "start",
-    });
-  }, [passage.slug]);
 
   const currentQuestion =
     passage.questions[Math.min(Math.max(questionIndex, 0), Math.max(passage.questions.length - 1, 0))];
@@ -400,10 +392,9 @@ export function VerbalPassageViewer({
 
   return (
     <div
-      ref={viewerRef}
       dir="rtl"
       aria-busy={isNavigating}
-      className={`space-y-6 transition-opacity duration-200 ${isNavigating ? "opacity-80" : "opacity-100"}`}
+      className="space-y-6"
     >
       {isNavigating ? (
         <div className="rounded-full border border-[#E8D8B3] bg-[#fffaf1] px-4 py-3 text-sm font-semibold text-[#8A6116] shadow-sm">

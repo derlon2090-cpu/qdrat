@@ -1,14 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { CalendarDays, Loader2, NotebookPen, RefreshCcw } from "lucide-react";
 
 import { StudentAccessCard } from "@/components/student-access-card";
 import {
   StudentPortalErrorCard,
   StudentPortalLoadingCard,
+  StudentPlanSetupNotice,
   formatDaysLeft,
   formatPortalDate,
   planTypeLabels,
@@ -102,18 +102,11 @@ function TaskListRow({
 }
 
 export function StudentPlan() {
-  const router = useRouter();
   const { status, user } = useAuthSession();
   const { status: portalStatus, data, error, refresh, setData } = useStudentPortal(status === "authenticated");
   const [taskState, setTaskState] = useState<Record<number, boolean>>({});
   const [actionState, setActionState] = useState<"idle" | "loading">("idle");
   const [actionError, setActionError] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (portalStatus === "ready" && data && !data.onboardingCompleted) {
-      router.replace("/onboarding");
-    }
-  }, [data, portalStatus, router]);
 
   async function handleToggleTask(task: StudentPortalTask, nextValue: boolean) {
     try {
@@ -167,6 +160,8 @@ export function StudentPlan() {
 
   return (
     <div className="space-y-6">
+      <StudentPlanSetupNotice onboardingCompleted={data.onboardingCompleted} />
+
       <Card className="surface-dark border-0">
         <CardContent className="space-y-6 p-8">
           <div className="flex flex-wrap items-start justify-between gap-4">
