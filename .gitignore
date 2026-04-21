@@ -13,5 +13,6 @@ data/parsed/*
 data/reports/*
 !data/raw/.gitkeep
 !data/parsed/.gitkeep
+!data/parsed/bank-4-reading-lamp-2.normalized.json
 !data/reports/.gitkeep
 !data/reports/latest-verbal-report.json
