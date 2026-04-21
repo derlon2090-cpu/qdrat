@@ -98,35 +98,36 @@ function BackToSummariesLink({
 }) {
   const frameClass =
     tone === "danger"
-      ? "border-rose-200 bg-white text-rose-700 shadow-[0_12px_28px_rgba(225,29,72,0.08)] hover:border-rose-300 hover:bg-rose-50/80"
-      : "border-[#d7e3f7] bg-white text-[#123B7A] shadow-[0_14px_32px_rgba(18,59,122,0.1)] hover:border-[#123B7A]/30 hover:bg-[#f7faff]";
+      ? "border-rose-200 bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(255,244,247,0.98))] text-rose-700 shadow-[0_18px_38px_rgba(225,29,72,0.1)] hover:border-rose-300 hover:bg-rose-50/90"
+      : "border-[#cfe0fb] bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(246,250,255,0.98))] text-[#123B7A] shadow-[0_18px_42px_rgba(18,59,122,0.12)] hover:border-[#9bbce8] hover:shadow-[0_22px_48px_rgba(18,59,122,0.16)]";
   const iconClass =
     tone === "danger"
-      ? "border-rose-200 bg-rose-50 text-rose-700"
-      : "border-[#d7e3f7] bg-[#eef4ff] text-[#123B7A]";
+      ? "border-rose-200 bg-white text-rose-700 shadow-[0_10px_22px_rgba(225,29,72,0.1)]"
+      : "border-[#cfe0fb] bg-[linear-gradient(180deg,#f4f8ff,#eaf2ff)] text-[#123B7A] shadow-[0_10px_24px_rgba(18,59,122,0.14)]";
   const subTextClass = tone === "danger" ? "text-rose-600/80" : "text-slate-500";
 
   return (
     <div className={cn("relative z-[90]", centered ? "flex justify-center" : "")}>
       <Link
         href="/summaries"
+        prefetch
         className={cn(
-          "pointer-events-auto group inline-flex w-fit cursor-pointer items-center gap-3 rounded-[1.15rem] border px-4 py-3 text-right transition hover:-translate-y-0.5",
+          "pointer-events-auto group inline-flex min-h-[5.5rem] w-full max-w-[23rem] cursor-pointer items-center justify-between gap-4 rounded-[1.55rem] border px-5 py-4 text-right transition duration-200 hover:-translate-y-0.5",
           frameClass,
         )}
         aria-label="الانتقال إلى مكتبة الملخصات"
       >
+        <span className="flex min-w-0 flex-1 flex-col leading-6">
+          <span className="text-base font-extrabold tracking-[-0.02em]">العودة إلى مكتبة الملخصات</span>
+          <span className={cn("mt-1 text-sm font-medium", subTextClass)}>جميع الملخصات المحفوظة</span>
+        </span>
         <span
           className={cn(
-            "flex h-10 w-10 items-center justify-center rounded-full border transition group-hover:scale-105",
+            "flex h-12 w-12 shrink-0 items-center justify-center rounded-full border transition duration-200 group-hover:scale-105",
             iconClass,
           )}
         >
-          <ArrowRight className="h-4 w-4" />
-        </span>
-        <span className="flex flex-col leading-6">
-          <span className="text-sm font-bold">العودة إلى مكتبة الملخصات</span>
-          <span className={cn("text-xs", subTextClass)}>جميع الملخصات المحفوظة</span>
+          <ArrowRight className="h-5 w-5" />
         </span>
       </Link>
     </div>
