@@ -3,7 +3,7 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
-  serverExternalPackages: ["@napi-rs/canvas"],
+  serverExternalPackages: ["@napi-rs/canvas", "pdfjs-dist"],
 };
 
 export default nextConfig;
