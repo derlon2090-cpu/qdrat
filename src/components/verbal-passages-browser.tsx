@@ -195,7 +195,7 @@ export function VerbalPassagesBrowser({ mode = "student" }: { mode?: "student" |
     )
       .then(async (response) => {
         if (!response.ok) {
-          throw new Error("تعذر مزامنة بنك القطع من القاعدة.");
+          throw new Error("تعذر مزامنة بنك الاستيعاب المقروء من القاعدة.");
         }
 
         return response.json() as Promise<{ items?: VerbalPassageRecord[] }>;
@@ -411,7 +411,7 @@ export function VerbalPassagesBrowser({ mode = "student" }: { mode?: "student" |
   return (
     <div dir="rtl" className="space-y-6">
       <div className="rounded-[2rem] border border-[#E8D8B3] bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(248,247,244,0.96))] p-7 shadow-soft">
-        <div className="display-font text-3xl font-bold text-slate-950">بنك القطع اللفظي</div>
+        <div className="display-font text-3xl font-bold text-slate-950">بنك الاستيعاب المقروء</div>
         <p className="mt-3 max-w-3xl text-sm leading-8 text-slate-600">
           ابحث عن القطعة بالعنوان أو بالاسم المفتاحي، أو ابدأ مباشرة بقطعة عشوائية. لا نعرض جميع القطع هنا حتى
           تبقى الصفحة خفيفة وواضحة مع زيادة عدد القطع لاحقًا.

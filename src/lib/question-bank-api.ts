@@ -214,7 +214,7 @@ function mapKeywordToDirectoryItem(
     href: linkedPassage ? `/verbal/reading?passage=${encodeURIComponent(linkedPassage.slug)}` : null,
     excerpt: linkedPassage
       ? createSnippet(linkedPassage.passage, query || keyword.title)
-      : "عنوان محفوظ داخل دليل القطع اللفظية، وسيتم ربط نص القطعة وأسئلتها به عند إضافته يدويًا.",
+      : "عنوان محفوظ داخل دليل الاستيعاب المقروء، وسيتم ربط نص القطعة وأسئلتها به عند إضافته يدويًا.",
     kind: linkedPassage ? "passage" : "keyword",
     status: linkedPassage ? "linked" : "pending",
     questionCount: linkedPassage?.questions.length ?? 0,
@@ -230,8 +230,8 @@ function mapReadingQuestionsToSearchItems() {
       text: question.text,
       title: question.text,
       excerpt: createSnippet(passage.passage, question.text),
-      section: "قطع",
-      type: "قطع لفظي",
+      section: "الاستيعاب المقروء",
+      type: "الاستيعاب المقروء",
       difficulty: "غير محدد",
       skill: passage.title,
       state: "جاهزة",
@@ -300,14 +300,7 @@ export async function getBankItems(filters: SearchFilters = {}) {
   const type = filters.type?.trim() ?? "الكل";
 
   const sectionCounts = new Map<string, number>([
-    ["verbal_passages", localVerbalPassages.length],
-    ["verbal_reading_comprehension", verbalReadingOnlyQuestions.length],
-    ["verbal_vocabulary", verbalMixedPracticeQuestions.filter((question) => question.categoryId === "vocabulary").length],
-    [
-      "verbal_linguistic_semantics",
-      verbalMixedPracticeQuestions.filter((question) => question.categoryId === "linguistic_semantics").length,
-    ],
-    ["verbal_text_type", verbalMixedPracticeQuestions.filter((question) => question.categoryId === "text_type").length],
+    ["verbal_reading_comprehension", localVerbalPassages.length || verbalReadingOnlyQuestions.length],
     ["verbal_analogy", verbalMixedPracticeQuestions.filter((question) => question.categoryId === "analogy").length],
     [
       "verbal_sentence_completion",
@@ -360,8 +353,8 @@ export async function getQuestionItems(filters: SearchFilters = {}) {
           text: passage.title,
           title: passage.title,
           excerpt: createSnippet(passage.passage, query),
-          section: "قطع",
-          type: "قطعة كاملة",
+          section: "الاستيعاب المقروء",
+          type: "الاستيعاب المقروء",
           difficulty: "غير محدد",
           skill: passage.title,
           state: "جاهزة",
@@ -386,8 +379,8 @@ export async function getQuestionItems(filters: SearchFilters = {}) {
             text: item.title,
             title: item.title,
             excerpt: item.excerpt,
-            section: "قطع",
-            type: "قطعة لفظية",
+            section: "الاستيعاب المقروء",
+            type: "الاستيعاب المقروء",
             difficulty: "جاهزة",
             skill: item.title,
             state: "مرتبطة",

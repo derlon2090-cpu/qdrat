@@ -9,12 +9,14 @@ export type VerbalQuestionCategoryId =
   | "contextual_error"
   | "odd_word"
   | "reading_comprehension"
-  | "vocabulary"
-  | "linguistic_semantics"
-  | "text_type"
   | "short_reading";
 
-export type VisibleVerbalQuestionCategoryId = Exclude<VerbalQuestionCategoryId, "short_reading">;
+export type VisibleVerbalQuestionCategoryId =
+  | "sentence_completion"
+  | "reading_comprehension"
+  | "odd_word"
+  | "contextual_error"
+  | "analogy";
 
 export type VerbalPracticeQuestion = {
   id: string;
@@ -135,64 +137,6 @@ function createCueList(values: string[]) {
   return values.map((value) => normalizeKeywordToken(value));
 }
 
-const LEGACY_TEXT_TYPE_PROMPT_CUES = createCueList([
-  "نوع النص",
-  "النص يعتبر",
-  "يصنف هذا النص",
-  "القالب الفني",
-  "أنسب قالب",
-  "أسلوب النص",
-]);
-
-const LEGACY_TEXT_TYPE_OPTION_CUES = createCueList([
-  "حكمة",
-  "نصيحة",
-  "مقالة",
-  "مقال",
-  "قصة",
-  "قصيدة",
-  "رواية",
-  "مثل",
-  "خطبة",
-  "ترجمة",
-  "نص أدبي",
-  "نص علمي",
-  "نص علمي متأدب",
-  "مقال ذاتي",
-]);
-
-const LEGACY_VOCABULARY_CUES = createCueList([
-  "معنى كلمة",
-  "المقصود ب",
-  "المقصود بـ",
-  "تعني",
-  "مرادف",
-  "ضد",
-  "يقابلها",
-  "يمكن استبدال",
-  "يمكن أن نستبدل",
-  "أقرب معنى",
-  "ما معنى",
-]);
-
-const LEGACY_LINGUISTIC_SEMANTICS_CUES = createCueList([
-  "تفيد",
-  "تدل",
-  "دلالة",
-  "نوع الأسلوب",
-  "العلاقة بين",
-  "ما العلاقة",
-  "علاقة",
-  "الضمير",
-  "يعود الضمير",
-  "يعود على",
-  "غرض الاستفهام",
-  "لماذا سمي",
-  "كم تضاد",
-  "بما قبلها",
-  "بما بعدها",
-]);
-
 const LEGACY_CONTEXTUAL_ERROR_CUES = createCueList([
   "الكلمة التي يمكن حذفها",
   "الكلمة الزائدة",
@@ -226,10 +170,6 @@ function includesLegacyCue(value: string, cues: string[]) {
   return cues.some((cue) => normalized.includes(cue));
 }
 
-function countMatchingOptionCues(options: string[], cues: string[]) {
-  return options.filter((option) => includesLegacyCue(option, cues)).length;
-}
-
 function normalizeLegacyShortReadingCategory(
   question: VerbalPracticeQuestion,
 ): VisibleVerbalQuestionCategoryId {
@@ -239,21 +179,6 @@ function normalizeLegacyShortReadingCategory(
 
   if (includesLegacyCue(question.prompt, LEGACY_CONTEXTUAL_ERROR_CUES)) {
     return "contextual_error";
-  }
-
-  if (
-    includesLegacyCue(question.prompt, LEGACY_TEXT_TYPE_PROMPT_CUES) ||
-    countMatchingOptionCues(question.options, LEGACY_TEXT_TYPE_OPTION_CUES) >= 2
-  ) {
-    return "text_type";
-  }
-
-  if (includesLegacyCue(question.prompt, LEGACY_VOCABULARY_CUES)) {
-    return "vocabulary";
-  }
-
-  if (includesLegacyCue(question.prompt, LEGACY_LINGUISTIC_SEMANTICS_CUES)) {
-    return "linguistic_semantics";
   }
 
   if (
@@ -281,40 +206,22 @@ function normalizeLegacyVerbalQuestion(question: VerbalPracticeQuestion): Verbal
 
 export const verbalQuestionCategories: VerbalQuestionCategory[] = [
   {
-    id: "reading_comprehension",
-    title: "فهم المقروء",
-    description: "أسئلة الفكرة والعنوان والاستنتاج وما يفهم من النص أو الفقرة.",
-    href: "/verbal/practice?category=reading_comprehension",
-  },
-  {
-    id: "vocabulary",
-    title: "المفردات",
-    description: "معاني الكلمات والمرادف والضد والمقصود باللفظ داخل السياق.",
-    href: "/verbal/practice?category=vocabulary",
-  },
-  {
-    id: "linguistic_semantics",
-    title: "الدلالة اللغوية",
-    description: "الضمائر والعلاقات بين الجمل ودلالة الألفاظ وما تفيده الكلمات والتراكيب.",
-    href: "/verbal/practice?category=linguistic_semantics",
-  },
-  {
-    id: "text_type",
-    title: "تصنيف النص",
-    description: "تمييز نوع النص مثل الحكمة والنصيحة والمقالة والقالب الفني المشابه.",
-    href: "/verbal/practice?category=text_type",
-  },
-  {
-    id: "analogy",
-    title: "تناظر لفظي",
-    description: "أسئلة علاقات لفظية وترادف وتقابل مأخوذة من بنكك المرسل.",
-    href: "/verbal/practice?category=analogy",
-  },
-  {
     id: "sentence_completion",
     title: "إكمال الجمل",
     description: "جمل ناقصة واختيار الأنسب لإتمام المعنى والسياق.",
     href: "/verbal/practice?category=sentence_completion",
+  },
+  {
+    id: "reading_comprehension",
+    title: "الاستيعاب المقروء",
+    description: "أسئلة النص والفقرة مثل الفكرة العامة والعنوان والاستنتاج وما يفهم من النص.",
+    href: "/verbal/practice?category=reading_comprehension",
+  },
+  {
+    id: "odd_word",
+    title: "المفردة الشاذة",
+    description: "اختيار الكلمة المختلفة عن بقية المجموعة بعد تحديد الرابط بين الكلمات.",
+    href: "/verbal/practice?category=odd_word",
   },
   {
     id: "contextual_error",
@@ -323,10 +230,10 @@ export const verbalQuestionCategories: VerbalQuestionCategory[] = [
     href: "/verbal/practice?category=contextual_error",
   },
   {
-    id: "odd_word",
-    title: "المفردة الشاذة",
-    description: "اختيار الكلمة المختلفة عن باقي المجموعة.",
-    href: "/verbal/practice?category=odd_word",
+    id: "analogy",
+    title: "التناظر اللفظي",
+    description: "أسئلة العلاقات اللفظية بين زوجين، ثم اختيار الزوج الذي يحمل العلاقة نفسها.",
+    href: "/verbal/practice?category=analogy",
   },
 ];
 
@@ -2195,8 +2102,7 @@ export const verbalMixedPracticeQuestions: VerbalPracticeQuestion[] = dedupeVerb
 ]).map(withDerivedKeywords);
 
 export function getVerbalQuestionCategory(categoryId: string | null | undefined) {
-  const resolvedCategoryId =
-    categoryId === "short_reading" ? "reading_comprehension" : categoryId;
+  const resolvedCategoryId = categoryId === "short_reading" ? "reading_comprehension" : categoryId;
 
   return (
     verbalQuestionCategories.find((category) => category.id === resolvedCategoryId) ??

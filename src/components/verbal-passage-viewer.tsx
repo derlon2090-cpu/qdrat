@@ -263,10 +263,10 @@ export function VerbalPassageViewer({
     const progressResult = await trackQuestionProgressFromClient({
       questionKey: currentQuestionKey,
       section: "verbal",
-      sourceBank: "بنك القطع اللفظي",
+      sourceBank: "بنك الاستيعاب المقروء",
       categoryId: `reading:${passage.slug}`,
       categoryTitle: passage.title,
-      questionTypeLabel: "قطع لفظية",
+      questionTypeLabel: "الاستيعاب المقروء",
       questionText: currentQuestion.questionText,
       questionHref,
       selectedAnswer: selectedAnswerText ?? selectedKey,
@@ -287,8 +287,8 @@ export function VerbalPassageViewer({
       mistakeTracking = await trackMistakeFromClient({
         questionKey: currentQuestionKey,
         section: "verbal",
-        sourceBank: "بنك القطع اللفظي",
-        questionTypeLabel: "قطع لفظي",
+        sourceBank: "بنك الاستيعاب المقروء",
+        questionTypeLabel: "الاستيعاب المقروء",
         questionText: currentQuestion.questionText,
         questionHref,
         metadata: {
@@ -358,7 +358,7 @@ export function VerbalPassageViewer({
     <div dir="rtl" className="space-y-6">
       <div className="rounded-[2rem] border border-slate-200 bg-white p-7 shadow-sm">
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3 text-sm text-slate-500">
-          <div>بنك الأسئلة / القطع اللفظية</div>
+          <div>بنك الأسئلة / الاستيعاب المقروء</div>
           <div className="rounded-full bg-slate-50 px-4 py-2 ring-1 ring-slate-200">
             {mode === "admin" ? "وضع الإدارة" : "وضع الطالب"}
           </div>

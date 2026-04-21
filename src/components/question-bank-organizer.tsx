@@ -323,7 +323,7 @@ export function QuestionBankOrganizer() {
     })
       .then(async (response) => {
         if (!response.ok) {
-          throw new Error("تعذر تحميل القطع اللفظية المضافة.");
+          throw new Error("تعذر تحميل نصوص الاستيعاب المقروء المضافة.");
         }
 
         return response.json() as Promise<{ items?: VerbalPassageRecord[] }>;
@@ -456,7 +456,7 @@ export function QuestionBankOrganizer() {
       >
         <EmptySectionCard
           title="اللفظي"
-          description="الأقسام اللفظية أصبحت مرتبة الآن إلى قطع لفظي، فهم المقروء، المفردات، الدلالة اللغوية، تصنيف النص، التناظر اللفظي، إكمال الجمل، الخطأ السياقي، والمفردة الشاذة."
+          description="الأقسام اللفظية الظاهرة الآن هي فقط: إكمال الجمل، الاستيعاب المقروء، المفردة الشاذة، الخطأ السياقي، والتناظر اللفظي."
           active={track === "verbal"}
           onClick={() => setTrack("verbal")}
           icon={BookOpenText}
@@ -491,7 +491,7 @@ export function QuestionBankOrganizer() {
           {track === "mistakes"
             ? "كل سؤال تخطئ فيه وأنت مسجل الدخول يُحفظ هنا داخل حسابك فقط، ويختفي تلقائيًا بعد 5 حلول صحيحة أو عند حذفه يدويًا."
             : track === "verbal"
-              ? "رتبنا بنك اللفظي إلى مسارات واضحة: بنك القطع اللفظية في صفحة مستقلة، ثم أقسام التدريب اللفظية المتنوعة المبنية من الأسئلة التي أرسلتها."
+              ? "رتبنا بنك اللفظي إلى الأقسام الرسمية فقط، مع إبقاء الاستيعاب المقروء في مساره الخاص وضم الأسئلة القرائية الفرعية تحته بدل إظهارها كأقسام إضافية."
               : `${EMPTY_SECTION_MESSAGE}. النظام مهيأ الآن للإضافة اليدوية المنظمة، وعند إدخال أي باب أو سؤال جديد سيظهر مباشرة داخل هذا القسم.`}
         </p>
 
@@ -512,11 +512,11 @@ export function QuestionBankOrganizer() {
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div>
                 <div className="display-font text-xl font-bold text-slate-950">
-                  بحث القطع اللفظية بالكلمات المفتاحية
+                  بحث الاستيعاب المقروء بالكلمات المفتاحية
                 </div>
                 <p className="mt-2 max-w-2xl text-sm leading-7 text-slate-500">
                   اكتب 3 أحرف فأكثر ليظهر لك عنوان القطعة فقط مع حالتها،
-                  ثم افتحها من بنك القطع اللفظية في صفحتها المخصصة دون
+                  ثم افتحها من بنك الاستيعاب المقروء في صفحتها المخصصة دون
                   بطاقات طويلة أو زحمة.
                 </p>
               </div>
@@ -530,13 +530,13 @@ export function QuestionBankOrganizer() {
                 href="/verbal/reading"
                 className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:border-[#123B7A] hover:text-[#123B7A]"
               >
-                افتح بنك القطع اللفظي
+                افتح بنك الاستيعاب المقروء
               </Link>
               <Link
                 href="/verbal/reading"
                 className="rounded-2xl bg-[linear-gradient(135deg,#F5D08A_0%,#E6B85C_40%,#D4A94C_100%)] px-4 py-3 text-sm font-bold text-slate-950 shadow-[0_10px_24px_rgba(201,154,67,0.24)] transition hover:-translate-y-0.5"
               >
-                ابدأ قطعة عشوائية
+                ابدأ نصًا عشوائيًا
               </Link>
             </div>
 
@@ -562,11 +562,11 @@ export function QuestionBankOrganizer() {
               </div>
             ) : isLoadingVerbalPassages ? (
               <div className="rounded-[1.5rem] border border-dashed border-slate-300 bg-slate-50/80 p-6 text-center text-sm text-slate-500">
-                جارٍ تحميل القطع اللفظية المضافة وربطها بالعناوين المفتاحية...
+                جارٍ تحميل قطع الاستيعاب المقروء المضافة وربطها بالعناوين المفتاحية...
               </div>
             ) : isDebouncingKeywordQuery ? (
               <div className="rounded-[1.5rem] border border-dashed border-slate-300 bg-slate-50/80 p-6 text-center text-sm text-slate-500">
-                جارٍ البحث في عناوين القطع والكلمات المفتاحية...
+                جارٍ البحث في عناوين الاستيعاب المقروء والكلمات المفتاحية...
               </div>
             ) : verbalKeywordResults.length ? (
               <div className="rounded-[1.5rem] border border-slate-200 bg-slate-50/60 p-3">
@@ -657,7 +657,7 @@ export function QuestionBankOrganizer() {
         ) : track !== "mistakes" ? (
           <div className="mt-6 rounded-[1.7rem] border border-dashed border-slate-300 bg-white/70 p-8 text-center text-sm text-slate-500">
             {track === "verbal"
-              ? "إذا لم تختر قسمًا بعد، ابدأ من بطاقات اللفظي بالأعلى أو من بنك القطع اللفظية."
+              ? "إذا لم تختر قسمًا بعد، ابدأ من بطاقات اللفظي بالأعلى أو من بنك الاستيعاب المقروء."
               : "لا يوجد محتوى معروض حاليًا داخل هذا القسم."}
           </div>
         ) : null}

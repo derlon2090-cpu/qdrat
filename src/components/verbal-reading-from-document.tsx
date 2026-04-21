@@ -81,7 +81,7 @@ export function VerbalReadingFromDocument({
   if (!currentPassage || passages.length === 0 || currentPassage.questions.length === 0) {
     return (
       <div dir="rtl" className="rounded-[28px] bg-white p-8 shadow-sm ring-1 ring-slate-200">
-        <div className="text-sm font-medium text-slate-500">بنك الأسئلة / القطع اللفظية</div>
+        <div className="text-sm font-medium text-slate-500">بنك الأسئلة / الاستيعاب المقروء</div>
         <h1 className="mt-4 text-3xl font-bold text-slate-900">لا توجد قطع حاليًا، سيتم إضافتها قريبًا</h1>
         <p className="mt-4 max-w-2xl text-lg leading-9 text-slate-600">
           تم تفريغ القطع القديمة بالكامل، والواجهة الآن جاهزة لاستقبال القطع اليدوية الجديدة بصيغة
@@ -148,10 +148,10 @@ export function VerbalReadingFromDocument({
     const progressResult = await trackQuestionProgressFromClient({
       questionKey,
       section: "verbal",
-      sourceBank: "بنك القطع اللفظي",
+      sourceBank: "بنك الاستيعاب المقروء",
       categoryId: `reading:${currentPassageRouteId}`,
       categoryTitle: currentPassage.title,
-      questionTypeLabel: "قطع لفظية",
+      questionTypeLabel: "الاستيعاب المقروء",
       questionText: currentQuestion.text,
       questionHref,
       selectedAnswer,
@@ -172,8 +172,8 @@ export function VerbalReadingFromDocument({
       mistakeTracking = await trackMistakeFromClient({
         questionKey,
         section: "verbal",
-        sourceBank: "بنك القطع اللفظي",
-        questionTypeLabel: "قطع لفظي",
+        sourceBank: "بنك الاستيعاب المقروء",
+        questionTypeLabel: "الاستيعاب المقروء",
         questionText: currentQuestion.text,
         questionHref,
         metadata: {
@@ -243,9 +243,9 @@ export function VerbalReadingFromDocument({
     <div dir="rtl" className="min-h-screen bg-slate-100 px-4 py-6 text-slate-900 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-[1600px]">
         <div className="mb-4 flex items-center justify-between text-sm text-slate-600">
-          <div className="font-medium">بنك الأسئلة / القطع اللفظية</div>
+          <div className="font-medium">بنك الأسئلة / الاستيعاب المقروء</div>
           <div className="rounded-full bg-white px-4 py-2 ring-1 ring-slate-200">
-            {currentPassage.sourceName || "المستند / القطع اللفظية"}
+            {currentPassage.sourceName || "المستند / الاستيعاب المقروء"}
           </div>
         </div>
 

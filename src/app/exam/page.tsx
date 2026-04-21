@@ -26,8 +26,8 @@ function EmptyExamState({ section }: { section?: string | null }) {
         لا توجد أسئلة حالياً، سيتم إضافتها قريبًا
       </h1>
       <p className="mt-4 max-w-2xl text-lg leading-9 text-slate-600">
-        هذا المسار لم يعد يُستخدم لعرض القطع اللفظية. إذا كنت تبحث عن بنك
-        القطع فستنتقل تلقائيًا إلى الصفحة الجديدة المخصصة له.
+        هذا المسار لم يعد يُستخدم لعرض الاستيعاب المقروء. إذا كنت تبحث عن بنك
+        الاستيعاب فستنتقل تلقائيًا إلى الصفحة الجديدة المخصصة له.
       </p>
     </div>
   );
@@ -49,10 +49,10 @@ function LegacyVerbalRedirect() {
   return (
     <div className="rounded-[28px] bg-white p-8 shadow-sm ring-1 ring-slate-200">
       <div className="text-sm font-medium text-slate-500">
-        بنك الأسئلة / القطع اللفظية
+        بنك الأسئلة / الاستيعاب المقروء
       </div>
       <h1 className="mt-4 text-3xl font-bold text-slate-900">
-        جارٍ تحويلك إلى بنك القطع اللفظية...
+        جارٍ تحويلك إلى بنك الاستيعاب المقروء...
       </h1>
     </div>
   );
@@ -90,7 +90,7 @@ export default function ExamPage() {
             <div className="mx-auto w-[min(calc(100%-2rem),1400px)]">
               <div className="rounded-[28px] bg-white p-8 shadow-sm ring-1 ring-slate-200">
                 <div className="text-sm font-medium text-slate-500">
-                  بنك الأسئلة / القطع اللفظية
+                  بنك الأسئلة / الاستيعاب المقروء
                 </div>
                 <h1 className="mt-4 text-3xl font-bold text-slate-900">
                   جارٍ تجهيز الصفحة...

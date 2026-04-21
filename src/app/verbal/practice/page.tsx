@@ -27,7 +27,9 @@ export default async function VerbalPracticePage({ searchParams }: VerbalPractic
     }
     redirect(`/verbal/practice?${nextParams.toString()}`);
   }
-  const activeCategory = getVerbalQuestionCategory(resolvedSearchParams.category);
+  const activeCategory = getVerbalQuestionCategory(
+    resolvedSearchParams.category ?? "sentence_completion",
+  );
   const questions = getVerbalQuestionsByCategory(activeCategory.id);
   const activeQuestionId =
     questions.find((question) => question.id === resolvedSearchParams.question)?.id ?? questions[0]?.id ?? null;
@@ -47,7 +49,7 @@ export default async function VerbalPracticePage({ searchParams }: VerbalPractic
     <PageShell
       eyebrow="اللفظي المصنف"
       title="رتبنا أسئلة اللفظي المتنوعة داخل أقسام واضحة وجاهزة للتدريب"
-      description="ابدأ من فهم المقروء أو المفردات أو الدلالة اللغوية أو تصنيف النص، ثم انتقل إلى التناظر اللفظي وإكمال الجمل والخطأ السياقي والمفردة الشاذة. أما القطع اللفظية نفسها فلها مسار مستقل يعرض النص مع أسئلته."
+      description="الأقسام الرسمية الظاهرة الآن هي: إكمال الجمل، الاستيعاب المقروء، المفردة الشاذة، الخطأ السياقي، والتناظر اللفظي. أي سؤال من معنى كلمة أو دلالة أو نوع نص داخل فقرة تم ضمه تحت الاستيعاب المقروء."
       icon={BookOpenText}
       iconWrap="bg-[#eef4ff]"
       iconColor="text-[#123B7A]"

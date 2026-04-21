@@ -78,7 +78,7 @@ function mapSamplePassage(row: SamplePassageRow, index: number): LocalVerbalPass
   return {
     id: row.slug,
     slug: row.slug,
-    source: "المستند / القطع اللفظية",
+    source: "المستند / الاستيعاب المقروء",
     title: row.title,
     keywords: row.keywords ?? [],
     pieceNumber: index + 1,
