@@ -19,13 +19,15 @@ type VerbalPracticePageProps = {
 
 export default async function VerbalPracticePage({ searchParams }: VerbalPracticePageProps) {
   const resolvedSearchParams = await searchParams;
-  if (resolvedSearchParams.category === "short_reading") {
+  if (
+    resolvedSearchParams.category === "short_reading" ||
+    resolvedSearchParams.category === "reading_comprehension"
+  ) {
     const nextParams = new URLSearchParams();
-    nextParams.set("category", "reading_comprehension");
     if (resolvedSearchParams.question) {
       nextParams.set("question", resolvedSearchParams.question);
     }
-    redirect(`/verbal/practice?${nextParams.toString()}`);
+    redirect(`/verbal/reading${nextParams.toString() ? `?${nextParams.toString()}` : ""}`);
   }
   const activeCategory = getVerbalQuestionCategory(
     resolvedSearchParams.category ?? "sentence_completion",

@@ -124,15 +124,34 @@ function getSelectedExplanation(
   return "هذا الخيار غير صحيح وفق البيانات المعتمدة لهذه القطعة.";
 }
 
+function findQuestionIndexById(
+  passage: VerbalPassageRecord,
+  requestedQuestionId: string | null | undefined,
+) {
+  const normalizedRequestedId = requestedQuestionId?.trim().toLowerCase();
+  if (!normalizedRequestedId) return -1;
+
+  return passage.questions.findIndex((question) => {
+    const normalizedQuestionId = question.id.trim().toLowerCase();
+    return (
+      normalizedQuestionId === normalizedRequestedId ||
+      normalizedQuestionId.startsWith(`${normalizedRequestedId}-`) ||
+      normalizedRequestedId.startsWith(`${normalizedQuestionId}-`)
+    );
+  });
+}
+
 export function VerbalPassageViewer({
   passage,
   mode = "student",
+  initialQuestionId,
   nextPassageTitle,
   onOpenNextPassage,
   onBackToResults,
 }: {
   passage: VerbalPassageRecord;
   mode?: ViewerMode;
+  initialQuestionId?: string | null;
   nextPassageTitle?: string | null;
   onOpenNextPassage?: (() => void) | null;
   onBackToResults?: (() => void) | null;
@@ -153,10 +172,11 @@ export function VerbalPassageViewer({
   }, []);
 
   useEffect(() => {
-    setQuestionIndex(0);
+    const matchedQuestionIndex = findQuestionIndexById(passage, initialQuestionId);
+    setQuestionIndex(matchedQuestionIndex >= 0 ? matchedQuestionIndex : 0);
     setAuthPromptQuestionId(null);
     setProgressFeedback(null);
-  }, [passage.id]);
+  }, [initialQuestionId, passage]);
 
   const currentQuestion =
     passage.questions[Math.min(Math.max(questionIndex, 0), Math.max(passage.questions.length - 1, 0))];
@@ -165,7 +185,7 @@ export function VerbalPassageViewer({
   const selectedKey = selectedAnswers[currentQuestionKey];
   const submitted = Boolean(submittedAnswers[currentQuestionKey]);
   const isCorrect = submitted && selectedKey === currentQuestion.correctOption;
-  const questionHref = `/verbal/reading?passage=${encodeURIComponent(passage.slug)}`;
+  const questionHref = `/verbal/reading?passage=${encodeURIComponent(passage.slug)}&question=${encodeURIComponent(currentQuestion.id)}`;
 
   const submittedCount = useMemo(
     () =>
@@ -205,6 +225,20 @@ export function VerbalPassageViewer({
     nextParams.set("passage", passage.slug);
     router.replace(`${pathname}?${nextParams.toString()}`, { scroll: false });
   }, [mode, passage.slug, pathname, router, searchParams]);
+
+  useEffect(() => {
+    const currentPassageParam = searchParams.get("passage")?.trim() ?? "";
+    const currentQuestionParam = searchParams.get("question")?.trim() ?? "";
+
+    if (currentPassageParam === passage.slug && currentQuestionParam === currentQuestion.id) {
+      return;
+    }
+
+    const nextParams = new URLSearchParams(searchParams.toString());
+    nextParams.set("passage", passage.slug);
+    nextParams.set("question", currentQuestion.id);
+    router.replace(`${pathname}?${nextParams.toString()}`, { scroll: false });
+  }, [currentQuestion.id, passage.slug, pathname, router, searchParams]);
 
   function getQuestionProgressState(
     question: VerbalPassageRecord["questions"][number],

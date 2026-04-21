@@ -40,9 +40,19 @@ function createExcerpt(text: string, maxLength = 120) {
   return `${cleanText.slice(0, maxLength).trim()}...`;
 }
 
-function buildPassageHref(pathname: string, searchParams: URLSearchParams, slug: string) {
+function buildPassageHref(
+  pathname: string,
+  searchParams: URLSearchParams,
+  slug: string,
+  questionId?: string | null,
+) {
   const nextParams = new URLSearchParams(searchParams.toString());
   nextParams.set("passage", slug);
+  if (questionId) {
+    nextParams.set("question", questionId);
+  } else {
+    nextParams.delete("question");
+  }
   return `${pathname}?${nextParams.toString()}`;
 }
 
@@ -139,6 +149,31 @@ function resolveKeywordPassage(title: string, passages: VerbalPassageRecord[]) {
   return ranked[0]?.passage ?? null;
 }
 
+function findPassageQuestionMatch(
+  passages: VerbalPassageRecord[],
+  requestedQuestionId: string,
+) {
+  const normalizedRequestedId = requestedQuestionId.trim().toLowerCase();
+  if (!normalizedRequestedId) return null;
+
+  for (const passage of passages) {
+    const matchedQuestion = passage.questions.find((question) => {
+      const normalizedQuestionId = question.id.trim().toLowerCase();
+      return (
+        normalizedQuestionId === normalizedRequestedId ||
+        normalizedQuestionId.startsWith(`${normalizedRequestedId}-`) ||
+        normalizedRequestedId.startsWith(`${normalizedQuestionId}-`)
+      );
+    });
+
+    if (matchedQuestion) {
+      return { passage, questionId: matchedQuestion.id };
+    }
+  }
+
+  return null;
+}
+
 function getSearchScore(item: SearchCatalogItem, query: string) {
   const normalizedQuery = normalizeArabicText(query);
   if (!normalizedQuery || normalizedQuery.length < SEARCH_MIN_CHARS) return 0;
@@ -173,6 +208,7 @@ export function VerbalPassagesBrowser({ mode = "student" }: { mode?: "student" |
   const [statusMessage, setStatusMessage] = useState("");
 
   const requestedSlug = searchParams.get("passage")?.trim().toLowerCase() ?? "";
+  const requestedQuestionId = searchParams.get("question")?.trim() ?? "";
 
   useEffect(() => {
     const timeoutId = window.setTimeout(() => {
@@ -301,7 +337,10 @@ export function VerbalPassagesBrowser({ mode = "student" }: { mode?: "student" |
   }, [canSearch, debouncedQuery, searchCatalog]);
 
   const selectPassage = useCallback(
-    (slug: string, options?: { clearSearch?: boolean; message?: string }) => {
+    (
+      slug: string,
+      options?: { clearSearch?: boolean; message?: string; questionId?: string | null },
+    ) => {
       if (!slug) return;
 
       setCurrentPassageSlug(slug);
@@ -316,7 +355,12 @@ export function VerbalPassagesBrowser({ mode = "student" }: { mode?: "student" |
         setStatusMessage(options.message);
       }
 
-      const nextHref = buildPassageHref(pathname, new URLSearchParams(searchParams.toString()), slug);
+      const nextHref = buildPassageHref(
+        pathname,
+        new URLSearchParams(searchParams.toString()),
+        slug,
+        options?.questionId ?? null,
+      );
       router.replace(nextHref, { scroll: false });
     },
     [pathname, router, searchParams],
@@ -345,6 +389,31 @@ export function VerbalPassagesBrowser({ mode = "student" }: { mode?: "student" |
   useEffect(() => {
     if (!visiblePassages.length) return;
 
+    const matchedQuestion = requestedQuestionId
+      ? findPassageQuestionMatch(visiblePassages, requestedQuestionId)
+      : null;
+
+    if (matchedQuestion) {
+      if (currentPassageSlug !== matchedQuestion.passage.slug) {
+        setCurrentPassageSlug(matchedQuestion.passage.slug);
+      }
+      setHasInitializedSelection(true);
+
+      if (
+        requestedSlug !== matchedQuestion.passage.slug ||
+        requestedQuestionId !== matchedQuestion.questionId
+      ) {
+        const nextHref = buildPassageHref(
+          pathname,
+          new URLSearchParams(searchParams.toString()),
+          matchedQuestion.passage.slug,
+          matchedQuestion.questionId,
+        );
+        router.replace(nextHref, { scroll: false });
+      }
+      return;
+    }
+
     if (requestedSlug) {
       const matchedPassage = visiblePassages.find((passage) => passage.slug === requestedSlug);
 
@@ -353,6 +422,17 @@ export function VerbalPassagesBrowser({ mode = "student" }: { mode?: "student" |
           setCurrentPassageSlug(matchedPassage.slug);
         }
         setHasInitializedSelection(true);
+
+        if (requestedQuestionId) {
+          setStatusMessage("لم نجد السؤال المطلوب، فتم فتح القطعة نفسها من بدايتها.");
+          const nextHref = buildPassageHref(
+            pathname,
+            new URLSearchParams(searchParams.toString()),
+            matchedPassage.slug,
+            null,
+          );
+          router.replace(nextHref, { scroll: false });
+        }
         return;
       }
 
@@ -363,10 +443,19 @@ export function VerbalPassagesBrowser({ mode = "student" }: { mode?: "student" |
       if (fallbackPassage) {
         setCurrentPassageSlug(fallbackPassage.slug);
         setHasInitializedSelection(true);
-        setStatusMessage("لم نجد القطعة المطلوبة بهذا المفتاح، فتم فتح قطعة متاحة بدلًا منها.");
+        setStatusMessage(
+          requestedQuestionId
+            ? "لم نجد السؤال أو القطعة المطلوبة، فتم فتح قطعة متاحة بدلًا منها."
+            : "لم نجد القطعة المطلوبة بهذا المفتاح، فتم فتح قطعة متاحة بدلًا منها.",
+        );
 
-        if (fallbackPassage.slug !== requestedSlug) {
-          const nextHref = buildPassageHref(pathname, new URLSearchParams(searchParams.toString()), fallbackPassage.slug);
+        if (fallbackPassage.slug !== requestedSlug || requestedQuestionId) {
+          const nextHref = buildPassageHref(
+            pathname,
+            new URLSearchParams(searchParams.toString()),
+            fallbackPassage.slug,
+            null,
+          );
           router.replace(nextHref, { scroll: false });
         }
       }
@@ -378,7 +467,12 @@ export function VerbalPassagesBrowser({ mode = "student" }: { mode?: "student" |
       if (randomPassage) {
         setCurrentPassageSlug(randomPassage.slug);
         setHasInitializedSelection(true);
-        const nextHref = buildPassageHref(pathname, new URLSearchParams(searchParams.toString()), randomPassage.slug);
+        const nextHref = buildPassageHref(
+          pathname,
+          new URLSearchParams(searchParams.toString()),
+          randomPassage.slug,
+          null,
+        );
         router.replace(nextHref, { scroll: false });
       }
     }
@@ -386,6 +480,7 @@ export function VerbalPassagesBrowser({ mode = "student" }: { mode?: "student" |
     currentPassageSlug,
     hasInitializedSelection,
     pathname,
+    requestedQuestionId,
     requestedSlug,
     router,
     searchParams,
@@ -511,6 +606,7 @@ export function VerbalPassagesBrowser({ mode = "student" }: { mode?: "student" |
           <VerbalPassageViewer
             passage={currentPassage}
             mode={mode}
+            initialQuestionId={requestedQuestionId || null}
             nextPassageTitle={nextPassage?.title ?? null}
             onOpenNextPassage={nextPassage ? () => selectPassage(nextPassage.slug, { message: `تم فتح قطعة: ${nextPassage.title}` }) : null}
           />

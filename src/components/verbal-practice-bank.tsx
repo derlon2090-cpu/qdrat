@@ -196,6 +196,11 @@ export function VerbalPracticeBank({
   }
 
   function openCategory(categoryId: string) {
+    if (categoryId === "reading_comprehension") {
+      router.push("/verbal/reading");
+      return;
+    }
+
     const nextCategory = categories.find((category) => category.id === categoryId);
     if (!nextCategory?.firstQuestionId) return;
     openQuestion(categoryId, nextCategory.firstQuestionId);
