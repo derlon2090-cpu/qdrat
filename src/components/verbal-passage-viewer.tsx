@@ -23,6 +23,57 @@ type ProgressFeedback = ClientQuestionProgressResult | null;
 const SAVED_ANSWERS_KEY = "miyaar-verbal-reading-answers";
 const SAVED_SUBMISSIONS_KEY = "miyaar-verbal-reading-submissions";
 
+function normalizeDisplaySpacing(value: string) {
+  return value
+    .replace(/\r/g, "")
+    .replace(/[ \t]+\n/g, "\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .replace(/\s+/g, " ")
+    .replace(/ \(/g, " (")
+    .trim();
+}
+
+function looksLikeDamagedDisplayParagraph(value: string) {
+  const compact = value.replace(/\s+/g, " ").trim();
+  if (compact.length < 16) {
+    return true;
+  }
+
+  const repeatedRuns = compact.match(/([\u0621-\u064A])\1{4,}/gu) ?? [];
+  if (repeatedRuns.length >= 2 || repeatedRuns.some((run) => run.length >= 6)) {
+    return true;
+  }
+
+  const tokens = compact.split(" ").filter(Boolean);
+  const arabicTokens = tokens.filter((token) => /^[\u0621-\u064A]+$/u.test(token));
+
+  if (arabicTokens.length >= 8) {
+    const longTokens = arabicTokens.filter((token) => token.length >= 14).length;
+    if (longTokens / arabicTokens.length > 0.2) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+function formatPassageForDisplay(value: string) {
+  const paragraphs = value
+    .split(/\n{2,}/)
+    .map((paragraph) => normalizeDisplaySpacing(paragraph))
+    .filter(Boolean);
+
+  const cleaned = paragraphs.filter((paragraph, index) => {
+    if (index === paragraphs.length - 1 && looksLikeDamagedDisplayParagraph(paragraph)) {
+      return false;
+    }
+
+    return !looksLikeDamagedDisplayParagraph(paragraph) || paragraph.length >= 40;
+  });
+
+  return (cleaned.length ? cleaned : paragraphs).join("\n\n");
+}
+
 function getChoiceLabel(index: number) {
   return ["أ", "ب", "ج", "د"][index] ?? String(index + 1);
 }
@@ -182,6 +233,11 @@ export function VerbalPassageViewer({
 
   const currentQuestion =
     passage.questions[Math.min(Math.max(questionIndex, 0), Math.max(passage.questions.length - 1, 0))];
+
+  const formattedPassageText = useMemo(
+    () => formatPassageForDisplay(passage.passageText),
+    [passage.passageText],
+  );
 
   const currentQuestionKey = `${passage.slug}:${currentQuestion.id}`;
   const selectedKey = selectedAnswers[currentQuestionKey];
@@ -437,7 +493,7 @@ export function VerbalPassageViewer({
         </div>
 
         <div className="mt-5 whitespace-pre-wrap text-lg leading-9 text-slate-800">
-          {passage.passageText}
+          {formattedPassageText}
         </div>
       </div>
 

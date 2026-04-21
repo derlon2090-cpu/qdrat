@@ -35,6 +35,10 @@ function normalizeSpaces(value: string) {
   return value.replace(/\s+/g, " ").trim();
 }
 
+function collapseRepeatedArabicCharacters(value: string) {
+  return value.replace(/([\u0621-\u064A])\1{3,}/gu, "$1$1");
+}
+
 function formatParagraphMarkers(value: string) {
   return value
     .replace(/\s*\((\d+)\)\s*/g, "\n\n($1) ")
@@ -78,6 +82,36 @@ function sanitizeText(value: string) {
         .replace(/\s+([)])/g, "$1"),
     ),
   );
+}
+
+function hasRepeatedCharacterDamage(value: string) {
+  const repeatedRuns = value.match(/([\u0621-\u064A])\1{4,}/gu) ?? [];
+  return repeatedRuns.length >= 2 || repeatedRuns.some((run) => run.length >= 6);
+}
+
+function cleanPassageParagraphs(value: string) {
+  const paragraphs = formatParagraphMarkers(collapseRepeatedArabicCharacters(value))
+    .split(/\n{2,}/)
+    .map((paragraph) => sanitizeText(paragraph))
+    .filter(Boolean);
+
+  const cleanedParagraphs = paragraphs.filter((paragraph, index) => {
+    if (paragraph.length < 20) {
+      return false;
+    }
+
+    if (hasRepeatedCharacterDamage(paragraph)) {
+      return false;
+    }
+
+    if (index === paragraphs.length - 1 && hasSevereSpacingDamage(paragraph)) {
+      return false;
+    }
+
+    return !hasSevereSpacingDamage(paragraph);
+  });
+
+  return cleanedParagraphs.join("\n\n").trim();
 }
 
 function isArabicWordToken(token: string) {
@@ -177,7 +211,7 @@ export const bank4ImportedPassages: LocalVerbalPassage[] = bank4ReadingData.pass
     }
 
     const title = sanitizeText(passage.pieceTitle);
-    const text = sanitizeText(passage.passageText);
+    const text = cleanPassageParagraphs(passage.passageText);
 
     if (
       !title ||
