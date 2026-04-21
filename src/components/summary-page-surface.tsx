@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import {
   useCallback,
   useEffect,
@@ -857,14 +858,20 @@ export function SummaryPageSurface({
           <div className="mx-auto max-w-2xl rounded-[1.6rem] border border-rose-200 bg-rose-50 px-5 py-5 text-sm font-semibold leading-8 text-rose-700 shadow-sm">
             {pdfError}
           </div>
-          <div className="mt-5 flex justify-center">
+          <div className="mt-5 flex flex-wrap justify-center gap-3">
+            <Link
+              href="/summaries"
+              className="rounded-full border border-rose-200 bg-white px-5 py-2.5 text-sm font-bold text-rose-700 transition hover:border-rose-300 hover:bg-rose-50"
+            >
+              العودة إلى مكتبة الملخصات
+            </Link>
             <a
               href={directPageUrl}
               target="_blank"
               rel="noreferrer"
-              className="rounded-full border border-rose-200 bg-white px-5 py-2.5 text-sm font-bold text-rose-700 transition hover:border-rose-300 hover:bg-rose-50"
+              className="rounded-full border border-slate-200 bg-white px-5 py-2.5 text-sm font-bold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50"
             >
-              فتح الملف الأصلي مباشرة
+              عرض الملف الأصلي
             </a>
           </div>
         </div>
