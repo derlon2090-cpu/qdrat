@@ -5,15 +5,22 @@ import { useMemo, useState } from "react";
 import {
   ArrowLeft,
   BarChart3,
+  Brain,
   ClipboardList,
-  Coins,
+  Compass,
   FileText,
   Files,
   Loader2,
   NotebookPen,
   RefreshCcw,
+  Sparkles,
+  Target,
+  TimerReset,
   TriangleAlert,
+  Trophy,
   UserRound,
+  Zap,
+  type LucideIcon,
 } from "lucide-react";
 
 import { StudentAccessCard } from "@/components/student-access-card";
@@ -42,58 +49,77 @@ const quickActions = [
   {
     href: "/question-bank",
     label: "بنك الأسئلة",
-    description: "ابدأ حل الأسئلة مباشرة",
+    description: "ابدأ تدريبًا سريعًا أو افتح جلسة مركزة في الكمي أو اللفظي.",
     icon: ClipboardList,
   },
   {
     href: "/question-bank?track=mistakes",
     label: "الأخطاء",
-    description: "راجع أسئلتك المتكررة",
+    description: "راجع الأسئلة المتكررة حتى تقل الأخطاء في المحاولات القادمة.",
     icon: TriangleAlert,
+  },
+  {
+    href: "/dashboard#progress",
+    label: "المراجعة",
+    description: "تابع الكمي واللفظي، واعرف أين يبدأ التركيز اليوم.",
+    icon: Target,
   },
   {
     href: "/summaries",
     label: "الملخصات",
-    description: "استكمل ملفاتك المحفوظة",
+    description: "ارجع إلى ملفاتك المحفوظة وأكمل من آخر صفحة توقفت عندها.",
     icon: FileText,
-  },
-  {
-    href: "/my-plan",
-    label: "خطتي",
-    description: "راجع مهامك القادمة",
-    icon: NotebookPen,
   },
   {
     href: "/paper-models",
     label: "النماذج",
-    description: "اختبر نفسك بنماذج مركزة",
+    description: "اختبر نفسك بنماذج تدريبية واقعية ومحاكية للاختبار.",
     icon: Files,
   },
   {
     href: "/diagnostic",
-    label: "التشخيص",
-    description: "قِس مستواك وحدد نقطة البداية",
-    icon: ClipboardList,
+    label: "اختبار سريع",
+    description: "قِس مستواك الحالي وحدد نقطة الانطلاق الأنسب لك.",
+    icon: Compass,
   },
   {
     href: "/statistics",
     label: "الإحصائيات",
-    description: "شاهد تقدمك وتحليل الأداء",
+    description: "شاهد تقدمك ونِسب الإتقان في الأقسام المختلفة.",
     icon: BarChart3,
   },
   {
     href: "/account",
-    label: "الحساب",
-    description: "راجع بياناتك وإعداداتك",
+    label: "الإعدادات",
+    description: "عدّل بياناتك وإعدادات خطتك الدراسية من مكان واحد.",
     icon: UserRound,
   },
-  {
-    href: "/pricing",
-    label: "الاشتراك",
-    description: "استعرض الباقات والمزايا",
-    icon: Coins,
-  },
 ];
+
+const trainingTracks = [
+  {
+    key: "quant",
+    title: "المسار الكمي",
+    description: "حسابي، هندسي، مقارنات ومسائل تحتاج متابعة منتظمة وواضحة.",
+    accentClass:
+      "border-[#d7e5ff] bg-[linear-gradient(180deg,rgba(241,246,255,0.98),rgba(255,255,255,0.98))]",
+    iconWrapClass: "bg-[#eaf2ff] text-[#1d4ed8]",
+    indicatorClassName: "bg-[linear-gradient(90deg,#1d4ed8,#60a5fa)]",
+    ringTone: "blue" as const,
+    icon: BarChart3,
+  },
+  {
+    key: "verbal",
+    title: "المسار اللفظي",
+    description: "إكمال جمل، تناظر، مفردة شاذة، وفهم مقروء بمراجعة يومية.",
+    accentClass:
+      "border-[#d5f0ec] bg-[linear-gradient(180deg,rgba(241,253,251,0.98),rgba(255,255,255,0.98))]",
+    iconWrapClass: "bg-[#e9fbf8] text-[#0f766e]",
+    indicatorClassName: "bg-[linear-gradient(90deg,#0f766e,#2dd4bf)]",
+    ringTone: "teal" as const,
+    icon: Brain,
+  },
+] as const;
 
 async function updateTaskCompletion(taskId: number, completed: boolean) {
   const response = await fetch(`/api/student/plan/tasks/${taskId}`, {
@@ -139,6 +165,93 @@ async function runPlanAction(action: "reset" | "postpone_today") {
   return payload.data;
 }
 
+function ProgressRing({
+  value,
+  label,
+  tone = "blue",
+}: {
+  value: number;
+  label: string;
+  tone?: "blue" | "teal" | "gold";
+}) {
+  const normalized = Math.max(0, Math.min(100, value));
+  const ringColor = tone === "teal" ? "#0EA5A4" : tone === "gold" ? "#F59E0B" : "#1D4ED8";
+
+  return (
+    <div
+      className="grid h-24 w-24 place-items-center rounded-full"
+      style={{
+        background: `conic-gradient(${ringColor} ${normalized * 3.6}deg, rgba(226,232,240,0.92) 0deg)`,
+      }}
+    >
+      <div className="grid h-[5.1rem] w-[5.1rem] place-items-center rounded-full bg-white text-center shadow-[inset_0_1px_0_rgba(255,255,255,0.85)]">
+        <div className="display-font text-2xl font-extrabold text-slate-950">{normalized}%</div>
+        <div className="text-[11px] font-semibold text-slate-500">{label}</div>
+      </div>
+    </div>
+  );
+}
+
+function MetricCard({
+  title,
+  value,
+  caption,
+  icon: Icon,
+  className,
+  iconWrapClass,
+}: {
+  title: string;
+  value: string;
+  caption: string;
+  icon: LucideIcon;
+  className: string;
+  iconWrapClass: string;
+}) {
+  return (
+    <Card className={`rounded-[2rem] border shadow-[0_18px_38px_rgba(15,23,42,0.06)] ${className}`}>
+      <CardContent className="flex items-start justify-between gap-4 p-5">
+        <div className="min-w-0">
+          <div className="text-xs font-semibold tracking-[0.14em] text-slate-400">{title}</div>
+          <div className="mt-3 display-font text-3xl font-extrabold text-slate-950">{value}</div>
+          <div className="mt-2 text-sm leading-7 text-slate-500">{caption}</div>
+        </div>
+        <div className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-[1.15rem] ${iconWrapClass}`}>
+          <Icon className="h-6 w-6" />
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function QuickActionCard({
+  href,
+  label,
+  description,
+  icon: Icon,
+}: {
+  href: string;
+  label: string;
+  description: string;
+  icon: LucideIcon;
+}) {
+  return (
+    <Link
+      href={href}
+      className="group rounded-[1.7rem] border border-slate-200/90 bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(248,250,252,0.92))] p-4 shadow-[0_14px_36px_rgba(15,23,42,0.05)] transition duration-200 hover:-translate-y-1 hover:border-[#bfd3f3] hover:shadow-[0_20px_46px_rgba(29,78,216,0.10)]"
+    >
+      <div className="flex items-start gap-3">
+        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[1rem] bg-[#eef4ff] text-[#123B7A] transition group-hover:scale-105">
+          <Icon className="h-5 w-5" />
+        </div>
+        <div className="min-w-0">
+          <div className="display-font text-lg font-bold text-slate-950">{label}</div>
+          <div className="mt-1 text-sm leading-7 text-slate-500">{description}</div>
+        </div>
+      </div>
+    </Link>
+  );
+}
+
 function TaskRow({
   task,
   pending,
@@ -149,7 +262,7 @@ function TaskRow({
   onToggle: (task: StudentPortalTask, nextValue: boolean) => void;
 }) {
   return (
-    <div className="rounded-[1.5rem] border border-slate-200 bg-white/90 p-4">
+    <div className="rounded-[1.6rem] border border-slate-200 bg-white/92 p-4 shadow-[0_10px_24px_rgba(15,23,42,0.04)]">
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0">
           <div className="display-font text-lg font-bold text-slate-950">{task.title}</div>
@@ -185,11 +298,41 @@ export function StudentDashboard() {
   const [actionState, setActionState] = useState<ActionState>("idle");
   const [actionError, setActionError] = useState<string | null>(null);
 
-  const pressure = data ? pressureConfig[data.planPressure] : null;
   const completedToday = useMemo(
     () => data?.todayTasks.filter((task) => task.isCompleted).length ?? 0,
     [data?.todayTasks],
   );
+
+  if (status === "loading") {
+    return <StudentPortalLoadingCard />;
+  }
+
+  if (status !== "authenticated" || !user) {
+    return (
+      <StudentAccessCard
+        title="لوحة الطالب مرتبطة بحسابك"
+        description="سجل دخولك أولًا حتى تظهر لك خطة اليوم، نسبة الإنجاز، آخر نشاط، وأسرع انتقال إلى بنك الأسئلة والأخطاء والملخصات."
+        next="/dashboard"
+      />
+    );
+  }
+
+  if (portalStatus === "loading" || portalStatus === "idle") {
+    return <StudentPortalLoadingCard label="جارٍ تحميل لوحة الطالب..." />;
+  }
+
+  if (portalStatus === "error" || !data) {
+    return <StudentPortalErrorCard message={error ?? "تعذر تحميل لوحة الطالب."} onRetry={() => void refresh()} />;
+  }
+
+  const pressure = pressureConfig[data.planPressure];
+  const firstName = data.fullName.trim().split(/\s+/)[0] || data.fullName;
+  const primaryResumeItem = data.resumeItems[0] ?? null;
+  const secondaryResumeItem = data.resumeItems[1] ?? null;
+  const upcomingTask = data.upcomingTasks[0] ?? null;
+  const mistakeRatio = data.solvedQuestionsCount
+    ? Math.round((data.totalMistakes / Math.max(data.solvedQuestionsCount, 1)) * 100)
+    : 0;
 
   async function handleToggleTask(task: StudentPortalTask, nextValue: boolean) {
     try {
@@ -217,87 +360,107 @@ export function StudentDashboard() {
     }
   }
 
-  if (status === "loading") {
-    return <StudentPortalLoadingCard />;
-  }
-
-  if (status !== "authenticated" || !user) {
-    return (
-      <StudentAccessCard
-        title="لوحة الطالب مرتبطة بحسابك"
-        description="سجل دخولك أولًا حتى تظهر لك خطة اليوم، ونسبة الإنجاز، والأخطاء، وآخر ما توقفت عنده داخل المنصة."
-        next="/dashboard"
-      />
-    );
-  }
-
-  if (portalStatus === "loading" || portalStatus === "idle") {
-    return <StudentPortalLoadingCard label="جاري تحميل لوحة الطالب..." />;
-  }
-
-  if (portalStatus === "error" || !data) {
-    return <StudentPortalErrorCard message={error ?? "تعذر تحميل لوحة الطالب."} onRetry={() => void refresh()} />;
-  }
-
   return (
     <div className="space-y-6">
       <StudentPlanSetupNotice onboardingCompleted={data.onboardingCompleted} />
 
-      <Card className="surface-dark border-0">
-        <CardContent className="space-y-6 p-8">
-          <div className="flex flex-wrap items-start justify-between gap-4">
+      <Card className="overflow-hidden rounded-[2.5rem] border-0 bg-[linear-gradient(135deg,#123B7A_0%,#16458C_40%,#0EA5A4_100%)] shadow-[0_28px_76px_rgba(18,59,122,0.26)]">
+        <CardContent className="space-y-8 p-8">
+          <div className="grid gap-8 xl:grid-cols-[1.15fr,0.85fr]">
             <div>
-              <Badge className="bg-white/10 text-white">لوحة الطالب</Badge>
-              <h2 className="mt-4 display-font text-4xl font-bold text-white">مرحبًا {data.fullName}</h2>
-              <p className="mt-3 max-w-3xl text-sm leading-8 text-white/78">
-                هذه صفحتك العملية بعد تسجيل الدخول: تبدأ من مهام اليوم، ثم تعيدك إلى آخر ما كنت تعمل عليه، وتعرض لك
-                التقدم الكلي والخطة القادمة بوضوح.
+              <Badge className="bg-white/12 text-white shadow-[inset_0_0_0_1px_rgba(255,255,255,0.12)]">لوحة الطالب</Badge>
+              <h2 className="mt-4 display-font text-[clamp(2.2rem,5vw,4.4rem)] font-extrabold text-white">
+                أهلًا يا {firstName} 👋
+              </h2>
+              <p className="mt-3 max-w-3xl text-base leading-8 text-white/82">
+                جاهز نكمل من آخر نقطة وصلت لها؟ هذه لوحتك اليومية: خطة واضحة، تقدم مرئي، وانتقال سريع بين
+                الأقسام الأساسية.
               </p>
-            </div>
-            <div className="grid gap-3 sm:grid-cols-2">
-              <div className="rounded-[1.5rem] border border-white/10 bg-white/5 px-5 py-4 text-white/88">
-                <div className="text-xs text-white/60">باقي على الاختبار</div>
-                <div className="mt-2 display-font text-2xl font-bold">{formatDaysLeft(data.daysLeft)}</div>
+
+              <div className="mt-6 flex flex-wrap gap-3">
+                <Link href={primaryResumeItem?.href ?? "/question-bank"}>
+                  <Button className="gap-2 bg-white text-[#123B7A] shadow-[0_14px_32px_rgba(255,255,255,0.18)] hover:bg-white/95">
+                    <Zap className="h-4 w-4" />
+                    {primaryResumeItem ? primaryResumeItem.ctaLabel : "ابدأ الآن"}
+                  </Button>
+                </Link>
+                <Link href="#today-plan">
+                  <Button variant="outline" className="gap-2 border-white/20 bg-white/8 text-white hover:bg-white/14">
+                    <Target className="h-4 w-4" />
+                    خطة اليوم
+                  </Button>
+                </Link>
+                <Link href="/onboarding">
+                  <Button variant="outline" className="gap-2 border-white/20 bg-white/8 text-white hover:bg-white/14">
+                    <Compass className="h-4 w-4" />
+                    ضبط الخطة
+                  </Button>
+                </Link>
               </div>
-              <div className="rounded-[1.5rem] border border-white/10 bg-white/5 px-5 py-4 text-white/88">
-                <div className="text-xs text-white/60">مستوى الخطة</div>
-                <div className="mt-2 display-font text-2xl font-bold">{planTypeLabels[data.planType]}</div>
+            </div>
+
+            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-1">
+              <div className="rounded-[2rem] border border-white/14 bg-white/10 p-5 backdrop-blur-sm">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="min-w-0">
+                    <div className="text-xs font-semibold tracking-[0.16em] text-white/60">الإنجاز الأسبوعي</div>
+                    <div className="mt-3 display-font text-3xl font-bold text-white">{data.progressPercent}%</div>
+                    <div className="mt-2 text-sm leading-7 text-white/74">
+                      تقدمك الكلي في الكمي واللفظي والخطة يظهر هنا بصورة واضحة وسريعة.
+                    </div>
+                  </div>
+                  <ProgressRing value={data.progressPercent} label="إنجاز" tone="gold" />
+                </div>
+              </div>
+
+              <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-2">
+                <div className="rounded-[1.5rem] border border-white/12 bg-white/8 px-5 py-4 text-white/88">
+                  <div className="text-xs text-white/60">الاختبار القادم</div>
+                  <div className="mt-2 display-font text-2xl font-bold">{formatDaysLeft(data.daysLeft)}</div>
+                  <div className="mt-1 text-xs text-white/70">{formatPortalDate(data.examDate)}</div>
+                </div>
+                <div className="rounded-[1.5rem] border border-white/12 bg-white/8 px-5 py-4 text-white/88">
+                  <div className="text-xs text-white/60">إيقاع الخطة</div>
+                  <div className="mt-2 display-font text-2xl font-bold">{planTypeLabels[data.planType]}</div>
+                  <div className="mt-1 text-xs text-white/70">{pressure.label}</div>
+                </div>
               </div>
             </div>
           </div>
 
-          <div className="grid gap-4 md:grid-cols-4">
-            <div className="rounded-[1.4rem] border border-white/10 bg-white/5 p-4">
-              <div className="text-sm text-white/60">نسبة الإنجاز</div>
-              <div className="mt-2 display-font text-3xl font-bold text-white">{data.progressPercent}%</div>
-            </div>
-            <div className="rounded-[1.4rem] border border-white/10 bg-white/5 p-4">
-              <div className="text-sm text-white/60">الأخطاء الحالية</div>
-              <div className="mt-2 display-font text-3xl font-bold text-white">{data.totalMistakes}</div>
-            </div>
-            <div className="rounded-[1.4rem] border border-white/10 bg-white/5 p-4">
-              <div className="text-sm text-white/60">إجمالي XP</div>
-              <div className="mt-2 display-font text-3xl font-bold text-white">
-                {data.xp.total.toLocaleString("en-US")}
-              </div>
-            </div>
-            <div className="rounded-[1.4rem] border border-white/10 bg-white/5 p-4">
-              <div className="text-sm text-white/60">آخر نشاط</div>
-              <div className="mt-2 text-base font-bold text-white">{data.lastActivityLabel ?? "بداية جديدة"}</div>
-            </div>
-          </div>
-
-          <div className="flex flex-wrap gap-3">
-            <Link href="/onboarding">
-              <Button className="gap-2">
-                <NotebookPen className="h-4 w-4" />
-                تعديل إعدادات الخطة
-              </Button>
-            </Link>
-            <Button type="button" variant="outline" className="gap-2" onClick={handleResetPlan} disabled={actionState === "loading"}>
-              {actionState === "loading" ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCcw className="h-4 w-4" />}
-              إعادة جدولة الخطة
-            </Button>
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+            <MetricCard
+              title="خطة اليوم"
+              value={`${completedToday}/${data.todayTasks.length || 0}`}
+              caption="أنجز المهمات اليومية ثم انتقل إلى المراجعة الذكية."
+              icon={Target}
+              className="border-white/14 bg-white/8"
+              iconWrapClass="bg-white/14 text-white"
+            />
+            <MetricCard
+              title="آخر نشاط"
+              value={data.lastActivityLabel ?? "بداية"}
+              caption={formatLastActivity(data.lastActivityAt)}
+              icon={TimerReset}
+              className="border-white/14 bg-white/8"
+              iconWrapClass="bg-white/14 text-white"
+            />
+            <MetricCard
+              title="إجمالي XP"
+              value={data.xp.total.toLocaleString("en-US")}
+              caption={data.xp.levelLabel}
+              icon={Trophy}
+              className="border-white/14 bg-white/8"
+              iconWrapClass="bg-white/14 text-white"
+            />
+            <MetricCard
+              title="أخطاء تحتاج مراجعة"
+              value={String(data.totalMistakes)}
+              caption={`${mistakeRatio}% من نشاطك الأخير يحتاج تثبيتًا ومراجعة.`}
+              icon={TriangleAlert}
+              className="border-white/14 bg-white/8"
+              iconWrapClass="bg-white/14 text-white"
+            />
           </div>
         </CardContent>
       </Card>
@@ -308,33 +471,32 @@ export function StudentDashboard() {
         </div>
       ) : null}
 
-      <div className="grid gap-6 xl:grid-cols-[1.15fr,0.85fr]">
+      <div className="grid gap-6 xl:grid-cols-[1.18fr,0.82fr]">
         <div className="space-y-6">
-          <Card className="rounded-[2rem] border-white/80 bg-white/96 shadow-soft">
+          <Card
+            id="today-plan"
+            className="rounded-[2rem] border border-[#dbe6f6] bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(247,250,255,0.96))] shadow-[0_18px_46px_rgba(18,59,122,0.08)]"
+          >
             <CardContent className="space-y-5 p-8">
               <div className="flex flex-wrap items-center justify-between gap-4">
                 <div>
-                  <p className="section-eyebrow text-[#123B7A]">خطة اليوم</p>
+                  <p className="section-eyebrow text-[#123B7A]">الخطة اليومية</p>
                   <h3 className="display-font text-2xl font-bold text-slate-950">
-                    {data.todayTasks.length ? `أنجزت ${completedToday} من ${data.todayTasks.length}` : "لا توجد مهام اليوم"}
+                    {data.todayTasks.length ? `أنجزت ${completedToday} من ${data.todayTasks.length}` : "لا توجد مهام لليوم"}
                   </h3>
+                  <p className="mt-2 text-sm leading-7 text-slate-500">
+                    مهام واضحة، تنفيذ سريع، وتحديث مباشر بمجرد إنهاء كل مهمة.
+                  </p>
                 </div>
-                {pressure ? (
-                  <span className={`rounded-full border px-3 py-1 text-xs font-bold ${pressure.className}`}>
-                    {pressure.label}
-                  </span>
-                ) : null}
+                <span className={`rounded-full border px-3 py-1 text-xs font-bold ${pressure.className}`}>
+                  {pressure.label}
+                </span>
               </div>
 
               {data.todayTasks.length ? (
                 <div className="space-y-3">
                   {data.todayTasks.map((task) => (
-                    <TaskRow
-                      key={task.id}
-                      task={task}
-                      pending={Boolean(taskState[task.id])}
-                      onToggle={handleToggleTask}
-                    />
+                    <TaskRow key={task.id} task={task} pending={Boolean(taskState[task.id])} onToggle={handleToggleTask} />
                   ))}
                 </div>
               ) : (
@@ -342,49 +504,98 @@ export function StudentDashboard() {
                   لا توجد مهام مجدولة اليوم حاليًا. يمكنك إعادة ضبط الخطة أو التوجه إلى بنك الأسئلة لبدء جلسة جديدة.
                 </div>
               )}
+
+              <div className="flex flex-wrap gap-3 pt-2">
+                <Link href="/onboarding">
+                  <Button className="gap-2">
+                    <NotebookPen className="h-4 w-4" />
+                    تعديل إعدادات الخطة
+                  </Button>
+                </Link>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="gap-2"
+                  onClick={handleResetPlan}
+                  disabled={actionState === "loading"}
+                >
+                  {actionState === "loading" ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCcw className="h-4 w-4" />}
+                  إعادة جدولة الخطة
+                </Button>
+              </div>
             </CardContent>
           </Card>
 
-          <Card className="rounded-[2rem] border-white/80 bg-white/96 shadow-soft" id="progress">
+          <Card
+            className="rounded-[2rem] border border-slate-200 bg-white/98 shadow-[0_18px_42px_rgba(15,23,42,0.06)]"
+            id="progress"
+          >
             <CardContent className="space-y-5 p-8">
               <div>
-                <p className="section-eyebrow text-[#123B7A]">تقدمك</p>
-                <h3 className="display-font text-2xl font-bold text-slate-950">الكمي واللفظي في مكان واحد</h3>
+                <p className="section-eyebrow text-[#123B7A]">المسار الأكاديمي</p>
+                <h3 className="display-font text-2xl font-bold text-slate-950">الكمي واللفظي في لوحة واحدة</h3>
+                <p className="mt-2 text-sm leading-7 text-slate-500">
+                  اعرف ما أنجزته، وما الذي بقي، وأين يجب أن يبدأ تركيزك اليوم.
+                </p>
               </div>
 
-              <div className="space-y-5">
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between text-sm font-semibold text-slate-600">
-                    <span>تقدم الكمي</span>
-                    <span>{data.quantProgressPercent}%</span>
-                  </div>
-                  <Progress value={data.quantProgressPercent} />
-                </div>
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between text-sm font-semibold text-slate-600">
-                    <span>تقدم اللفظي</span>
-                    <span>{data.verbalProgressPercent}%</span>
-                  </div>
-                  <Progress value={data.verbalProgressPercent} />
-                </div>
+              <div className="grid gap-4 lg:grid-cols-2">
+                {trainingTracks.map((track) => {
+                  const isQuant = track.key === "quant";
+                  const progressValue = isQuant ? data.quantProgressPercent : data.verbalProgressPercent;
+                  const remaining = isQuant ? data.quantRemainingSections : data.verbalRemainingSections;
+                  const Icon = track.icon;
+
+                  return (
+                    <div key={track.key} className={`rounded-[1.8rem] border p-5 ${track.accentClass}`}>
+                      <div className="flex items-start justify-between gap-4">
+                        <div className={`flex h-12 w-12 items-center justify-center rounded-[1rem] ${track.iconWrapClass}`}>
+                          <Icon className="h-5 w-5" />
+                        </div>
+                        <ProgressRing value={progressValue} label={isQuant ? "كمي" : "لفظي"} tone={track.ringTone} />
+                      </div>
+                      <div className="mt-4">
+                        <div className="display-font text-xl font-bold text-slate-950">{track.title}</div>
+                        <div className="mt-2 text-sm leading-7 text-slate-500">{track.description}</div>
+                      </div>
+                      <div className="mt-4 space-y-2">
+                        <div className="flex items-center justify-between text-sm font-semibold text-slate-600">
+                          <span>نسبة الإتقان</span>
+                          <span>{progressValue}%</span>
+                        </div>
+                        <Progress value={progressValue} indicatorClassName={track.indicatorClassName} />
+                      </div>
+                      <div className="mt-4 rounded-[1.2rem] border border-white/70 bg-white/70 px-4 py-3 text-sm font-semibold text-slate-700">
+                        المتبقي الآن: {remaining ?? "غير محدد"} قسم
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
 
               <div className="grid gap-4 md:grid-cols-3">
                 <div className="rounded-[1.4rem] border border-slate-200 bg-slate-50/70 p-4">
-                  <div className="text-xs font-semibold text-slate-500">المقاطع الكمية المتبقية</div>
+                  <div className="text-xs font-semibold text-slate-500">هدف الأسبوع</div>
                   <div className="mt-3 display-font text-2xl font-bold text-slate-950">
-                    {data.quantRemainingSections ?? "غير محدد"}
+                    {data.weeklyGoal.targetQuestions} سؤالًا
+                  </div>
+                  <div className="mt-2 text-sm text-slate-500">
+                    مع مراجعة {data.weeklyGoal.mistakesReview} سؤال من الأخطاء.
                   </div>
                 </div>
                 <div className="rounded-[1.4rem] border border-slate-200 bg-slate-50/70 p-4">
-                  <div className="text-xs font-semibold text-slate-500">المقاطع اللفظية المتبقية</div>
+                  <div className="text-xs font-semibold text-slate-500">خطة الكمي</div>
                   <div className="mt-3 display-font text-2xl font-bold text-slate-950">
-                    {data.verbalRemainingSections ?? "غير محدد"}
+                    {data.weeklyGoal.quantSections} مقطع
                   </div>
+                  <div className="mt-2 text-sm text-slate-500">حافظ على توزيع متوازن بدل التكديس في نهاية الأسبوع.</div>
                 </div>
                 <div className="rounded-[1.4rem] border border-slate-200 bg-slate-50/70 p-4">
-                  <div className="text-xs font-semibold text-slate-500">تاريخ الاختبار</div>
-                  <div className="mt-3 text-base font-bold text-slate-950">{formatPortalDate(data.examDate)}</div>
+                  <div className="text-xs font-semibold text-slate-500">خطة اللفظي</div>
+                  <div className="mt-3 display-font text-2xl font-bold text-slate-950">
+                    {data.weeklyGoal.verbalSections} مقطع
+                  </div>
+                  <div className="mt-2 text-sm text-slate-500">الاستمرار اليومي القصير أفضل من جلسة متأخرة وطويلة.</div>
                 </div>
               </div>
             </CardContent>
@@ -394,16 +605,22 @@ export function StudentDashboard() {
         </div>
 
         <div className="space-y-6">
-          <Card className="rounded-[2rem] border-white/80 bg-white/96 shadow-soft">
+          <Card className="rounded-[2rem] border border-slate-200 bg-white/98 shadow-[0_18px_42px_rgba(15,23,42,0.06)]">
             <CardContent className="space-y-5 p-8">
               <div>
-                <p className="section-eyebrow text-[#123B7A]">استكمل من حيث توقفت</p>
-                <h3 className="display-font text-2xl font-bold text-slate-950">آخر ما كنت تعمل عليه</h3>
+                <p className="section-eyebrow text-[#123B7A]">استكمال ذكي</p>
+                <h3 className="display-font text-2xl font-bold text-slate-950">أكمل من آخر نقطة توقفت عندها</h3>
+                <p className="mt-2 text-sm leading-7 text-slate-500">
+                  بدلاً من البدء العشوائي، افتح آخر ملف أو آخر تدريب مناسب لك الآن.
+                </p>
               </div>
 
               <div className="space-y-3">
                 {data.resumeItems.map((item) => (
-                  <div key={item.id} className="rounded-[1.5rem] border border-slate-200 bg-slate-50/70 p-4">
+                  <div
+                    key={item.id}
+                    className="rounded-[1.6rem] border border-slate-200 bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(248,250,252,0.9))] p-4 shadow-[0_12px_28px_rgba(15,23,42,0.04)]"
+                  >
                     <div className="display-font text-lg font-bold text-slate-950">{item.title}</div>
                     <p className="mt-2 text-sm leading-7 text-slate-600">{item.subtitle}</p>
                     <div className="mt-4">
@@ -420,52 +637,62 @@ export function StudentDashboard() {
             </CardContent>
           </Card>
 
-          <Card className="rounded-[2rem] border-white/80 bg-white/96 shadow-soft">
+          <Card className="rounded-[2rem] border border-slate-200 bg-white/98 shadow-[0_18px_42px_rgba(15,23,42,0.06)]">
             <CardContent className="space-y-5 p-8">
               <div>
-                <p className="section-eyebrow text-[#123B7A]">الانتقال السريع</p>
-                <h3 className="display-font text-2xl font-bold text-slate-950">ابدأ مما تحتاجه الآن</h3>
+                <p className="section-eyebrow text-[#123B7A]">الأقسام الرئيسية</p>
+                <h3 className="display-font text-2xl font-bold text-slate-950">لوحة بطاقات واضحة</h3>
+                <p className="mt-2 text-sm leading-7 text-slate-500">
+                  كل قسم رئيسي ظاهر كبطاقة مستقلة حتى يبدأ الطالب فورًا بدون بحث طويل.
+                </p>
               </div>
 
               <div className="grid gap-3 sm:grid-cols-2">
-                {quickActions.map((item) => {
-                  const Icon = item.icon;
-
-                  return (
-                    <Link key={item.href} href={item.href} className="rounded-[1.4rem] border border-slate-200 bg-slate-50/70 p-4 transition hover:border-[#d7e3f7] hover:bg-white">
-                      <div className="flex items-center gap-3">
-                        <div className="flex h-11 w-11 items-center justify-center rounded-[1rem] bg-[#eef4ff] text-[#123B7A]">
-                          <Icon className="h-5 w-5" />
-                        </div>
-                        <div>
-                          <div className="font-bold text-slate-900">{item.label}</div>
-                          <div className="text-xs leading-6 text-slate-500">{item.description}</div>
-                        </div>
-                      </div>
-                    </Link>
-                  );
-                })}
+                {quickActions.map((item) => (
+                  <QuickActionCard key={item.href} href={item.href} label={item.label} description={item.description} icon={item.icon} />
+                ))}
               </div>
             </CardContent>
           </Card>
 
-          <Card className="rounded-[2rem] border-white/80 bg-white/96 shadow-soft">
+          <Card className="rounded-[2rem] border border-slate-200 bg-white/98 shadow-[0_18px_42px_rgba(15,23,42,0.06)]">
             <CardContent className="space-y-5 p-8">
               <div>
-                <p className="section-eyebrow text-[#123B7A]">التوصيات اليومية</p>
-                <h3 className="display-font text-2xl font-bold text-slate-950">ماذا يفضّل أن تبدأ به</h3>
+                <p className="section-eyebrow text-[#123B7A]">توصيات اليوم</p>
+                <h3 className="display-font text-2xl font-bold text-slate-950">ابدأ من الأكثر أثرًا</h3>
+                <p className="mt-2 text-sm leading-7 text-slate-500">
+                  توصيات قصيرة تساعدك على اختيار أفضل خطوة تالية بدل التشتت بين الأقسام.
+                </p>
               </div>
 
               <div className="space-y-3">
                 {data.recommendations.map((item) => (
-                  <div key={item} className="rounded-[1.4rem] border border-slate-200 bg-slate-50/80 p-4 text-sm leading-8 text-slate-600">
-                    {item}
+                  <div
+                    key={item}
+                    className="rounded-[1.5rem] border border-slate-200 bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(248,250,252,0.92))] p-4"
+                  >
+                    <div className="flex items-start gap-3">
+                      <div className="mt-1 flex h-10 w-10 shrink-0 items-center justify-center rounded-[1rem] bg-[#eef4ff] text-[#123B7A]">
+                        <Sparkles className="h-4 w-4" />
+                      </div>
+                      <div className="text-sm leading-8 text-slate-600">{item}</div>
+                    </div>
                   </div>
                 ))}
               </div>
 
-              <div className="rounded-[1.4rem] border border-[#E8D8B3] bg-[#fffaf0] px-4 py-3 text-sm font-semibold text-slate-700">
-                آخر استخدام: {formatLastActivity(data.lastActivityAt)}{data.lastActivityLabel ? ` - ${data.lastActivityLabel}` : ""}
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div className="rounded-[1.4rem] border border-[#E8D8B3] bg-[#fffaf0] px-4 py-4 text-sm font-semibold text-slate-700">
+                  آخر استخدام: {formatLastActivity(data.lastActivityAt)}
+                  {data.lastActivityLabel ? ` - ${data.lastActivityLabel}` : ""}
+                </div>
+                <div className="rounded-[1.4rem] border border-[#dcefe8] bg-[#f0fdf7] px-4 py-4 text-sm font-semibold text-slate-700">
+                  {upcomingTask
+                    ? `التالي في الخطة: ${upcomingTask.title}`
+                    : secondaryResumeItem
+                      ? `بعدها مباشرة: ${secondaryResumeItem.title}`
+                      : "لوحتك جاهزة لتبدأ من أي قسم الآن."}
+                </div>
               </div>
             </CardContent>
           </Card>

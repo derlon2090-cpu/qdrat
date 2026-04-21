@@ -19,11 +19,13 @@ type BasicNavLink = {
 };
 
 function isNavItemActive(pathname: string, currentSearch: string, href: string) {
-  if (!href.includes("?")) {
-    return pathname === href;
+  const [hrefWithoutHash] = href.split("#");
+
+  if (!hrefWithoutHash.includes("?")) {
+    return pathname === hrefWithoutHash;
   }
 
-  const [targetPath, queryString] = href.split("?");
+  const [targetPath, queryString] = hrefWithoutHash.split("?");
   if (pathname !== targetPath) {
     return false;
   }
@@ -165,11 +167,11 @@ export function SiteHeader({
               {isAuthenticated ? (
                 <>
                   <Link href="/dashboard" onClick={() => setOpen(false)}>
-                    <Button className="w-full">لوحة الطالب</Button>
+                    <Button className="w-full">لوحتي</Button>
                   </Link>
                   <Link href="/my-plan" onClick={() => setOpen(false)}>
                     <Button className="w-full" variant="outline">
-                      خطتي
+                      الخطة اليومية
                     </Button>
                   </Link>
                   <button

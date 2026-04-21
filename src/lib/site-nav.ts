@@ -72,14 +72,14 @@ export const publicTopNavItems: SiteNavItem[] = [
 export const studentTopNavItems: SiteNavItem[] = [
   {
     href: "/dashboard",
-    label: "لوحة الطالب",
+    label: "لوحتي",
     icon: House,
     accent: "text-[#123B7A]",
     iconWrap: "bg-[#eef4ff]",
   },
   {
     href: "/my-plan",
-    label: "خطتي",
+    label: "الخطة اليومية",
     icon: NotebookPen,
     accent: "text-[#2f855a]",
     iconWrap: "bg-[#edfdf3]",
@@ -114,7 +114,7 @@ export const studentTopNavItems: SiteNavItem[] = [
   },
   {
     href: "/account",
-    label: "الحساب",
+    label: "الإعدادات",
     icon: UserRound,
     accent: "text-[#475569]",
     iconWrap: "bg-[#f8fafc]",
@@ -124,19 +124,19 @@ export const studentTopNavItems: SiteNavItem[] = [
 export const studentSidebarItems: SiteNavItem[] = [
   {
     href: "/dashboard",
-    label: "لوحة الطالب",
+    label: "لوحتي",
     icon: House,
     accent: "text-[#123B7A]",
     iconWrap: "bg-[#eef4ff]",
-    description: "خطة اليوم وتقدمك",
+    description: "لوحة اليوم والإنجاز",
   },
   {
     href: "/my-plan",
-    label: "خطتي",
+    label: "الخطة اليومية",
     icon: NotebookPen,
     accent: "text-[#2f855a]",
     iconWrap: "bg-[#edfdf3]",
-    description: "الخطة الذكية",
+    description: "مهامك اليومية الذكية",
   },
   {
     href: "/question-bank",
@@ -144,7 +144,7 @@ export const studentSidebarItems: SiteNavItem[] = [
     icon: BriefcaseBusiness,
     accent: "text-[#d97706]",
     iconWrap: "bg-[#fff7ed]",
-    description: "التدريب والبحث",
+    description: "تدريب كمي ولفظي",
   },
   {
     href: "/question-bank?track=mistakes",
@@ -153,6 +153,14 @@ export const studentSidebarItems: SiteNavItem[] = [
     accent: "text-[#dc2626]",
     iconWrap: "bg-[#fff1f2]",
     description: "أسئلتك المتكررة",
+  },
+  {
+    href: "/dashboard#progress",
+    label: "المراجعة",
+    icon: ClipboardList,
+    accent: "text-[#2563eb]",
+    iconWrap: "bg-[#eff6ff]",
+    description: "الكمي واللفظي",
   },
   {
     href: "/summaries",
@@ -171,36 +179,12 @@ export const studentSidebarItems: SiteNavItem[] = [
     description: "نماذج التدريب",
   },
   {
-    href: "/diagnostic",
-    label: "التشخيص",
-    icon: ClipboardList,
-    accent: "text-[#2563eb]",
-    iconWrap: "bg-[#eff6ff]",
-    description: "قياس المستوى",
-  },
-  {
-    href: "/statistics",
-    label: "الإحصائيات",
-    icon: BarChart3,
-    accent: "text-[#7c3aed]",
-    iconWrap: "bg-[#f5f3ff]",
-    description: "التقدم والتحليل",
-  },
-  {
     href: "/account",
-    label: "الحساب",
+    label: "الإعدادات",
     icon: UserRound,
     accent: "text-[#475569]",
     iconWrap: "bg-[#f8fafc]",
-    description: "بياناتك وإعداداتك",
-  },
-  {
-    href: "/pricing",
-    label: "الاشتراك",
-    icon: Coins,
-    accent: "text-[#b7791f]",
-    iconWrap: "bg-[#fff8e5]",
-    description: "الباقات والمزايا",
+    description: "الحساب وتفضيلاتك",
   },
 ];
 
@@ -216,16 +200,14 @@ export const publicFooterLinks = [
 ];
 
 export const studentFooterLinks = [
-  { href: "/dashboard", label: "لوحة الطالب" },
-  { href: "/my-plan", label: "خطتي" },
+  { href: "/dashboard", label: "لوحتي" },
+  { href: "/my-plan", label: "الخطة اليومية" },
   { href: "/question-bank", label: "بنك الأسئلة" },
   { href: "/question-bank?track=mistakes", label: "الأخطاء" },
+  { href: "/dashboard#progress", label: "المراجعة" },
   { href: "/summaries", label: "الملخصات" },
   { href: "/paper-models", label: "النماذج" },
-  { href: "/diagnostic", label: "التشخيص" },
-  { href: "/statistics", label: "الإحصائيات" },
-  { href: "/account", label: "الحساب" },
-  { href: "/pricing", label: "الاشتراك" },
+  { href: "/account", label: "الإعدادات" },
   { href: "/faq", label: "الدعم" },
 ];
 
