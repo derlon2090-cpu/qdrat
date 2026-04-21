@@ -118,13 +118,13 @@ export const bank4ShortReadingQuestions: VerbalPracticeQuestion[] = bank4Reading
 
       return {
         id: `bank4-reading-${String(passage.pieceNumber).padStart(3, "0")}-${String(question.questionOrder).padStart(2, "0")}`,
-        categoryId: "short_reading",
+        categoryId: "reading_comprehension",
         prompt,
         options: orderedOptions,
         correctAnswer,
         explanation: createExplanation(title, question, correctAnswer),
         source: `البنك الرابع - استيعاب المقروء - قطعة ${title}`,
-        keywords: [title, "البنك الرابع", "استيعاب المقروء", "فهم قصير"],
+        keywords: [title, "البنك الرابع", "استيعاب المقروء", "قطع لفظي"],
       } satisfies VerbalPracticeQuestion;
     });
   },

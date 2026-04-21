@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import { redirect } from "next/navigation";
 import { BookOpenText } from "lucide-react";
 
 import { PageShell } from "@/components/page-shell";
@@ -18,6 +19,9 @@ type VerbalPracticePageProps = {
 
 export default async function VerbalPracticePage({ searchParams }: VerbalPracticePageProps) {
   const resolvedSearchParams = await searchParams;
+  if (resolvedSearchParams.category === "short_reading") {
+    redirect("/verbal/reading");
+  }
   const activeCategory = getVerbalQuestionCategory(resolvedSearchParams.category);
   const questions = getVerbalQuestionsByCategory(activeCategory.id);
   const activeQuestionId =
@@ -38,7 +42,7 @@ export default async function VerbalPracticePage({ searchParams }: VerbalPractic
     <PageShell
       eyebrow="اللفظي المصنف"
       title="رتبنا أسئلة اللفظي المتنوعة داخل أقسام واضحة وجاهزة للتدريب"
-      description="ابدأ من تناظر لفظي أو إكمال الجمل أو الخطأ السياقي أو المفردة الشاذة أو الفهم القصير. كل سؤال مرتبط بتصحيح بعد التأكيد وشرح للإجابة الصحيحة مع دعم حفظ الأخطاء وXP."
+      description="ابدأ من تناظر لفظي أو إكمال الجمل أو الخطأ السياقي أو المفردة الشاذة. أما أسئلة القطع والاستيعاب فتظهر داخل قسم القطع اللفظية نفسه مع النص وأسئلته."
       icon={BookOpenText}
       iconWrap="bg-[#eef4ff]"
       iconColor="text-[#123B7A]"

@@ -8,7 +8,13 @@ export type VerbalQuestionCategoryId =
   | "sentence_completion"
   | "contextual_error"
   | "odd_word"
+  | "reading_comprehension"
+  | "vocabulary"
+  | "linguistic_semantics"
+  | "text_type"
   | "short_reading";
+
+export type VisibleVerbalQuestionCategoryId = Exclude<VerbalQuestionCategoryId, "short_reading">;
 
 export type VerbalPracticeQuestion = {
   id: string;
@@ -22,7 +28,7 @@ export type VerbalPracticeQuestion = {
 };
 
 export type VerbalQuestionCategory = {
-  id: VerbalQuestionCategoryId;
+  id: VisibleVerbalQuestionCategoryId;
   title: string;
   description: string;
   href: string;
@@ -125,7 +131,179 @@ function makeShortReadingQuestion(
   };
 }
 
+function createCueList(values: string[]) {
+  return values.map((value) => normalizeKeywordToken(value));
+}
+
+const LEGACY_TEXT_TYPE_PROMPT_CUES = createCueList([
+  "نوع النص",
+  "النص يعتبر",
+  "يصنف هذا النص",
+  "القالب الفني",
+  "أنسب قالب",
+  "أسلوب النص",
+]);
+
+const LEGACY_TEXT_TYPE_OPTION_CUES = createCueList([
+  "حكمة",
+  "نصيحة",
+  "مقالة",
+  "مقال",
+  "قصة",
+  "قصيدة",
+  "رواية",
+  "مثل",
+  "خطبة",
+  "ترجمة",
+  "نص أدبي",
+  "نص علمي",
+  "نص علمي متأدب",
+  "مقال ذاتي",
+]);
+
+const LEGACY_VOCABULARY_CUES = createCueList([
+  "معنى كلمة",
+  "المقصود ب",
+  "المقصود بـ",
+  "تعني",
+  "مرادف",
+  "ضد",
+  "يقابلها",
+  "يمكن استبدال",
+  "يمكن أن نستبدل",
+  "أقرب معنى",
+  "ما معنى",
+]);
+
+const LEGACY_LINGUISTIC_SEMANTICS_CUES = createCueList([
+  "تفيد",
+  "تدل",
+  "دلالة",
+  "نوع الأسلوب",
+  "العلاقة بين",
+  "ما العلاقة",
+  "علاقة",
+  "الضمير",
+  "يعود الضمير",
+  "يعود على",
+  "غرض الاستفهام",
+  "لماذا سمي",
+  "كم تضاد",
+  "بما قبلها",
+  "بما بعدها",
+]);
+
+const LEGACY_CONTEXTUAL_ERROR_CUES = createCueList([
+  "الكلمة التي يمكن حذفها",
+  "الكلمة الزائدة",
+  "تعد زائدة",
+  "غير الصحيحة منطقيًا",
+  "غير الصحيحة منطقيا",
+  "خطأ منطقي",
+  "العبارة غير الصحيحة",
+]);
+
+const LEGACY_READING_COMPREHENSION_CUES = createCueList([
+  "يفهم من النص",
+  "نفهم من النص",
+  "نستنتج من النص",
+  "وفقا للنص",
+  "وفقًا للنص",
+  "حسب النص",
+  "من خلال النص",
+  "تدل الفقرة",
+  "الفكرة العامة",
+  "الفكرة الرئيسية",
+  "العنوان الأنسب",
+  "أنسب عنوان",
+  "ماذا نستفيد",
+]);
+
+const LEGACY_PASSAGE_CUES = createCueList(["النص", "القطعة", "الفقرة", "السياق"]);
+
+function includesLegacyCue(value: string, cues: string[]) {
+  const normalized = normalizeKeywordToken(value);
+  return cues.some((cue) => normalized.includes(cue));
+}
+
+function countMatchingOptionCues(options: string[], cues: string[]) {
+  return options.filter((option) => includesLegacyCue(option, cues)).length;
+}
+
+function normalizeLegacyShortReadingCategory(
+  question: VerbalPracticeQuestion,
+): VisibleVerbalQuestionCategoryId {
+  if (question.categoryId !== "short_reading") {
+    return question.categoryId;
+  }
+
+  if (includesLegacyCue(question.prompt, LEGACY_CONTEXTUAL_ERROR_CUES)) {
+    return "contextual_error";
+  }
+
+  if (
+    includesLegacyCue(question.prompt, LEGACY_TEXT_TYPE_PROMPT_CUES) ||
+    countMatchingOptionCues(question.options, LEGACY_TEXT_TYPE_OPTION_CUES) >= 2
+  ) {
+    return "text_type";
+  }
+
+  if (includesLegacyCue(question.prompt, LEGACY_VOCABULARY_CUES)) {
+    return "vocabulary";
+  }
+
+  if (includesLegacyCue(question.prompt, LEGACY_LINGUISTIC_SEMANTICS_CUES)) {
+    return "linguistic_semantics";
+  }
+
+  if (
+    includesLegacyCue(question.prompt, LEGACY_READING_COMPREHENSION_CUES) ||
+    includesLegacyCue(question.prompt, LEGACY_PASSAGE_CUES)
+  ) {
+    return "reading_comprehension";
+  }
+
+  return "reading_comprehension";
+}
+
+function normalizeLegacyVerbalQuestion(question: VerbalPracticeQuestion): VerbalPracticeQuestion {
+  const nextCategoryId = normalizeLegacyShortReadingCategory(question);
+
+  if (nextCategoryId === question.categoryId) {
+    return question;
+  }
+
+  return {
+    ...question,
+    categoryId: nextCategoryId,
+  };
+}
+
 export const verbalQuestionCategories: VerbalQuestionCategory[] = [
+  {
+    id: "reading_comprehension",
+    title: "فهم المقروء",
+    description: "أسئلة الفكرة والعنوان والاستنتاج وما يفهم من النص أو الفقرة.",
+    href: "/verbal/practice?category=reading_comprehension",
+  },
+  {
+    id: "vocabulary",
+    title: "المفردات",
+    description: "معاني الكلمات والمرادف والضد والمقصود باللفظ داخل السياق.",
+    href: "/verbal/practice?category=vocabulary",
+  },
+  {
+    id: "linguistic_semantics",
+    title: "الدلالة اللغوية",
+    description: "الضمائر والعلاقات بين الجمل ودلالة الألفاظ وما تفيده الكلمات والتراكيب.",
+    href: "/verbal/practice?category=linguistic_semantics",
+  },
+  {
+    id: "text_type",
+    title: "تصنيف النص",
+    description: "تمييز نوع النص مثل الحكمة والنصيحة والمقالة والقالب الفني المشابه.",
+    href: "/verbal/practice?category=text_type",
+  },
   {
     id: "analogy",
     title: "تناظر لفظي",
@@ -149,12 +327,6 @@ export const verbalQuestionCategories: VerbalQuestionCategory[] = [
     title: "المفردة الشاذة",
     description: "اختيار الكلمة المختلفة عن باقي المجموعة.",
     href: "/verbal/practice?category=odd_word",
-  },
-  {
-    id: "short_reading",
-    title: "فهم قصير",
-    description: "أسئلة فهم سريعة وعناوين ومعاني وعلاقات مبنية على نصوص قصيرة ومباشرة.",
-    href: "/verbal/practice?category=short_reading",
   },
 ];
 
@@ -1995,13 +2167,17 @@ const shortReadingQuestions: VerbalPracticeQuestion[] = [
   ),
 ];
 
-export const verbalReadingOnlyQuestions: VerbalPracticeQuestion[] = dedupeVerbalQuestions([
+const normalizedLegacyReadingQuestions = dedupeVerbalQuestions([
   ...shortReadingQuestions,
   ...importedVerbalMixedQuestions.filter((question) => question.categoryId === "short_reading"),
   ...bank45SessionQuestions.filter((question) => question.categoryId === "short_reading"),
   ...bank68SessionQuestions.filter((question) => question.categoryId === "short_reading"),
   ...bank4ShortReadingQuestions,
-]).map(withDerivedKeywords);
+].map(normalizeLegacyVerbalQuestion));
+
+export const verbalReadingOnlyQuestions: VerbalPracticeQuestion[] = normalizedLegacyReadingQuestions
+  .filter((question) => question.categoryId === "reading_comprehension")
+  .map(withDerivedKeywords);
 
 export const verbalMixedPracticeQuestions: VerbalPracticeQuestion[] = dedupeVerbalQuestions([
   ...analogyQuestions,
@@ -2012,17 +2188,24 @@ export const verbalMixedPracticeQuestions: VerbalPracticeQuestion[] = dedupeVerb
   ...additionalContextualErrorQuestions,
   ...oddWordQuestions,
   ...additionalOddWordQuestions,
+  ...normalizedLegacyReadingQuestions.filter((question) => question.categoryId !== "reading_comprehension"),
   ...importedVerbalMixedQuestions.filter((question) => question.categoryId !== "short_reading"),
   ...bank45SessionQuestions.filter((question) => question.categoryId !== "short_reading"),
   ...bank68SessionQuestions.filter((question) => question.categoryId !== "short_reading"),
 ]).map(withDerivedKeywords);
 
 export function getVerbalQuestionCategory(categoryId: string | null | undefined) {
-  return verbalQuestionCategories.find((category) => category.id === categoryId) ?? verbalQuestionCategories[0];
+  const resolvedCategoryId =
+    categoryId === "short_reading" ? "reading_comprehension" : categoryId;
+
+  return (
+    verbalQuestionCategories.find((category) => category.id === resolvedCategoryId) ??
+    verbalQuestionCategories[0]
+  );
 }
 
-export function getVerbalQuestionsByCategory(categoryId: VerbalQuestionCategoryId) {
-  if (categoryId === "short_reading") {
+export function getVerbalQuestionsByCategory(categoryId: VerbalQuestionCategoryId | string) {
+  if (categoryId === "short_reading" || categoryId === "reading_comprehension") {
     return verbalReadingOnlyQuestions;
   }
 

@@ -173,7 +173,7 @@ export function VerbalReadingFromDocument({
         questionKey,
         section: "verbal",
         sourceBank: "بنك القطع اللفظي",
-        questionTypeLabel: "لفظي",
+        questionTypeLabel: "قطع لفظي",
         questionText: currentQuestion.text,
         questionHref,
         metadata: {

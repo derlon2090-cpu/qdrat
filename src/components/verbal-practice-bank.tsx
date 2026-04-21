@@ -301,9 +301,28 @@ export function VerbalPracticeBank({
       <div className="rounded-[1.9rem] border border-[#E8D8B3] bg-white/95 p-6 shadow-soft">
         <div className="display-font text-2xl font-bold text-slate-950">اختر القسم اللفظي الذي تريد التدريب عليه</div>
         <p className="mt-2 max-w-3xl text-sm leading-8 text-slate-600">
-          صنفنا الأسئلة التي أرسلتها إلى تناظر لفظي، إكمال الجمل، الخطأ السياقي، المفردة الشاذة، والفهم القصير، مع
-          تصحيح بعد تأكيد الإجابة وشرح للإجابة الصحيحة.
+          صنفنا الأسئلة اللفظية المتنوعة إلى تناظر لفظي، إكمال الجمل، الخطأ السياقي، والمفردة الشاذة. أما أي سؤال
+          مبني على قطعة أو معنى نص أو عنوانه أو ما يفهم منه، فمكانه داخل قسم القطع اللفظية نفسه وليس قسمًا منفصلًا.
         </p>
+
+        <div className="mt-5 rounded-[1.6rem] border border-[#E8D8B3] bg-[#fffaf1] p-5">
+          <div className="text-sm font-bold text-[#123B7A]">كيف تعرف نوع السؤال قبل الحل؟</div>
+          <div className="mt-3 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+            {[
+              { label: "قطع لفظي", hint: "يفهم من النص / نستنتج / عنوان مناسب / معنى كلمة داخل قطعة" },
+              { label: "إكمال الجمل", hint: "أكمل / فراغ / يتم المعنى بـ" },
+              { label: "تناظر لفظي", hint: "كلمة : كلمة = كلمة : ؟" },
+              { label: "المفردة الشاذة", hint: "الكلمة المختلفة / الشاذة / ما لا ينتمي" },
+              { label: "الخطأ السياقي", hint: "الكلمة الخاطئة / غير المنسجمة / الخطأ في الجملة" },
+              { label: "ابدأ بالمطلوب", hint: "حدّد الكلمة المفتاحية في السؤال أولًا ثم اختر القسم المناسب" },
+            ].map((item) => (
+              <div key={item.label} className="rounded-[1.2rem] border border-white bg-white px-4 py-3 shadow-sm">
+                <div className="text-sm font-bold text-slate-900">{item.label}</div>
+                <div className="mt-1 text-xs leading-6 text-slate-500">{item.hint}</div>
+              </div>
+            ))}
+          </div>
+        </div>
 
         <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
           {categories.map((category) => {

@@ -288,7 +288,7 @@ export function VerbalPassageViewer({
         questionKey: currentQuestionKey,
         section: "verbal",
         sourceBank: "بنك القطع اللفظي",
-        questionTypeLabel: "لفظي",
+        questionTypeLabel: "قطع لفظي",
         questionText: currentQuestion.questionText,
         questionHref,
         metadata: {
