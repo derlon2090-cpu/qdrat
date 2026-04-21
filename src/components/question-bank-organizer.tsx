@@ -456,7 +456,7 @@ export function QuestionBankOrganizer() {
       >
         <EmptySectionCard
           title="اللفظي"
-          description="الأقسام اللفظية أصبحت مرتبة الآن إلى قطع لفظي، تناظر لفظي، إكمال الجمل، الخطأ السياقي، والمفردة الشاذة."
+          description="الأقسام اللفظية أصبحت مرتبة الآن إلى قطع لفظي، فهم المقروء، المفردات، الدلالة اللغوية، تصنيف النص، التناظر اللفظي، إكمال الجمل، الخطأ السياقي، والمفردة الشاذة."
           active={track === "verbal"}
           onClick={() => setTrack("verbal")}
           icon={BookOpenText}

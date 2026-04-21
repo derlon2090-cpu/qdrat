@@ -11,6 +11,7 @@ import { quantitativeSections, verbalSections } from "@/data/question-bank-secti
 import {
   getVerbalQuestionCategory,
   verbalMixedPracticeQuestions,
+  verbalReadingOnlyQuestions,
 } from "@/data/verbal-mixed-bank";
 
 export type BankItem = {
@@ -300,6 +301,13 @@ export async function getBankItems(filters: SearchFilters = {}) {
 
   const sectionCounts = new Map<string, number>([
     ["verbal_passages", localVerbalPassages.length],
+    ["verbal_reading_comprehension", verbalReadingOnlyQuestions.length],
+    ["verbal_vocabulary", verbalMixedPracticeQuestions.filter((question) => question.categoryId === "vocabulary").length],
+    [
+      "verbal_linguistic_semantics",
+      verbalMixedPracticeQuestions.filter((question) => question.categoryId === "linguistic_semantics").length,
+    ],
+    ["verbal_text_type", verbalMixedPracticeQuestions.filter((question) => question.categoryId === "text_type").length],
     ["verbal_analogy", verbalMixedPracticeQuestions.filter((question) => question.categoryId === "analogy").length],
     [
       "verbal_sentence_completion",

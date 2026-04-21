@@ -20,7 +20,12 @@ type VerbalPracticePageProps = {
 export default async function VerbalPracticePage({ searchParams }: VerbalPracticePageProps) {
   const resolvedSearchParams = await searchParams;
   if (resolvedSearchParams.category === "short_reading") {
-    redirect("/verbal/reading");
+    const nextParams = new URLSearchParams();
+    nextParams.set("category", "reading_comprehension");
+    if (resolvedSearchParams.question) {
+      nextParams.set("question", resolvedSearchParams.question);
+    }
+    redirect(`/verbal/practice?${nextParams.toString()}`);
   }
   const activeCategory = getVerbalQuestionCategory(resolvedSearchParams.category);
   const questions = getVerbalQuestionsByCategory(activeCategory.id);
@@ -42,7 +47,7 @@ export default async function VerbalPracticePage({ searchParams }: VerbalPractic
     <PageShell
       eyebrow="اللفظي المصنف"
       title="رتبنا أسئلة اللفظي المتنوعة داخل أقسام واضحة وجاهزة للتدريب"
-      description="ابدأ من تناظر لفظي أو إكمال الجمل أو الخطأ السياقي أو المفردة الشاذة. أما أسئلة القطع والاستيعاب فتظهر داخل قسم القطع اللفظية نفسه مع النص وأسئلته."
+      description="ابدأ من فهم المقروء أو المفردات أو الدلالة اللغوية أو تصنيف النص، ثم انتقل إلى التناظر اللفظي وإكمال الجمل والخطأ السياقي والمفردة الشاذة. أما القطع اللفظية نفسها فلها مسار مستقل يعرض النص مع أسئلته."
       icon={BookOpenText}
       iconWrap="bg-[#eef4ff]"
       iconColor="text-[#123B7A]"
