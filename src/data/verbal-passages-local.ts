@@ -1,5 +1,6 @@
 import samplePassagesData from "../../data/verbal-passages.sample.json";
 import { importedLocalVerbalPassages } from "./verbal-passages-imported";
+import { bank4ImportedPassages } from "./verbal-passages-bank4";
 
 export type LocalVerbalPassageQuestion = {
   id: string;
@@ -104,6 +105,7 @@ const sampleLocalVerbalPassages = (samplePassagesData as SamplePassageRow[]).map
 export const localVerbalPassages = [
   ...sampleLocalVerbalPassages,
   ...importedLocalVerbalPassages,
+  ...bank4ImportedPassages,
 ].map((passage, index) => ({
   ...passage,
   pieceNumber: index + 1,

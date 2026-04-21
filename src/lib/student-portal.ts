@@ -1,9 +1,19 @@
 import { getSqlClient } from "@/lib/db";
+import {
+  ensureUserQuestionProgressSchema,
+  getUserQuestionProgressTotals,
+  listRecentSolvedQuestions,
+  listSolvedSections,
+  type UserSolvedQuestionSummary,
+  type UserSolvedSectionSummary,
+} from "@/lib/user-question-progress";
 
 const DEFAULT_QUANT_SECTIONS = 18;
 const DEFAULT_VERBAL_SECTIONS = 12;
 const DEFAULT_DAILY_MINUTES = 120;
 const PLAN_GENERATION_DAYS = 14;
+const XP_PER_SOLVED_QUESTION = 5;
+const XP_PRO_TARGET = 10_000;
 
 export type StudentPlanType = "light" | "medium" | "intensive";
 export type PlanPressure = "comfortable" | "balanced" | "compressed" | "needs_more_time";
@@ -27,6 +37,19 @@ export type StudentPortalResumeItem = {
   ctaLabel: string;
 };
 
+export type StudentPortalXpSummary = {
+  total: number;
+  perQuestion: number;
+  target: number;
+  remainingToTarget: number;
+  progressPercent: number;
+  levelLabel: string;
+  statusMessage: string;
+};
+
+export type StudentPortalSolvedSection = UserSolvedSectionSummary;
+export type StudentPortalSolvedQuestion = UserSolvedQuestionSummary;
+
 export type StudentPortalData = {
   userId: string;
   fullName: string;
@@ -41,12 +64,16 @@ export type StudentPortalData = {
   progressPercent: number;
   quantProgressPercent: number;
   verbalProgressPercent: number;
+  xp: StudentPortalXpSummary;
+  solvedQuestionsCount: number;
   totalMistakes: number;
   quantitativeMistakes: number;
   verbalMistakes: number;
   summariesCount: number;
   lastActivityAt: string | null;
   lastActivityLabel: string | null;
+  solvedSections: StudentPortalSolvedSection[];
+  recentSolvedQuestions: StudentPortalSolvedQuestion[];
   todayTasks: StudentPortalTask[];
   upcomingTasks: StudentPortalTask[];
   weeklyGoal: {
@@ -196,6 +223,43 @@ function calculatePressure(
   if (requiredMinutes <= dailyMinutes * 1.05) return "balanced";
   if (requiredMinutes <= dailyMinutes * 1.3) return "compressed";
   return "needs_more_time";
+}
+
+function buildXpSummary(totalXp: number): StudentPortalXpSummary {
+  const normalizedXp = Math.max(0, Math.round(totalXp));
+  const remainingToTarget = Math.max(0, XP_PRO_TARGET - normalizedXp);
+
+  let levelLabel = "مستوى مبتدئ";
+  if (normalizedXp >= XP_PRO_TARGET) {
+    levelLabel = "لفل محترف";
+  } else if (normalizedXp >= 7500) {
+    levelLabel = "جاهز تقريبًا";
+  } else if (normalizedXp >= 5000) {
+    levelLabel = "مستوى متقدم";
+  } else if (normalizedXp >= 2500) {
+    levelLabel = "مستوى متمكن";
+  }
+
+  let statusMessage = "ابدأ بتجميع النقاط من الأسئلة الصحيحة، وكل سؤال صحيح يمنحك 5 XP.";
+  if (normalizedXp >= XP_PRO_TARGET) {
+    statusMessage = "وصلت للفل المحترف وأنت جاهز تقريبًا للاختبار. حافظ على المراجعة اليومية.";
+  } else if (normalizedXp >= 7500) {
+    statusMessage = `أنت جاهز تقريبًا للاختبار، ويتبقى ${remainingToTarget} XP للوصول إلى لفل المحترف.`;
+  } else if (normalizedXp >= 5000) {
+    statusMessage = `مستواك متقدم الآن، ويتبقى ${remainingToTarget} XP للوصول إلى الجاهزية العالية.`;
+  } else if (normalizedXp >= 2500) {
+    statusMessage = `أنت على الطريق الصحيح، واستمر حتى تقلص الفارق المتبقي ${remainingToTarget} XP.`;
+  }
+
+  return {
+    total: normalizedXp,
+    perQuestion: XP_PER_SOLVED_QUESTION,
+    target: XP_PRO_TARGET,
+    remainingToTarget,
+    progressPercent: clamp(Math.round((normalizedXp / XP_PRO_TARGET) * 100), 0, 100),
+    levelLabel,
+    statusMessage,
+  };
 }
 
 function buildRecommendationSet(input: {
@@ -354,6 +418,7 @@ function buildPlanTasks(input: {
 }
 
 async function ensureStudentPortalSchema() {
+  await ensureUserQuestionProgressSchema();
   const sql = getSql();
 
   await sql.query(`
@@ -630,6 +695,9 @@ async function listPlanTasks(userId: string) {
 function mapPortalData(
   row: StudentPortalRow | null,
   tasks: StudentPortalTask[],
+  progress: Awaited<ReturnType<typeof getUserQuestionProgressTotals>>,
+  solvedSections: Awaited<ReturnType<typeof listSolvedSections>>,
+  recentSolvedQuestions: Awaited<ReturnType<typeof listRecentSolvedQuestions>>,
   mistakes: Awaited<ReturnType<typeof getMistakeStats>>,
   summaries: Awaited<ReturnType<typeof getSummaryStats>>,
 ) {
@@ -665,6 +733,7 @@ function mapPortalData(
     targetQuestions: todayTasks.reduce((sum, task) => sum + (task.targetQuestions ?? 0), 0) * 3 || 90,
     mistakesReview: Math.max(5, Math.min(15, mistakes.total_mistakes || 5)),
   };
+  const xp = buildXpSummary(progress.totalXp);
 
   const resumeItems: StudentPortalResumeItem[] = [];
 
@@ -712,12 +781,16 @@ function mapPortalData(
     progressPercent: clamp(progressPercent, 0, 100),
     quantProgressPercent: clamp(quantProgressPercent, 0, 100),
     verbalProgressPercent: clamp(verbalProgressPercent, 0, 100),
+    xp,
+    solvedQuestionsCount: progress.solvedQuestionsCount,
     totalMistakes: mistakes.total_mistakes,
     quantitativeMistakes: mistakes.quantitative_mistakes,
     verbalMistakes: mistakes.verbal_mistakes,
     summariesCount: summaries.total_summaries,
     lastActivityAt: row?.last_activity_at ?? null,
     lastActivityLabel: row?.last_activity_label ?? null,
+    solvedSections,
+    recentSolvedQuestions,
     todayTasks,
     upcomingTasks,
     weeklyGoal,
@@ -775,8 +848,13 @@ export async function getStudentPortalData(userId: string) {
     throw new Error("تعذر العثور على ملف الطالب.");
   }
 
-  const mistakes = await getMistakeStats(userId);
-  const summaries = await getSummaryStats(userId);
+  const [progress, solvedSections, recentSolvedQuestions, mistakes, summaries] = await Promise.all([
+    getUserQuestionProgressTotals(userId),
+    listSolvedSections(userId),
+    listRecentSolvedQuestions(userId),
+    getMistakeStats(userId),
+    getSummaryStats(userId),
+  ]);
 
   if (portalRow.onboarding_completed) {
     const tasks = await listPlanTasks(userId);
@@ -786,7 +864,7 @@ export async function getStudentPortalData(userId: string) {
   }
 
   const nextTasks = await listPlanTasks(userId);
-  return mapPortalData(portalRow, nextTasks, mistakes, summaries);
+  return mapPortalData(portalRow, nextTasks, progress, solvedSections, recentSolvedQuestions, mistakes, summaries);
 }
 
 export async function saveStudentOnboarding(userId: string, input: OnboardingInput) {

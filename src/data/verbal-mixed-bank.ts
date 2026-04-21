@@ -1,4 +1,7 @@
 import { importedVerbalMixedQuestions } from "./verbal-mixed-imported";
+import { bank45SessionQuestions } from "./verbal-mixed-bank45";
+import { bank68SessionQuestions } from "./verbal-mixed-bank68";
+import { bank4ShortReadingQuestions } from "./verbal-short-reading-bank4";
 
 export type VerbalQuestionCategoryId =
   | "analogy"
@@ -147,6 +150,12 @@ export const verbalQuestionCategories: VerbalQuestionCategory[] = [
     description: "اختيار الكلمة المختلفة عن باقي المجموعة.",
     href: "/verbal/practice?category=odd_word",
   },
+  {
+    id: "short_reading",
+    title: "فهم قصير",
+    description: "أسئلة فهم سريعة وعناوين ومعاني وعلاقات مبنية على نصوص قصيرة ومباشرة.",
+    href: "/verbal/practice?category=short_reading",
+  },
 ];
 
 const VERBAL_KEYWORD_STOP_WORDS = new Set([
@@ -246,6 +255,25 @@ function withDerivedKeywords(question: VerbalPracticeQuestion): VerbalPracticeQu
     ...question,
     keywords: deriveQuestionKeywords(question),
   };
+}
+
+function dedupeVerbalQuestions(questions: VerbalPracticeQuestion[]) {
+  const seen = new Set<string>();
+
+  return questions.filter((question) => {
+    const key = [
+      question.categoryId,
+      normalizeKeywordToken(question.prompt),
+      normalizeKeywordToken(question.correctAnswer),
+    ].join("::");
+
+    if (seen.has(key)) {
+      return false;
+    }
+
+    seen.add(key);
+    return true;
+  });
 }
 
 const analogyQuestions: VerbalPracticeQuestion[] = [
@@ -1967,12 +1995,15 @@ const shortReadingQuestions: VerbalPracticeQuestion[] = [
   ),
 ];
 
-export const verbalReadingOnlyQuestions: VerbalPracticeQuestion[] = [
+export const verbalReadingOnlyQuestions: VerbalPracticeQuestion[] = dedupeVerbalQuestions([
   ...shortReadingQuestions,
   ...importedVerbalMixedQuestions.filter((question) => question.categoryId === "short_reading"),
-].map(withDerivedKeywords);
+  ...bank45SessionQuestions.filter((question) => question.categoryId === "short_reading"),
+  ...bank68SessionQuestions.filter((question) => question.categoryId === "short_reading"),
+  ...bank4ShortReadingQuestions,
+]).map(withDerivedKeywords);
 
-export const verbalMixedPracticeQuestions: VerbalPracticeQuestion[] = [
+export const verbalMixedPracticeQuestions: VerbalPracticeQuestion[] = dedupeVerbalQuestions([
   ...analogyQuestions,
   ...additionalAnalogyQuestions,
   ...sentenceCompletionQuestions,
@@ -1982,13 +2013,19 @@ export const verbalMixedPracticeQuestions: VerbalPracticeQuestion[] = [
   ...oddWordQuestions,
   ...additionalOddWordQuestions,
   ...importedVerbalMixedQuestions.filter((question) => question.categoryId !== "short_reading"),
-].map(withDerivedKeywords);
+  ...bank45SessionQuestions.filter((question) => question.categoryId !== "short_reading"),
+  ...bank68SessionQuestions.filter((question) => question.categoryId !== "short_reading"),
+]).map(withDerivedKeywords);
 
 export function getVerbalQuestionCategory(categoryId: string | null | undefined) {
   return verbalQuestionCategories.find((category) => category.id === categoryId) ?? verbalQuestionCategories[0];
 }
 
 export function getVerbalQuestionsByCategory(categoryId: VerbalQuestionCategoryId) {
+  if (categoryId === "short_reading") {
+    return verbalReadingOnlyQuestions;
+  }
+
   return verbalMixedPracticeQuestions.filter((question) => question.categoryId === categoryId);
 }
 

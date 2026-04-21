@@ -3,8 +3,13 @@
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
+import { RotateCcw, Sparkles } from "lucide-react";
 
 import { useAuthSession } from "@/hooks/use-auth-session";
+import {
+  trackQuestionProgressFromClient,
+  type ClientQuestionProgressResult,
+} from "@/lib/client-question-progress";
 import { trackMistakeFromClient } from "@/lib/client-mistakes";
 import {
   getVerbalQuestionCategory,
@@ -15,6 +20,7 @@ import { Button } from "@/components/ui/button";
 
 type SavedAnswerMap = Record<string, string>;
 type QuestionProgressState = "current" | "correct" | "incorrect" | "unanswered";
+type ProgressFeedback = ClientQuestionProgressResult | null;
 
 const SAVED_ANSWERS_KEY = "miyaar-verbal-practice-answers";
 
@@ -40,6 +46,16 @@ function persistSavedAnswers(value: SavedAnswerMap) {
   window.sessionStorage.setItem(SAVED_ANSWERS_KEY, JSON.stringify(value));
 }
 
+function clearCategorySavedAnswers(categoryId: string) {
+  const savedAnswers = readSavedAnswers();
+  const nextEntries = Object.entries(savedAnswers).filter(
+    ([key]) => !key.startsWith(`${categoryId}-`),
+  );
+  const nextAnswers = Object.fromEntries(nextEntries) as SavedAnswerMap;
+  persistSavedAnswers(nextAnswers);
+  return nextAnswers;
+}
+
 function buildPracticeHref(pathname: string, currentParams: URLSearchParams, categoryId: string, questionId: string) {
   const nextParams = new URLSearchParams(currentParams.toString());
   nextParams.set("category", categoryId);
@@ -57,6 +73,7 @@ export function VerbalPracticeBank() {
   const [selectedAnswer, setSelectedAnswer] = useState("");
   const [submitted, setSubmitted] = useState(false);
   const [showAuthPrompt, setShowAuthPrompt] = useState(false);
+  const [progressFeedback, setProgressFeedback] = useState<ProgressFeedback>(null);
 
   useEffect(() => {
     setSavedAnswers(readSavedAnswers());
@@ -80,6 +97,9 @@ export function VerbalPracticeBank() {
   const currentQuestion = questions[currentQuestionIndex] ?? null;
 
   const currentKey = currentQuestion ? `${currentCategory.id}-${currentQuestion.id}` : "";
+  const questionHref = currentQuestion
+    ? `/verbal/practice?category=${encodeURIComponent(currentCategory.id)}&question=${encodeURIComponent(currentQuestion.id)}`
+    : "/verbal/practice";
 
   useEffect(() => {
     if (!currentQuestion) return;
@@ -87,6 +107,7 @@ export function VerbalPracticeBank() {
     setSelectedAnswer(oldAnswer);
     setSubmitted(Boolean(oldAnswer));
     setShowAuthPrompt(false);
+    setProgressFeedback(null);
   }, [currentKey, currentQuestion, savedAnswers]);
 
   useEffect(() => {
@@ -97,6 +118,24 @@ export function VerbalPracticeBank() {
       });
     }
   }, [currentCategory.id, currentQuestion, pathname, router, searchParams]);
+
+  useEffect(() => {
+    if (!currentQuestion || searchParams.get("reset") !== "1") return;
+
+    const nextAnswers = clearCategorySavedAnswers(currentCategory.id);
+    setSavedAnswers(nextAnswers);
+    setSelectedAnswer("");
+    setSubmitted(false);
+    setShowAuthPrompt(false);
+    setProgressFeedback(null);
+
+    const nextParams = new URLSearchParams(searchParams.toString());
+    nextParams.delete("reset");
+    nextParams.set("category", currentCategory.id);
+    nextParams.set("question", questions[0]?.id ?? currentQuestion.id);
+
+    router.replace(`${pathname}?${nextParams.toString()}`, { scroll: false });
+  }, [currentCategory.id, currentQuestion, pathname, questions, router, searchParams]);
 
   const result = useMemo(() => {
     if (!submitted || !selectedAnswer || !currentQuestion) return null;
@@ -156,6 +195,20 @@ export function VerbalPracticeBank() {
     openQuestion(categoryId, nextQuestions[0].id);
   }
 
+  function handleResetCategory() {
+    const nextAnswers = clearCategorySavedAnswers(currentCategory.id);
+    setSavedAnswers(nextAnswers);
+    setSelectedAnswer("");
+    setSubmitted(false);
+    setShowAuthPrompt(false);
+    setProgressFeedback(null);
+
+    const firstQuestion = questions[0];
+    if (firstQuestion) {
+      openQuestion(currentCategory.id, firstQuestion.id);
+    }
+  }
+
   async function confirmAnswer() {
     if (!selectedAnswer || !currentQuestion) return;
 
@@ -169,27 +222,59 @@ export function VerbalPracticeBank() {
       return next;
     });
 
-    const trackingResult = await trackMistakeFromClient({
+    const isCorrect = selectedAnswer === currentQuestion.correctAnswer;
+    const progressResult = await trackQuestionProgressFromClient({
       questionKey: currentKey,
       section: "verbal",
       sourceBank: `بنك اللفظي / ${currentCategory.title}`,
+      categoryId: currentCategory.id,
+      categoryTitle: currentCategory.title,
       questionTypeLabel: currentCategory.title,
       questionText: currentQuestion.prompt,
-      questionHref: `/verbal/practice?category=${encodeURIComponent(currentCategory.id)}&question=${encodeURIComponent(currentQuestion.id)}`,
+      questionHref,
+      selectedAnswer,
+      correctAnswer: currentQuestion.correctAnswer,
       metadata: {
         source: currentQuestion.source,
         categoryId: currentCategory.id,
         categoryTitle: currentCategory.title,
       },
-      outcome: selectedAnswer === currentQuestion.correctAnswer ? "correct" : "incorrect",
+      outcome: isCorrect ? "correct" : "incorrect",
+      xpValue: 5,
     });
 
-    if (trackingResult.unauthorized && selectedAnswer !== currentQuestion.correctAnswer) {
+    let mistakeTracking:
+      | Awaited<ReturnType<typeof trackMistakeFromClient>>
+      | null = null;
+
+    if (!isCorrect) {
+      mistakeTracking = await trackMistakeFromClient({
+        questionKey: currentKey,
+        section: "verbal",
+        sourceBank: `بنك اللفظي / ${currentCategory.title}`,
+        questionTypeLabel: currentCategory.title,
+        questionText: currentQuestion.prompt,
+        questionHref,
+        metadata: {
+          source: currentQuestion.source,
+          categoryId: currentCategory.id,
+          categoryTitle: currentCategory.title,
+        },
+        outcome: "incorrect",
+      });
+    }
+
+    setProgressFeedback(progressResult.result ?? null);
+
+    const shouldShowAuthPrompt =
+      progressResult.unauthorized || Boolean(mistakeTracking?.unauthorized);
+
+    if (shouldShowAuthPrompt) {
       setShowAuthPrompt(true);
       return;
     }
 
-    if (selectedAnswer === currentQuestion.correctAnswer || authStatus === "authenticated") {
+    if (isCorrect || authStatus === "authenticated") {
       setShowAuthPrompt(false);
     }
   }
@@ -210,7 +295,7 @@ export function VerbalPracticeBank() {
       <div className="rounded-[1.9rem] border border-[#E8D8B3] bg-white/95 p-6 shadow-soft">
         <div className="display-font text-2xl font-bold text-slate-950">اختر القسم اللفظي الذي تريد التدريب عليه</div>
         <p className="mt-2 max-w-3xl text-sm leading-8 text-slate-600">
-          صنفنا الأسئلة التي أرسلتها إلى تناظر لفظي، إكمال الجمل، الخطأ السياقي، والمفردة الشاذة، مع
+          صنفنا الأسئلة التي أرسلتها إلى تناظر لفظي، إكمال الجمل، الخطأ السياقي، المفردة الشاذة، والفهم القصير، مع
           تصحيح بعد تأكيد الإجابة وشرح للإجابة الصحيحة.
         </p>
 
@@ -296,6 +381,11 @@ export function VerbalPracticeBank() {
               تأكيد الإجابة
             </Button>
 
+            <Button variant="outline" size="lg" onClick={handleResetCategory} className="gap-2">
+              <RotateCcw className="h-4 w-4" />
+              إعادة أسئلة هذا القسم
+            </Button>
+
             <Button
               variant="outline"
               size="lg"
@@ -330,17 +420,48 @@ export function VerbalPracticeBank() {
               <div className="mt-3">
                 <span className="font-bold">الشرح:</span> {result.explanation}
               </div>
+
+              {progressFeedback ? (
+                <div className="mt-4 rounded-[1.1rem] border border-white/60 bg-white/60 px-4 py-3 text-sm leading-7">
+                  <div className="flex flex-wrap items-center gap-2 font-bold">
+                    <Sparkles className="h-4 w-4" />
+                    {progressFeedback.awardedXp > 0
+                      ? `تمت إضافة ${progressFeedback.awardedXp} XP إلى ملفك.`
+                      : progressFeedback.alreadySolved
+                        ? "هذا السؤال محسوب سابقًا داخل إنجازاتك."
+                        : "تم حفظ المحاولة داخل ملف الطالب."}
+                  </div>
+                  <div className="mt-2">
+                    مجموعك الحالي: {progressFeedback.totalXp.toLocaleString("en-US")} XP
+                    {` `} - الأسئلة المحلولة:{" "}
+                    {progressFeedback.solvedQuestionsCount.toLocaleString("en-US")}
+                  </div>
+                  {progressFeedback.reachedProfessionalLevel ? (
+                    <div className="mt-2 font-bold">
+                      وصلت للفل المحترف وأنت جاهز تقريبًا للاختبار.
+                    </div>
+                  ) : null}
+                </div>
+              ) : null}
             </div>
           ) : null}
 
           {showAuthPrompt ? (
             <div className="mt-6 rounded-[1.4rem] border border-amber-200 bg-amber-50 px-5 py-5 text-sm leading-8 text-amber-800">
-              سجّل دخولك حتى يتم حفظ هذا السؤال داخل قائمة الأخطاء الخاصة بحسابك.
+              {result?.isCorrect
+                ? "سجّل دخولك حتى يتم حفظ هذا السؤال كسؤال محلول وإضافة XP إلى ملف الطالب."
+                : "سجّل دخولك حتى يتم حفظ هذا السؤال داخل ملف الطالب وقائمة الأخطاء الخاصة بحسابك."}
               <div className="mt-3 flex flex-wrap gap-3">
-                <Link href="/login?next=/question-bank?track=mistakes" className="font-semibold text-[#123B7A]">
+                <Link
+                  href={`/login?next=${encodeURIComponent(questionHref)}`}
+                  className="font-semibold text-[#123B7A]"
+                >
                   تسجيل الدخول
                 </Link>
-                <Link href="/register?next=/question-bank?track=mistakes" className="font-semibold text-[#123B7A]">
+                <Link
+                  href={`/register?next=${encodeURIComponent(questionHref)}`}
+                  className="font-semibold text-[#123B7A]"
+                >
                   إنشاء حساب
                 </Link>
               </div>

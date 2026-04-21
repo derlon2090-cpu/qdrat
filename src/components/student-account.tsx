@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { Clock3, Mail, Phone, Settings2, ShieldCheck, UserRound } from "lucide-react";
 
 import { StudentAccessCard } from "@/components/student-access-card";
+import { StudentAchievementsPanel } from "@/components/student-achievements-panel";
 import {
   StudentPortalErrorCard,
   StudentPortalLoadingCard,
@@ -170,6 +171,8 @@ export function StudentAccount() {
           </CardContent>
         </Card>
       </div>
+
+      <StudentAchievementsPanel data={data} sectionId="student-achievements" compact />
 
       <Card className="rounded-[2rem] border-white/80 bg-white/96 shadow-soft">
         <CardContent className="space-y-5 p-8">

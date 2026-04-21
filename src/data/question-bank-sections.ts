@@ -36,6 +36,12 @@ export const verbalSections: QuestionBankSectionItem[] = [
     description: "أسئلة اختيار الكلمة المختلفة عن المجموعة مع شرح سبب الاختيار الصحيح.",
     href: "/verbal/practice?category=odd_word",
   },
+  {
+    id: "verbal_short_reading",
+    title: "فهم قصير",
+    description: "أسئلة فهم قصيرة وعناوين ومعاني وعلاقات مبنية على نصوص مباشرة مع شرح الإجابة الصحيحة.",
+    href: "/verbal/practice?category=short_reading",
+  },
 ];
 
 export const quantitativeSections: QuestionBankSectionItem[] = [];

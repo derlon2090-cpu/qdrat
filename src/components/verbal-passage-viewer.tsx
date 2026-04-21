@@ -2,9 +2,15 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { RotateCcw, Sparkles } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { useAuthSession } from "@/hooks/use-auth-session";
+import {
+  trackQuestionProgressFromClient,
+  type ClientQuestionProgressResult,
+} from "@/lib/client-question-progress";
 import { trackMistakeFromClient } from "@/lib/client-mistakes";
 import type { VerbalPassageRecord } from "@/lib/verbal-passages";
 
@@ -12,6 +18,7 @@ type ViewerMode = "student" | "admin";
 type SavedAnswerMap = Record<string, "A" | "B" | "C" | "D" | undefined>;
 type SavedSubmissionMap = Record<string, boolean | undefined>;
 type PassageQuestionProgressState = "current" | "correct" | "incorrect" | "unanswered";
+type ProgressFeedback = ClientQuestionProgressResult | null;
 
 const SAVED_ANSWERS_KEY = "miyaar-verbal-reading-answers";
 const SAVED_SUBMISSIONS_KEY = "miyaar-verbal-reading-submissions";
@@ -79,6 +86,26 @@ function persistSavedSubmissions(value: SavedSubmissionMap) {
   window.sessionStorage.setItem(SAVED_SUBMISSIONS_KEY, JSON.stringify(value));
 }
 
+function clearPassageAnswers(passageSlug: string) {
+  const savedAnswers = readSavedAnswers();
+  const nextEntries = Object.entries(savedAnswers).filter(
+    ([key]) => !key.startsWith(`${passageSlug}:`),
+  );
+  const nextAnswers = Object.fromEntries(nextEntries) as SavedAnswerMap;
+  persistSavedAnswers(nextAnswers);
+  return nextAnswers;
+}
+
+function clearPassageSubmissions(passageSlug: string) {
+  const savedSubmissions = readSavedSubmissions();
+  const nextEntries = Object.entries(savedSubmissions).filter(
+    ([key]) => !key.startsWith(`${passageSlug}:`),
+  );
+  const nextSubmissions = Object.fromEntries(nextEntries) as SavedSubmissionMap;
+  persistSavedSubmissions(nextSubmissions);
+  return nextSubmissions;
+}
+
 function getCorrectExplanation(question: VerbalPassageRecord["questions"][number]) {
   return (
     question.explanation?.trim() ||
@@ -110,10 +137,14 @@ export function VerbalPassageViewer({
   onOpenNextPassage?: (() => void) | null;
   onBackToResults?: (() => void) | null;
 }) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const [questionIndex, setQuestionIndex] = useState(0);
   const [selectedAnswers, setSelectedAnswers] = useState<SavedAnswerMap>({});
   const [submittedAnswers, setSubmittedAnswers] = useState<SavedSubmissionMap>({});
   const [authPromptQuestionId, setAuthPromptQuestionId] = useState<string | null>(null);
+  const [progressFeedback, setProgressFeedback] = useState<ProgressFeedback>(null);
   const { status: authStatus } = useAuthSession();
 
   useEffect(() => {
@@ -124,6 +155,7 @@ export function VerbalPassageViewer({
   useEffect(() => {
     setQuestionIndex(0);
     setAuthPromptQuestionId(null);
+    setProgressFeedback(null);
   }, [passage.id]);
 
   const currentQuestion =
@@ -133,6 +165,7 @@ export function VerbalPassageViewer({
   const selectedKey = selectedAnswers[currentQuestionKey];
   const submitted = Boolean(submittedAnswers[currentQuestionKey]);
   const isCorrect = submitted && selectedKey === currentQuestion.correctOption;
+  const questionHref = `/verbal/reading?passage=${encodeURIComponent(passage.slug)}`;
 
   const submittedCount = useMemo(
     () =>
@@ -144,6 +177,34 @@ export function VerbalPassageViewer({
     mode === "student" &&
     passage.questions.length > 0 &&
     submittedCount === passage.questions.length;
+
+  function resetPassageSession() {
+    const nextAnswers = clearPassageAnswers(passage.slug);
+    const nextSubmissions = clearPassageSubmissions(passage.slug);
+    setSelectedAnswers(nextAnswers);
+    setSubmittedAnswers(nextSubmissions);
+    setQuestionIndex(0);
+    setAuthPromptQuestionId(null);
+    setProgressFeedback(null);
+  }
+
+  useEffect(() => {
+    if (mode !== "student" || searchParams.get("reset") !== "1") {
+      return;
+    }
+
+    const targetPassage = searchParams.get("passage")?.trim();
+    if (targetPassage && targetPassage !== passage.slug) {
+      return;
+    }
+
+    resetPassageSession();
+
+    const nextParams = new URLSearchParams(searchParams.toString());
+    nextParams.delete("reset");
+    nextParams.set("passage", passage.slug);
+    router.replace(`${pathname}?${nextParams.toString()}`, { scroll: false });
+  }, [mode, passage.slug, pathname, router, searchParams]);
 
   function getQuestionProgressState(
     question: VerbalPassageRecord["questions"][number],
@@ -194,26 +255,58 @@ export function VerbalPassageViewer({
       return next;
     });
 
-    const trackingResult = await trackMistakeFromClient({
+    const isAnswerCorrect = selectedKey === currentQuestion.correctOption;
+    const selectedAnswerText = getQuestionOptions(currentQuestion).find(
+      (option) => option.key === selectedKey,
+    )?.text;
+
+    const progressResult = await trackQuestionProgressFromClient({
       questionKey: currentQuestionKey,
       section: "verbal",
       sourceBank: "بنك القطع اللفظي",
-      questionTypeLabel: "لفظي",
+      categoryId: `reading:${passage.slug}`,
+      categoryTitle: passage.title,
+      questionTypeLabel: "قطع لفظية",
       questionText: currentQuestion.questionText,
-      questionHref: `/verbal/reading?passage=${encodeURIComponent(passage.slug)}`,
+      questionHref,
+      selectedAnswer: selectedAnswerText ?? selectedKey,
+      correctAnswer: getCorrectAnswerText(currentQuestion),
       metadata: {
         passageTitle: passage.title,
         questionOrder: currentQuestion.questionOrder,
       },
-      outcome: selectedKey === currentQuestion.correctOption ? "correct" : "incorrect",
+      outcome: isAnswerCorrect ? "correct" : "incorrect",
+      xpValue: 5,
     });
 
-    if (trackingResult.unauthorized && selectedKey !== currentQuestion.correctOption) {
+    let mistakeTracking:
+      | Awaited<ReturnType<typeof trackMistakeFromClient>>
+      | null = null;
+
+    if (!isAnswerCorrect) {
+      mistakeTracking = await trackMistakeFromClient({
+        questionKey: currentQuestionKey,
+        section: "verbal",
+        sourceBank: "بنك القطع اللفظي",
+        questionTypeLabel: "لفظي",
+        questionText: currentQuestion.questionText,
+        questionHref,
+        metadata: {
+          passageTitle: passage.title,
+          questionOrder: currentQuestion.questionOrder,
+        },
+        outcome: "incorrect",
+      });
+    }
+
+    setProgressFeedback(progressResult.result ?? null);
+
+    if (progressResult.unauthorized || Boolean(mistakeTracking?.unauthorized)) {
       setAuthPromptQuestionId(currentQuestion.id);
       return;
     }
 
-    if (selectedKey === currentQuestion.correctOption || authStatus === "authenticated") {
+    if (isAnswerCorrect || authStatus === "authenticated") {
       setAuthPromptQuestionId((current) => (current === currentQuestion.id ? null : current));
     }
   }
@@ -234,6 +327,7 @@ export function VerbalPassageViewer({
       persistSavedSubmissions(next);
       return next;
     });
+    setProgressFeedback(null);
     setAuthPromptQuestionId((current) => (current === currentQuestion.id ? null : current));
   }
 
@@ -373,6 +467,11 @@ export function VerbalPassageViewer({
                 تأكيد الإجابة
               </Button>
 
+              <Button variant="outline" size="lg" onClick={resetPassageSession} className="gap-2">
+                <RotateCcw className="h-4 w-4" />
+                إعادة أسئلة هذه القطعة
+              </Button>
+
               <Button
                 variant="outline"
                 size="lg"
@@ -422,21 +521,46 @@ export function VerbalPassageViewer({
                   </div>
                 </>
               ) : null}
+
+              {progressFeedback ? (
+                <div className="mt-4 rounded-[1.1rem] border border-white/60 bg-white/60 px-4 py-3 text-sm leading-7">
+                  <div className="flex flex-wrap items-center gap-2 font-bold">
+                    <Sparkles className="h-4 w-4" />
+                    {progressFeedback.awardedXp > 0
+                      ? `تمت إضافة ${progressFeedback.awardedXp} XP إلى ملفك.`
+                      : progressFeedback.alreadySolved
+                        ? "هذه القطعة محسوبة سابقًا داخل إنجازاتك."
+                        : "تم حفظ المحاولة داخل ملف الطالب."}
+                  </div>
+                  <div className="mt-2">
+                    مجموعك الحالي: {progressFeedback.totalXp.toLocaleString("en-US")} XP
+                    {` `} - الأسئلة المحلولة:{" "}
+                    {progressFeedback.solvedQuestionsCount.toLocaleString("en-US")}
+                  </div>
+                  {progressFeedback.reachedProfessionalLevel ? (
+                    <div className="mt-2 font-bold">
+                      وصلت للفل المحترف وأنت جاهز تقريبًا للاختبار.
+                    </div>
+                  ) : null}
+                </div>
+              ) : null}
             </div>
           ) : null}
 
           {mode === "student" && authPromptQuestionId === currentQuestion.id ? (
             <div className="mt-6 rounded-[1.4rem] border border-amber-200 bg-amber-50 px-5 py-5 text-sm leading-8 text-amber-800">
-              سجّل دخولك حتى يتم حفظ هذا السؤال داخل قائمة الأخطاء الخاصة بحسابك.
+              {isCorrect
+                ? "سجّل دخولك حتى يتم حفظ هذا السؤال كسؤال محلول وإضافة XP إلى ملف الطالب."
+                : "سجّل دخولك حتى يتم حفظ هذا السؤال داخل ملف الطالب وقائمة الأخطاء الخاصة بحسابك."}
               <div className="mt-3 flex flex-wrap gap-3">
                 <Link
-                  href="/login?next=/question-bank?track=mistakes"
+                  href={`/login?next=${encodeURIComponent(questionHref)}`}
                   className="font-semibold text-[#123B7A]"
                 >
                   تسجيل الدخول
                 </Link>
                 <Link
-                  href="/register?next=/question-bank?track=mistakes"
+                  href={`/register?next=${encodeURIComponent(questionHref)}`}
                   className="font-semibold text-[#123B7A]"
                 >
                   إنشاء حساب

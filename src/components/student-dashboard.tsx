@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 
 import { StudentAccessCard } from "@/components/student-access-card";
+import { StudentAchievementsPanel } from "@/components/student-achievements-panel";
 import {
   StudentPortalErrorCard,
   StudentPortalLoadingCard,
@@ -280,8 +281,10 @@ export function StudentDashboard() {
               <div className="mt-2 display-font text-3xl font-bold text-white">{data.totalMistakes}</div>
             </div>
             <div className="rounded-[1.4rem] border border-white/10 bg-white/5 p-4">
-              <div className="text-sm text-white/60">عدد الملخصات</div>
-              <div className="mt-2 display-font text-3xl font-bold text-white">{data.summariesCount}</div>
+              <div className="text-sm text-white/60">إجمالي XP</div>
+              <div className="mt-2 display-font text-3xl font-bold text-white">
+                {data.xp.total.toLocaleString("en-US")}
+              </div>
             </div>
             <div className="rounded-[1.4rem] border border-white/10 bg-white/5 p-4">
               <div className="text-sm text-white/60">آخر نشاط</div>
@@ -391,6 +394,8 @@ export function StudentDashboard() {
               </div>
             </CardContent>
           </Card>
+
+          <StudentAchievementsPanel data={data} sectionId="xp-progress" />
         </div>
 
         <div className="space-y-6">

@@ -12,6 +12,8 @@
     "start": "next start",
     "test:verbal-passages": "tsc -p tests/tsconfig.json && node .tmp-tests/tests/verbal-passages/core.test.js",
     "seed:verbal-passages": "node scripts/seed-verbal-passages-sample.mjs",
+    "import:bank45-session": "node scripts/import-bank45-session.mjs",
+    "import:bank68-session": "node scripts/import-bank68-session.mjs",
     "ingest": "node scripts/verbal-pipeline/ingest.mjs",
     "parse": "node scripts/verbal-pipeline/parse.mjs",
     "validate": "node scripts/verbal-pipeline/validate.mjs",

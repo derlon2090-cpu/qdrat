@@ -3,8 +3,13 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { RotateCcw, Sparkles } from "lucide-react";
 
 import { useAuthSession } from "@/hooks/use-auth-session";
+import {
+  trackQuestionProgressFromClient,
+  type ClientQuestionProgressResult,
+} from "@/lib/client-question-progress";
 import { trackMistakeFromClient } from "@/lib/client-mistakes";
 import type { PassageDetail, ReadingPassageSummary } from "@/lib/question-bank-api";
 
@@ -15,6 +20,7 @@ type VerbalReadingFromDocumentProps = {
 };
 
 type SavedAnswerMap = Record<string, string>;
+type ProgressFeedback = ClientQuestionProgressResult | null;
 
 const SAVED_ANSWERS_KEY = "miyaar-manual-reading-answers";
 
@@ -40,6 +46,16 @@ function persistSavedAnswers(value: SavedAnswerMap) {
   window.sessionStorage.setItem(SAVED_ANSWERS_KEY, JSON.stringify(value));
 }
 
+function clearPassageSavedAnswers(passageId: string) {
+  const savedAnswers = readSavedAnswers();
+  const nextEntries = Object.entries(savedAnswers).filter(
+    ([key]) => !key.startsWith(`${passageId}-`),
+  );
+  const nextAnswers = Object.fromEntries(nextEntries) as SavedAnswerMap;
+  persistSavedAnswers(nextAnswers);
+  return nextAnswers;
+}
+
 export function VerbalReadingFromDocument({
   currentPassage,
   passages,
@@ -51,6 +67,7 @@ export function VerbalReadingFromDocument({
   const [submitted, setSubmitted] = useState(false);
   const [savedAnswers, setSavedAnswers] = useState<SavedAnswerMap>({});
   const [showAuthPrompt, setShowAuthPrompt] = useState(false);
+  const [progressFeedback, setProgressFeedback] = useState<ProgressFeedback>(null);
   const { status: authStatus } = useAuthSession();
 
   useEffect(() => {
@@ -80,13 +97,20 @@ export function VerbalReadingFromDocument({
       Math.min(Math.max(questionIndex, 0), Math.max(currentPassage.questions.length - 1, 0))
     ];
 
+  const currentPassageSummary =
+    passages.find((passage) => passage.id === currentPassage.id) ?? null;
+  const currentPassageRouteId =
+    currentPassageSummary?.href.split("passage=")[1]?.split("&")[0] ?? currentPassage.id;
   const questionKey = `${currentPassage.id}-${currentQuestion.id}`;
+  const questionHref =
+    currentPassageSummary?.href ?? `/verbal/reading?passage=${encodeURIComponent(currentPassageRouteId)}`;
 
   useEffect(() => {
     const oldAnswer = savedAnswers[questionKey] || "";
     setSelectedAnswer(oldAnswer);
     setSubmitted(Boolean(oldAnswer));
     setShowAuthPrompt(false);
+    setProgressFeedback(null);
   }, [questionKey, savedAnswers]);
 
   const result = useMemo(() => {
@@ -119,28 +143,67 @@ export function VerbalReadingFromDocument({
       return next;
     });
 
-    const trackingResult = await trackMistakeFromClient({
+    const isCorrect = selectedAnswer === currentQuestion.correctAnswer;
+
+    const progressResult = await trackQuestionProgressFromClient({
       questionKey,
       section: "verbal",
       sourceBank: "بنك القطع اللفظي",
-      questionTypeLabel: "لفظي",
+      categoryId: `reading:${currentPassageRouteId}`,
+      categoryTitle: currentPassage.title,
+      questionTypeLabel: "قطع لفظية",
       questionText: currentQuestion.text,
-      questionHref: `/verbal/reading?passage=${encodeURIComponent(currentPassage.id)}`,
+      questionHref,
+      selectedAnswer,
+      correctAnswer: currentQuestion.correctAnswer,
       metadata: {
         passageTitle: currentPassage.title,
         questionOrder: currentQuestion.order,
       },
-      outcome: selectedAnswer === currentQuestion.correctAnswer ? "correct" : "incorrect",
+      outcome: isCorrect ? "correct" : "incorrect",
+      xpValue: 5,
     });
 
-    if (trackingResult.unauthorized && selectedAnswer !== currentQuestion.correctAnswer) {
+    let mistakeTracking:
+      | Awaited<ReturnType<typeof trackMistakeFromClient>>
+      | null = null;
+
+    if (!isCorrect) {
+      mistakeTracking = await trackMistakeFromClient({
+        questionKey,
+        section: "verbal",
+        sourceBank: "بنك القطع اللفظي",
+        questionTypeLabel: "لفظي",
+        questionText: currentQuestion.text,
+        questionHref,
+        metadata: {
+          passageTitle: currentPassage.title,
+          questionOrder: currentQuestion.order,
+        },
+        outcome: "incorrect",
+      });
+    }
+
+    setProgressFeedback(progressResult.result ?? null);
+
+    if (progressResult.unauthorized || Boolean(mistakeTracking?.unauthorized)) {
       setShowAuthPrompt(true);
       return;
     }
 
-    if (selectedAnswer === currentQuestion.correctAnswer || authStatus === "authenticated") {
+    if (isCorrect || authStatus === "authenticated") {
       setShowAuthPrompt(false);
     }
+  };
+
+  const resetCurrentPassage = () => {
+    const nextAnswers = clearPassageSavedAnswers(currentPassage.id);
+    setSavedAnswers(nextAnswers);
+    setQuestionIndex(0);
+    setSelectedAnswer("");
+    setSubmitted(false);
+    setShowAuthPrompt(false);
+    setProgressFeedback(null);
   };
 
   const goToQuestion = (newIndex: number) => {
@@ -279,6 +342,14 @@ export function VerbalReadingFromDocument({
                   </button>
 
                   <button
+                    onClick={resetCurrentPassage}
+                    className="flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-6 py-4 text-lg font-semibold text-slate-700"
+                  >
+                    <RotateCcw className="h-5 w-5" />
+                    إعادة أسئلة هذه القطعة
+                  </button>
+
+                  <button
                     onClick={goToPreviousQuestion}
                     className="rounded-2xl border border-slate-200 bg-white px-6 py-4 text-lg font-semibold text-slate-700"
                   >
@@ -317,17 +388,42 @@ export function VerbalReadingFromDocument({
                         </div>
                       </>
                     ) : null}
+
+                    {progressFeedback ? (
+                      <div className="mt-4 rounded-2xl border border-white/60 bg-white/60 px-4 py-4 text-sm leading-7">
+                        <div className="flex flex-wrap items-center gap-2 font-bold">
+                          <Sparkles className="h-4 w-4" />
+                          {progressFeedback.awardedXp > 0
+                            ? `تمت إضافة ${progressFeedback.awardedXp} XP إلى ملفك.`
+                            : progressFeedback.alreadySolved
+                              ? "هذه القطعة محسوبة سابقًا داخل إنجازاتك."
+                              : "تم حفظ المحاولة داخل ملف الطالب."}
+                        </div>
+                        <div className="mt-2">
+                          مجموعك الحالي: {progressFeedback.totalXp.toLocaleString("en-US")} XP
+                          {` `} - الأسئلة المحلولة:{" "}
+                          {progressFeedback.solvedQuestionsCount.toLocaleString("en-US")}
+                        </div>
+                        {progressFeedback.reachedProfessionalLevel ? (
+                          <div className="mt-2 font-bold">
+                            وصلت للفل المحترف وأنت جاهز تقريبًا للاختبار.
+                          </div>
+                        ) : null}
+                      </div>
+                    ) : null}
                   </div>
                 ) : null}
 
                 {showAuthPrompt ? (
                   <div className="mt-6 rounded-2xl border border-amber-200 bg-amber-50 px-5 py-5 text-sm leading-8 text-amber-800">
-                    سجّل دخولك حتى يتم حفظ هذا السؤال داخل قائمة الأخطاء الخاصة بحسابك.
+                    {result?.isCorrect
+                      ? "سجّل دخولك حتى يتم حفظ هذا السؤال كسؤال محلول وإضافة XP إلى ملف الطالب."
+                      : "سجّل دخولك حتى يتم حفظ هذا السؤال داخل ملف الطالب وقائمة الأخطاء الخاصة بحسابك."}
                     <div className="mt-3 flex flex-wrap gap-3">
-                      <Link href="/login?next=/question-bank?track=mistakes" className="font-semibold text-[#123B7A]">
+                      <Link href={`/login?next=${encodeURIComponent(questionHref)}`} className="font-semibold text-[#123B7A]">
                         تسجيل الدخول
                       </Link>
-                      <Link href="/register?next=/question-bank?track=mistakes" className="font-semibold text-[#123B7A]">
+                      <Link href={`/register?next=${encodeURIComponent(questionHref)}`} className="font-semibold text-[#123B7A]">
                         إنشاء حساب
                       </Link>
                     </div>

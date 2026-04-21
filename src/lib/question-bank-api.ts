@@ -10,6 +10,7 @@ import {
 import { quantitativeSections, verbalSections } from "@/data/question-bank-sections";
 import {
   getVerbalQuestionCategory,
+  verbalReadingOnlyQuestions,
   verbalMixedPracticeQuestions,
 } from "@/data/verbal-mixed-bank";
 
@@ -243,7 +244,7 @@ function mapReadingQuestionsToSearchItems() {
 }
 
 function mapVerbalPracticeQuestionsToSearchItems() {
-  return verbalMixedPracticeQuestions.map((question, index) => {
+  return [...verbalMixedPracticeQuestions, ...verbalReadingOnlyQuestions].map((question, index) => {
     const category = getVerbalQuestionCategory(question.categoryId);
 
     return {
@@ -310,6 +311,7 @@ export async function getBankItems(filters: SearchFilters = {}) {
       verbalMixedPracticeQuestions.filter((question) => question.categoryId === "contextual_error").length,
     ],
     ["verbal_odd_word", verbalMixedPracticeQuestions.filter((question) => question.categoryId === "odd_word").length],
+    ["verbal_short_reading", verbalReadingOnlyQuestions.length],
   ]);
 
   const items: BankItem[] = [...verbalSections, ...quantitativeSections].map((section) => ({
