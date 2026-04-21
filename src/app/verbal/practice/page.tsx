@@ -3,8 +3,37 @@ import { BookOpenText } from "lucide-react";
 
 import { PageShell } from "@/components/page-shell";
 import { VerbalPracticeBank } from "@/components/verbal-practice-bank";
+import {
+  getVerbalQuestionCategory,
+  getVerbalQuestionsByCategory,
+  verbalQuestionCategories,
+} from "@/data/verbal-mixed-bank";
 
-export default function VerbalPracticePage() {
+type VerbalPracticePageProps = {
+  searchParams: Promise<{
+    category?: string;
+    question?: string;
+  }>;
+};
+
+export default async function VerbalPracticePage({ searchParams }: VerbalPracticePageProps) {
+  const resolvedSearchParams = await searchParams;
+  const activeCategory = getVerbalQuestionCategory(resolvedSearchParams.category);
+  const questions = getVerbalQuestionsByCategory(activeCategory.id);
+  const activeQuestionId =
+    questions.find((question) => question.id === resolvedSearchParams.question)?.id ?? questions[0]?.id ?? null;
+
+  const categories = verbalQuestionCategories.map((category) => {
+    const categoryQuestions = getVerbalQuestionsByCategory(category.id);
+    return {
+      id: category.id,
+      title: category.title,
+      description: category.description,
+      count: categoryQuestions.length,
+      firstQuestionId: categoryQuestions[0]?.id ?? null,
+    };
+  });
+
   return (
     <PageShell
       eyebrow="اللفظي المصنف"
@@ -24,7 +53,16 @@ export default function VerbalPracticePage() {
           </div>
         }
       >
-        <VerbalPracticeBank />
+        <VerbalPracticeBank
+          categories={categories}
+          currentCategory={{
+            id: activeCategory.id,
+            title: activeCategory.title,
+            description: activeCategory.description,
+          }}
+          questions={questions}
+          activeQuestionId={activeQuestionId}
+        />
       </Suspense>
     </PageShell>
   );

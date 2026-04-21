@@ -11,16 +11,30 @@ import {
   type ClientQuestionProgressResult,
 } from "@/lib/client-question-progress";
 import { trackMistakeFromClient } from "@/lib/client-mistakes";
-import {
-  getVerbalQuestionCategory,
-  getVerbalQuestionsByCategory,
-  verbalQuestionCategories,
-} from "@/data/verbal-mixed-bank";
+import type { VerbalPracticeQuestion, VerbalQuestionCategoryId } from "@/data/verbal-mixed-bank";
 import { Button } from "@/components/ui/button";
 
 type SavedAnswerMap = Record<string, string>;
 type QuestionProgressState = "current" | "correct" | "incorrect" | "unanswered";
 type ProgressFeedback = ClientQuestionProgressResult | null;
+type PracticeCategorySummary = {
+  id: VerbalQuestionCategoryId;
+  title: string;
+  description: string;
+  count: number;
+  firstQuestionId: string | null;
+};
+type ActiveCategory = {
+  id: VerbalQuestionCategoryId;
+  title: string;
+  description: string;
+};
+type VerbalPracticeBankProps = {
+  categories: PracticeCategorySummary[];
+  currentCategory: ActiveCategory;
+  questions: VerbalPracticeQuestion[];
+  activeQuestionId: string | null;
+};
 
 const SAVED_ANSWERS_KEY = "miyaar-verbal-practice-answers";
 
@@ -63,7 +77,12 @@ function buildPracticeHref(pathname: string, currentParams: URLSearchParams, cat
   return `${pathname}?${nextParams.toString()}`;
 }
 
-export function VerbalPracticeBank() {
+export function VerbalPracticeBank({
+  categories,
+  currentCategory,
+  questions,
+  activeQuestionId,
+}: VerbalPracticeBankProps) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -79,20 +98,7 @@ export function VerbalPracticeBank() {
     setSavedAnswers(readSavedAnswers());
   }, []);
 
-  const currentCategory = useMemo(
-    () => getVerbalQuestionCategory(searchParams.get("category")),
-    [searchParams],
-  );
-  const questions = useMemo(
-    () => getVerbalQuestionsByCategory(currentCategory.id),
-    [currentCategory.id],
-  );
-
-  const currentQuestionIndex = useMemo(() => {
-    const requestedQuestionId = searchParams.get("question");
-    const index = questions.findIndex((question) => question.id === requestedQuestionId);
-    return index >= 0 ? index : 0;
-  }, [questions, searchParams]);
+  const currentQuestionIndex = questions.findIndex((question) => question.id === activeQuestionId);
 
   const currentQuestion = questions[currentQuestionIndex] ?? null;
 
@@ -190,9 +196,9 @@ export function VerbalPracticeBank() {
   }
 
   function openCategory(categoryId: string) {
-    const nextQuestions = getVerbalQuestionsByCategory(categoryId as typeof currentCategory.id);
-    if (!nextQuestions.length) return;
-    openQuestion(categoryId, nextQuestions[0].id);
+    const nextCategory = categories.find((category) => category.id === categoryId);
+    if (!nextCategory?.firstQuestionId) return;
+    openQuestion(categoryId, nextCategory.firstQuestionId);
   }
 
   function handleResetCategory() {
@@ -300,8 +306,7 @@ export function VerbalPracticeBank() {
         </p>
 
         <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-          {verbalQuestionCategories.map((category) => {
-            const categoryQuestions = getVerbalQuestionsByCategory(category.id);
+          {categories.map((category) => {
             const active = category.id === currentCategory.id;
             return (
               <button
@@ -317,7 +322,7 @@ export function VerbalPracticeBank() {
                 <div className="display-font text-xl font-bold">{category.title}</div>
                 <div className={`mt-2 text-sm leading-7 ${active ? "text-white/80" : "text-slate-500"}`}>{category.description}</div>
                 <div className={`mt-4 text-xs font-semibold ${active ? "text-white/75" : "text-[#123B7A]"}`}>
-                  {categoryQuestions.length} سؤال
+                  {category.count} سؤال
                 </div>
               </button>
             );
@@ -501,7 +506,7 @@ export function VerbalPracticeBank() {
             <div className="rounded-[1.4rem] border border-slate-200 bg-slate-50/70 p-5">
               <div className="mb-3 text-lg font-bold text-slate-900">الانتقال إلى قسم لفظي آخر</div>
               <div className="flex flex-wrap gap-2">
-                {verbalQuestionCategories.map((category) => (
+                {categories.map((category) => (
                   <button
                     key={`category-${category.id}`}
                     type="button"
