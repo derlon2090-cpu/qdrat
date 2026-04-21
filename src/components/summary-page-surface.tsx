@@ -30,6 +30,14 @@ function getCanvasPixelRatio() {
   return Math.min(2, Math.round(ratio));
 }
 
+function normalizeSurfaceAspectRatio(width: number, height: number) {
+  const safeWidth = Math.max(1, Number.isFinite(width) ? width : 1);
+  const safeHeight = Math.max(1, Number.isFinite(height) ? height : 1);
+  const ratio = safeHeight / safeWidth;
+
+  return clamp(ratio, 1.05, 1.7);
+}
+
 type ActiveTool = "navigate" | "pen" | "highlighter" | "eraser";
 
 type ChangeMeta = {
@@ -164,17 +172,18 @@ export function SummaryPageSurface({
     () => `/api/summaries/${summaryId}/pages/${pageNumber}/preview?width=1800`,
     [pageNumber, summaryId],
   );
-  const surfacePaddingTop = useMemo(() => {
+  const surfaceAspectRatio = useMemo(() => {
     const width = Math.max(1, resolvedPageDimension.width || pageDimension.width || 1);
     const height = Math.max(1, resolvedPageDimension.height || pageDimension.height || 1);
 
-    return `${(height / width) * 100}%`;
+    return normalizeSurfaceAspectRatio(width, height);
   }, [
     pageDimension.height,
     pageDimension.width,
     resolvedPageDimension.height,
     resolvedPageDimension.width,
   ]);
+  const surfacePaddingTop = useMemo(() => `${surfaceAspectRatio * 100}%`, [surfaceAspectRatio]);
 
   const renderCanvas = useCallback(() => {
     const canvas = canvasRef.current;
@@ -841,6 +850,28 @@ export function SummaryPageSurface({
     };
   }, [continueBoxInteraction, continueDrawing, finishBoxInteraction, finishDrawing, renderCanvas]);
 
+  if (pdfError) {
+    return (
+      <div className="space-y-4">
+        <div className="mx-auto w-full max-w-[900px] rounded-[2rem] border border-rose-200 bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(255,247,247,0.98))] p-8 text-center shadow-[0_20px_55px_rgba(225,29,72,0.08)]">
+          <div className="mx-auto max-w-2xl rounded-[1.6rem] border border-rose-200 bg-rose-50 px-5 py-5 text-sm font-semibold leading-8 text-rose-700 shadow-sm">
+            {pdfError}
+          </div>
+          <div className="mt-5 flex justify-center">
+            <a
+              href={directPageUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="rounded-full border border-rose-200 bg-white px-5 py-2.5 text-sm font-bold text-rose-700 transition hover:border-rose-300 hover:bg-rose-50"
+            >
+              فتح الملف الأصلي مباشرة
+            </a>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-4">
       <div className="pointer-events-none relative mx-auto w-full max-w-[900px]">
@@ -881,14 +912,6 @@ export function SummaryPageSurface({
                 <Loader2 className="h-4 w-4 animate-spin" />
                 جارٍ تجهيز الصفحة...
               </span>
-            </div>
-          ) : null}
-
-          {pdfError ? (
-            <div className="pointer-events-none absolute inset-0 z-50 flex items-center justify-center bg-white/92 px-6 text-center">
-              <div className="max-w-md rounded-[1.6rem] border border-rose-200 bg-rose-50 px-5 py-5 text-sm font-semibold leading-7 text-rose-700 shadow-sm">
-                {pdfError}
-              </div>
             </div>
           ) : null}
 
