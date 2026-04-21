@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { RotateCcw, Sparkles } from "lucide-react";
 
@@ -145,6 +145,7 @@ export function VerbalPassageViewer({
   passage,
   mode = "student",
   initialQuestionId,
+  isNavigating = false,
   nextPassageTitle,
   onOpenNextPassage,
   onBackToResults,
@@ -152,6 +153,7 @@ export function VerbalPassageViewer({
   passage: VerbalPassageRecord;
   mode?: ViewerMode;
   initialQuestionId?: string | null;
+  isNavigating?: boolean;
   nextPassageTitle?: string | null;
   onOpenNextPassage?: (() => void) | null;
   onBackToResults?: (() => void) | null;
@@ -164,6 +166,7 @@ export function VerbalPassageViewer({
   const [submittedAnswers, setSubmittedAnswers] = useState<SavedSubmissionMap>({});
   const [authPromptQuestionId, setAuthPromptQuestionId] = useState<string | null>(null);
   const [progressFeedback, setProgressFeedback] = useState<ProgressFeedback>(null);
+  const viewerRef = useRef<HTMLDivElement | null>(null);
   const { status: authStatus } = useAuthSession();
 
   useEffect(() => {
@@ -177,6 +180,13 @@ export function VerbalPassageViewer({
     setAuthPromptQuestionId(null);
     setProgressFeedback(null);
   }, [initialQuestionId, passage]);
+
+  useEffect(() => {
+    viewerRef.current?.scrollIntoView({
+      behavior: "smooth",
+      block: "start",
+    });
+  }, [passage.slug]);
 
   const currentQuestion =
     passage.questions[Math.min(Math.max(questionIndex, 0), Math.max(passage.questions.length - 1, 0))];
@@ -389,7 +399,18 @@ export function VerbalPassageViewer({
   }
 
   return (
-    <div dir="rtl" className="space-y-6">
+    <div
+      ref={viewerRef}
+      dir="rtl"
+      aria-busy={isNavigating}
+      className={`space-y-6 transition-opacity duration-200 ${isNavigating ? "opacity-80" : "opacity-100"}`}
+    >
+      {isNavigating ? (
+        <div className="rounded-full border border-[#E8D8B3] bg-[#fffaf1] px-4 py-3 text-sm font-semibold text-[#8A6116] shadow-sm">
+          جاري فتح القطعة التالية...
+        </div>
+      ) : null}
+
       <div className="rounded-[2rem] border border-slate-200 bg-white p-7 shadow-sm">
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3 text-sm text-slate-500">
           <div>بنك الأسئلة / الاستيعاب المقروء</div>
@@ -472,10 +493,10 @@ export function VerbalPassageViewer({
                 <button
                   key={`${currentQuestion.id}-${option.key}`}
                   type="button"
-                  disabled={mode === "admin"}
+                  disabled={mode === "admin" || isNavigating}
                   onClick={() => handleSelectOption(option.key)}
                   className={`rounded-[1.4rem] border px-5 py-5 text-right transition ${classes} ${
-                    mode === "admin" ? "cursor-default" : ""
+                    mode === "admin" || isNavigating ? "cursor-default" : ""
                   }`}
                 >
                   <div className="flex items-start justify-between gap-4">
@@ -497,7 +518,11 @@ export function VerbalPassageViewer({
 
           {mode === "student" ? (
             <div className="mt-8 flex flex-wrap items-center gap-3">
-              <Button size="lg" onClick={() => void confirmCurrentAnswer()} disabled={!selectedKey}>
+              <Button
+                size="lg"
+                onClick={() => void confirmCurrentAnswer()}
+                disabled={isNavigating || !selectedKey}
+              >
                 تأكيد الإجابة
               </Button>
 
@@ -510,7 +535,7 @@ export function VerbalPassageViewer({
                 variant="outline"
                 size="lg"
                 onClick={goToPreviousQuestion}
-                disabled={questionIndex === 0}
+                disabled={isNavigating || questionIndex === 0}
               >
                 السؤال السابق
               </Button>
@@ -519,7 +544,10 @@ export function VerbalPassageViewer({
                 variant="outline"
                 size="lg"
                 onClick={goToNextQuestion}
-                disabled={!onOpenNextPassage && questionIndex === passage.questions.length - 1}
+                disabled={
+                  isNavigating ||
+                  (!onOpenNextPassage && questionIndex === passage.questions.length - 1)
+                }
               >
                 {questionIndex === passage.questions.length - 1
                   ? "السؤال التالي / قطعة أخرى"
@@ -629,11 +657,12 @@ export function VerbalPassageViewer({
                     <button
                       key={`jump-${question.id}`}
                       type="button"
+                      disabled={isNavigating}
                       onClick={() => goToQuestion(index)}
                       className={`min-w-[108px] rounded-[999px] border px-5 py-4 text-base font-bold transition ${getQuestionProgressClasses(
                         status,
                         active,
-                      )}`}
+                      )} ${isNavigating ? "cursor-wait opacity-70" : ""}`}
                     >
                       سؤال {index + 1}
                     </button>
@@ -648,7 +677,7 @@ export function VerbalPassageViewer({
               </div>
               <div className="flex flex-wrap gap-3">
                 {onOpenNextPassage ? (
-                  <Button size="default" onClick={onOpenNextPassage}>
+                  <Button size="default" onClick={onOpenNextPassage} disabled={isNavigating}>
                     {nextPassageTitle
                       ? `افتح ${nextPassageTitle}`
                       : "افتح القطعة التالية"}
@@ -656,7 +685,12 @@ export function VerbalPassageViewer({
                 ) : null}
 
                 {onBackToResults ? (
-                  <Button variant="outline" size="default" onClick={onBackToResults}>
+                  <Button
+                    variant="outline"
+                    size="default"
+                    onClick={onBackToResults}
+                    disabled={isNavigating}
+                  >
                     ارجع إلى نتائج البحث
                   </Button>
                 ) : null}
@@ -675,7 +709,7 @@ export function VerbalPassageViewer({
               </p>
               <div className="mt-4 flex flex-wrap gap-3">
                 {onOpenNextPassage ? (
-                  <Button size="default" onClick={onOpenNextPassage}>
+                  <Button size="default" onClick={onOpenNextPassage} disabled={isNavigating}>
                     {nextPassageTitle
                       ? `انتقل إلى ${nextPassageTitle}`
                       : "الانتقال إلى القطعة التالية"}
@@ -683,7 +717,12 @@ export function VerbalPassageViewer({
                 ) : null}
 
                 {onBackToResults ? (
-                  <Button variant="outline" size="default" onClick={onBackToResults}>
+                  <Button
+                    variant="outline"
+                    size="default"
+                    onClick={onBackToResults}
+                    disabled={isNavigating}
+                  >
                     اختر قطعة أخرى
                   </Button>
                 ) : null}

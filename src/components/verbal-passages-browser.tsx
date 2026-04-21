@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState, useTransition } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { ArrowUpLeft, Dice5, Search } from "lucide-react";
 
@@ -240,6 +240,7 @@ export function VerbalPassagesBrowser({ mode = "student" }: { mode?: "student" |
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
+  const [isNavigating, startNavigation] = useTransition();
   const [query, setQuery] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
   const [passageRecords, setPassageRecords] = useState<VerbalPassageRecord[]>(fallbackPassages);
@@ -383,7 +384,7 @@ export function VerbalPassagesBrowser({ mode = "student" }: { mode?: "student" |
       slug: string,
       options?: { clearSearch?: boolean; message?: string; questionId?: string | null },
     ) => {
-      if (!slug) return;
+      if (!slug || isNavigating) return;
 
       setCurrentPassageSlug(slug);
       setHasInitializedSelection(true);
@@ -403,9 +404,18 @@ export function VerbalPassagesBrowser({ mode = "student" }: { mode?: "student" |
         slug,
         options?.questionId ?? null,
       );
-      router.replace(nextHref, { scroll: false });
+
+      startNavigation(() => {
+        router.replace(nextHref, { scroll: false });
+      });
+
+      if (typeof window !== "undefined") {
+        window.requestAnimationFrame(() => {
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        });
+      }
     },
-    [pathname, router, searchParams],
+    [isNavigating, pathname, router, searchParams, startNavigation],
   );
 
   const openRandomPassage = useCallback(
@@ -531,6 +541,21 @@ export function VerbalPassagesBrowser({ mode = "student" }: { mode?: "student" |
     visiblePassages,
   ]);
 
+  useEffect(() => {
+    if (!nextPassage) {
+      return;
+    }
+
+    const nextHref = buildPassageHref(
+      pathname,
+      new URLSearchParams(searchParams.toString()),
+      nextPassage.slug,
+      null,
+    );
+
+    router.prefetch(nextHref);
+  }, [nextPassage, pathname, router, searchParams]);
+
   const resultCaption = useMemo(() => {
     if (isLoadingDirectory) return "جاري تجهيز الدليل...";
     if (normalizedQueryLength > 0 && normalizedQueryLength < SEARCH_MIN_CHARS) {
@@ -599,13 +624,14 @@ export function VerbalPassagesBrowser({ mode = "student" }: { mode?: "student" |
                             {item.availability === "available" && item.linkedPassageSlug ? (
                               <button
                                 type="button"
+                                disabled={isNavigating}
                                 onClick={() =>
                                   selectPassage(item.linkedPassageSlug as string, {
                                     clearSearch: true,
                                     message: `تم فتح قطعة: ${item.title}`,
                                   })
                                 }
-                                className="inline-flex items-center gap-2 rounded-2xl border border-[#123B7A]/15 bg-white px-4 py-2 text-sm font-semibold text-[#123B7A] transition hover:border-[#123B7A] hover:bg-[#123B7A]/5"
+                                className="inline-flex items-center gap-2 rounded-2xl border border-[#123B7A]/15 bg-white px-4 py-2 text-sm font-semibold text-[#123B7A] transition hover:border-[#123B7A] hover:bg-[#123B7A]/5 disabled:cursor-wait disabled:opacity-60"
                               >
                                 فتح
                                 <ArrowUpLeft className="h-4 w-4" />
@@ -632,7 +658,7 @@ export function VerbalPassagesBrowser({ mode = "student" }: { mode?: "student" |
           <Button
             type="button"
             onClick={() => openRandomPassage({ excludeCurrent: true })}
-            disabled={isLoadingDirectory || !visiblePassages.length}
+            disabled={isLoadingDirectory || isNavigating || !visiblePassages.length}
             className="h-14 rounded-[1.7rem] bg-[linear-gradient(135deg,#F5D08A_0%,#E6B85C_40%,#D4A94C_100%)] px-7 text-base font-bold text-slate-950 shadow-[0_12px_30px_rgba(201,154,67,0.28)] transition hover:-translate-y-0.5 hover:shadow-[0_16px_34px_rgba(201,154,67,0.34)] disabled:translate-y-0 disabled:opacity-60"
           >
             <Dice5 className="ml-2 h-5 w-5" />
@@ -651,6 +677,7 @@ export function VerbalPassagesBrowser({ mode = "student" }: { mode?: "student" |
             passage={currentPassage}
             mode={mode}
             initialQuestionId={requestedQuestionId || null}
+            isNavigating={isNavigating}
             nextPassageTitle={nextPassage?.title ?? null}
             onOpenNextPassage={nextPassage ? () => selectPassage(nextPassage.slug, { message: `تم فتح قطعة: ${nextPassage.title}` }) : null}
           />
