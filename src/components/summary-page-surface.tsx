@@ -164,6 +164,17 @@ export function SummaryPageSurface({
     () => `/api/summaries/${summaryId}/pages/${pageNumber}/preview?width=1800`,
     [pageNumber, summaryId],
   );
+  const surfacePaddingTop = useMemo(() => {
+    const width = Math.max(1, resolvedPageDimension.width || pageDimension.width || 1);
+    const height = Math.max(1, resolvedPageDimension.height || pageDimension.height || 1);
+
+    return `${(height / width) * 100}%`;
+  }, [
+    pageDimension.height,
+    pageDimension.width,
+    resolvedPageDimension.height,
+    resolvedPageDimension.width,
+  ]);
 
   const renderCanvas = useCallback(() => {
     const canvas = canvasRef.current;
@@ -832,144 +843,145 @@ export function SummaryPageSurface({
 
   return (
     <div className="space-y-4">
-      <div
-        ref={surfaceRef}
-        className="relative mx-auto w-full max-w-[900px] overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-[0_20px_70px_rgba(15,23,42,0.08)]"
-        style={{
-          aspectRatio: `${resolvedPageDimension.width} / ${resolvedPageDimension.height}`,
-        }}
-      >
-        <img
-          key={previewImageUrl}
-          src={previewImageUrl}
-          alt={`صفحة ${pageNumber}`}
-          className="pointer-events-none absolute inset-0 h-full w-full select-none bg-white object-fill"
-          draggable={false}
-          onLoad={() => {
-            setIsPdfLoading(false);
-            setPdfError(null);
-          }}
-          onError={() => {
-            setIsPdfLoading(false);
-            setPdfError("تعذر عرض هذه الصفحة الآن. جرّب فتح الصفحة مباشرة أو إعادة تحميل الملخص.");
-          }}
-        />
+      <div className="relative mx-auto w-full max-w-[900px]">
+        <div aria-hidden="true" className="pointer-events-none block w-full" style={{ paddingTop: surfacePaddingTop }} />
 
-        <canvas
-          ref={canvasRef}
-          className={cn(
-            "absolute inset-0 z-20 h-full w-full touch-none",
-            activeTool === "navigate" ? "pointer-events-none" : "pointer-events-auto",
-          )}
-          onPointerDown={startDrawing}
-        />
+        <div
+          ref={surfaceRef}
+          className="absolute inset-0 z-0 isolate overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-[0_20px_70px_rgba(15,23,42,0.08)]"
+        >
+          <img
+            key={previewImageUrl}
+            src={previewImageUrl}
+            alt={`صفحة ${pageNumber}`}
+            className="pointer-events-none absolute inset-0 h-full w-full select-none bg-white object-fill"
+            draggable={false}
+            onLoad={() => {
+              setIsPdfLoading(false);
+              setPdfError(null);
+            }}
+            onError={() => {
+              setIsPdfLoading(false);
+              setPdfError("تعذر عرض هذه الصفحة الآن. جرّب فتح الصفحة مباشرة أو إعادة تحميل الملخص.");
+            }}
+          />
 
-        {isPdfLoading ? (
-          <div className="pointer-events-none absolute inset-0 z-50 flex items-center justify-center bg-white/88 text-sm font-semibold text-slate-600 backdrop-blur-[1px]">
-            <span className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 shadow-sm">
-              <Loader2 className="h-4 w-4 animate-spin" />
-              جارٍ تجهيز الصفحة...
-            </span>
-          </div>
-        ) : null}
-
-        {pdfError ? (
-          <div className="pointer-events-none absolute inset-0 z-50 flex items-center justify-center bg-white/92 px-6 text-center">
-            <div className="max-w-md rounded-[1.6rem] border border-rose-200 bg-rose-50 px-5 py-5 text-sm font-semibold leading-7 text-rose-700 shadow-sm">
-              {pdfError}
-            </div>
-          </div>
-        ) : null}
-
-        {pageState.hideRegions.map((region) => (
-          <div
-            key={region.id}
+          <canvas
+            ref={canvasRef}
             className={cn(
-              "absolute z-30 overflow-hidden rounded-2xl border shadow-sm transition",
-              hideAnswers
-                ? "border-slate-300 bg-white"
-                : "border-dashed border-slate-300/90 bg-white/40 backdrop-blur-sm",
-              selectedHideId === region.id && "ring-2 ring-[#123B7A]/20",
+              "absolute inset-0 z-20 h-full w-full touch-none",
+              activeTool === "navigate" ? "pointer-events-none" : "pointer-events-auto",
             )}
-            style={createFrameStyle(region.x, region.y, region.width, region.height)}
-          >
-            {hideAnswers ? (
-              <div className="flex h-full w-full items-center justify-center text-[11px] font-semibold text-slate-500">
-                إخفاء الإجابة
-              </div>
-            ) : null}
+            onPointerDown={startDrawing}
+          />
 
-            <div className="absolute inset-x-2 top-2 flex items-center justify-between gap-2">
-              <button
-                type="button"
-                className="rounded-full bg-white/85 p-1 text-slate-600 shadow"
-                onPointerDown={(event) => beginHideMove(region.id, event)}
-                aria-label="تحريك مربع الإخفاء"
-              >
-                <Move className="h-3.5 w-3.5" />
-              </button>
-              <button
-                type="button"
-                className="rounded-full bg-white/85 p-1 text-slate-600 shadow"
-                onPointerDown={(event) => beginHideResize(region.id, event)}
-                aria-label="تغيير حجم مربع الإخفاء"
-              >
-                <Minimize2 className="h-3.5 w-3.5" />
-              </button>
+          {isPdfLoading ? (
+            <div className="pointer-events-none absolute inset-0 z-50 flex items-center justify-center bg-white/88 text-sm font-semibold text-slate-600 backdrop-blur-[1px]">
+              <span className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 shadow-sm">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                جارٍ تجهيز الصفحة...
+              </span>
             </div>
-          </div>
-        ))}
+          ) : null}
 
-        {pageState.solutionBoxes.map((box) => (
-          <div
-            key={box.id}
-            className={cn(
-              "absolute z-40 overflow-hidden rounded-[1.4rem] border border-[#d8c7a7] bg-[linear-gradient(180deg,rgba(255,255,255,0.97),rgba(249,245,232,0.97))] shadow-[0_12px_32px_rgba(201,154,67,0.18)]",
-              selectedSolutionId === box.id && "ring-2 ring-[#C99A43]/25",
-            )}
-            style={createFrameStyle(box.x, box.y, box.width, box.height)}
-          >
-            <div className="flex items-center justify-between gap-2 border-b border-[#eadcc0] bg-white/85 px-3 py-2">
-              <div className="flex items-center gap-2 text-xs font-semibold text-slate-600">
-                <SquarePen className="h-3.5 w-3.5 text-[#C99A43]" />
-                مساحة حل
+          {pdfError ? (
+            <div className="pointer-events-none absolute inset-0 z-50 flex items-center justify-center bg-white/92 px-6 text-center">
+              <div className="max-w-md rounded-[1.6rem] border border-rose-200 bg-rose-50 px-5 py-5 text-sm font-semibold leading-7 text-rose-700 shadow-sm">
+                {pdfError}
               </div>
-              <div className="flex items-center gap-2">
+            </div>
+          ) : null}
+
+          {pageState.hideRegions.map((region) => (
+            <div
+              key={region.id}
+              className={cn(
+                "absolute z-30 overflow-hidden rounded-2xl border shadow-sm transition",
+                hideAnswers
+                  ? "border-slate-300 bg-white"
+                  : "border-dashed border-slate-300/90 bg-white/40 backdrop-blur-sm",
+                selectedHideId === region.id && "ring-2 ring-[#123B7A]/20",
+              )}
+              style={createFrameStyle(region.x, region.y, region.width, region.height)}
+            >
+              {hideAnswers ? (
+                <div className="flex h-full w-full items-center justify-center text-[11px] font-semibold text-slate-500">
+                  إخفاء الإجابة
+                </div>
+              ) : null}
+
+              <div className="absolute inset-x-2 top-2 flex items-center justify-between gap-2">
                 <button
                   type="button"
-                  className="rounded-full bg-white p-1 text-slate-600 shadow"
-                  onPointerDown={(event) => beginSolutionMove(box.id, event)}
-                  aria-label="تحريك مساحة الحل"
+                  className="rounded-full bg-white/85 p-1 text-slate-600 shadow"
+                  onPointerDown={(event) => beginHideMove(region.id, event)}
+                  aria-label="تحريك مربع الإخفاء"
                 >
-                  <Grip className="h-3.5 w-3.5" />
+                  <Move className="h-3.5 w-3.5" />
                 </button>
                 <button
                   type="button"
-                  className="rounded-full bg-white p-1 text-slate-600 shadow"
-                  onPointerDown={(event) => beginSolutionResize(box.id, event)}
-                  aria-label="تغيير حجم مساحة الحل"
+                  className="rounded-full bg-white/85 p-1 text-slate-600 shadow"
+                  onPointerDown={(event) => beginHideResize(region.id, event)}
+                  aria-label="تغيير حجم مربع الإخفاء"
                 >
                   <Minimize2 className="h-3.5 w-3.5" />
                 </button>
               </div>
             </div>
+          ))}
 
-            <textarea
-              value={box.content}
-              onChange={(event) =>
-                updateSolutionBoxes((boxes) =>
-                  boxes.map((item) =>
-                    item.id === box.id
-                      ? { ...item, content: event.target.value }
-                      : item,
-                  ),
-                )
-              }
-              className="h-[calc(100%-42px)] w-full resize-none border-0 bg-[repeating-linear-gradient(180deg,transparent,transparent_30px,rgba(15,23,42,0.08)_30px,rgba(15,23,42,0.08)_31px)] px-4 py-3 text-sm leading-8 text-slate-800 outline-none"
-              placeholder="اكتب حلك هنا..."
-            />
-          </div>
-        ))}
+          {pageState.solutionBoxes.map((box) => (
+            <div
+              key={box.id}
+              className={cn(
+                "absolute z-40 overflow-hidden rounded-[1.4rem] border border-[#d8c7a7] bg-[linear-gradient(180deg,rgba(255,255,255,0.97),rgba(249,245,232,0.97))] shadow-[0_12px_32px_rgba(201,154,67,0.18)]",
+                selectedSolutionId === box.id && "ring-2 ring-[#C99A43]/25",
+              )}
+              style={createFrameStyle(box.x, box.y, box.width, box.height)}
+            >
+              <div className="flex items-center justify-between gap-2 border-b border-[#eadcc0] bg-white/85 px-3 py-2">
+                <div className="flex items-center gap-2 text-xs font-semibold text-slate-600">
+                  <SquarePen className="h-3.5 w-3.5 text-[#C99A43]" />
+                  مساحة حل
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    className="rounded-full bg-white p-1 text-slate-600 shadow"
+                    onPointerDown={(event) => beginSolutionMove(box.id, event)}
+                    aria-label="تحريك مساحة الحل"
+                  >
+                    <Grip className="h-3.5 w-3.5" />
+                  </button>
+                  <button
+                    type="button"
+                    className="rounded-full bg-white p-1 text-slate-600 shadow"
+                    onPointerDown={(event) => beginSolutionResize(box.id, event)}
+                    aria-label="تغيير حجم مساحة الحل"
+                  >
+                    <Minimize2 className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              </div>
+
+              <textarea
+                value={box.content}
+                onChange={(event) =>
+                  updateSolutionBoxes((boxes) =>
+                    boxes.map((item) =>
+                      item.id === box.id
+                        ? { ...item, content: event.target.value }
+                        : item,
+                    ),
+                  )
+                }
+                className="h-[calc(100%-42px)] w-full resize-none border-0 bg-[repeating-linear-gradient(180deg,transparent,transparent_30px,rgba(15,23,42,0.08)_30px,rgba(15,23,42,0.08)_31px)] px-4 py-3 text-sm leading-8 text-slate-800 outline-none"
+                placeholder="اكتب حلك هنا..."
+              />
+            </div>
+          ))}
+        </div>
       </div>
 
       <div className="flex justify-center">
