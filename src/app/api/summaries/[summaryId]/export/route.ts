@@ -15,6 +15,8 @@ import {
   type SummarySolutionBox,
 } from "@/lib/summaries";
 
+export const runtime = "nodejs";
+
 function safeFileName(fileName: string) {
   return encodeURIComponent(
     `${fileName.replace(/\.pdf$/i, "").replace(/["\r\n]/g, " ").trim()}-annotated.pdf`,

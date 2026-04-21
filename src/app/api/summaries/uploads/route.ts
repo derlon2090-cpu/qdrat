@@ -3,6 +3,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { getAuthenticatedUserFromRequest } from "@/lib/auth";
 import { createSummaryUploadSession } from "@/lib/summaries";
 
+export const runtime = "nodejs";
+
 function formatUploadError(error: unknown, fallbackMessage: string) {
   if (error instanceof Error) {
     return error.message;

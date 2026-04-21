@@ -3,6 +3,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { getAuthenticatedUserFromRequest } from "@/lib/auth";
 import { createUserSummary, listUserSummaries } from "@/lib/summaries";
 
+export const runtime = "nodejs";
+
 function formatSummariesError(error: unknown, fallbackMessage: string) {
   if (error instanceof Error) {
     return error.message;

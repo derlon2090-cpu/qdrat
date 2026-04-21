@@ -3,6 +3,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { getAuthenticatedUserFromRequest } from "@/lib/auth";
 import { getSummaryFilePayload } from "@/lib/summaries";
 
+export const runtime = "nodejs";
+
 function createSafeFileName(fileName: string) {
   return encodeURIComponent(fileName.replace(/["\r\n]/g, " ").trim());
 }
