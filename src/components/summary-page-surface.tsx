@@ -843,12 +843,12 @@ export function SummaryPageSurface({
 
   return (
     <div className="space-y-4">
-      <div className="relative mx-auto w-full max-w-[900px]">
+      <div className="pointer-events-none relative mx-auto w-full max-w-[900px]">
         <div aria-hidden="true" className="pointer-events-none block w-full" style={{ paddingTop: surfacePaddingTop }} />
 
         <div
           ref={surfaceRef}
-          className="absolute inset-0 z-0 isolate overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-[0_20px_70px_rgba(15,23,42,0.08)]"
+          className="pointer-events-auto absolute inset-0 z-0 isolate overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-[0_20px_70px_rgba(15,23,42,0.08)]"
         >
           <img
             key={previewImageUrl}

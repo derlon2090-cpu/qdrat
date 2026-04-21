@@ -107,7 +107,7 @@ function BackToSummariesLink({
   const subTextClass = tone === "danger" ? "text-rose-600/80" : "text-slate-500";
 
   return (
-    <div className={cn("relative z-20", centered ? "flex justify-center" : "")}>
+    <div className={cn("relative z-[90]", centered ? "flex justify-center" : "")}>
       <Link
         href="/summaries"
         className={cn(
@@ -600,8 +600,8 @@ export function SummaryWorkspace({ summaryId }: { summaryId: string }) {
   const notesAreTemporarilyHidden = reviewMode && hideNotesInReview;
 
   return (
-    <div className="space-y-6">
-      <Card className="relative z-20 border border-[#E8D8B3] bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(248,247,244,0.96))]">
+    <div className="relative z-10 space-y-6">
+      <Card className="relative z-[80] border border-[#E8D8B3] bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(248,247,244,0.96))]">
         <CardContent className="flex flex-col gap-5 p-7 lg:flex-row lg:items-start lg:justify-between">
           <div>
             <BackToSummariesLink />
@@ -612,7 +612,7 @@ export function SummaryWorkspace({ summaryId }: { summaryId: string }) {
             </p>
           </div>
 
-          <div className="flex flex-wrap gap-3">
+          <div className="relative z-[90] flex flex-wrap gap-3">
             <Button type="button" variant="outline" onClick={exportNotes} className="gap-2">
               <Download className="h-4 w-4" />
               تصدير الملاحظات
@@ -719,7 +719,7 @@ export function SummaryWorkspace({ summaryId }: { summaryId: string }) {
         </Card>
 
         <div className="space-y-6">
-          <Card className="relative z-10 border-white/80 bg-white/96 shadow-soft">
+          <Card className="relative z-[70] border-white/80 bg-white/96 shadow-soft">
             <CardContent className="space-y-5 p-6">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div className="display-font text-2xl font-bold text-slate-950">الصفحة {currentPage}</div>
@@ -943,7 +943,7 @@ export function SummaryWorkspace({ summaryId }: { summaryId: string }) {
             onChange={(nextState, meta) => updatePageState(currentPage, nextState, meta)}
           />
 
-          <Card className="border-white/80 bg-white/96 shadow-soft">
+          <Card className="relative z-[20] border-white/80 bg-white/96 shadow-soft">
             <CardContent className="grid gap-6 p-6 lg:grid-cols-[1fr,220px]">
               <div>
                 <div className="display-font text-xl font-bold text-slate-950">ملاحظات الصفحة الحالية</div>

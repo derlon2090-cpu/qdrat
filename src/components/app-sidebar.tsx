@@ -44,7 +44,7 @@ export function AppSidebar() {
 
   return (
     <aside className="hidden xl:block xl:w-[280px]">
-      <div className="sticky top-28 rounded-[2rem] border border-white/80 bg-white/94 p-4 shadow-soft">
+      <div className="sticky top-28 z-[120] rounded-[2rem] border border-white/80 bg-white/94 p-4 shadow-soft">
         <div className="mb-4 px-3">
           <div className="text-xs font-semibold tracking-[0.18em] text-slate-400">STUDENT SPACE</div>
           <div className="mt-2 display-font text-xl font-bold text-slate-950">مساحتك داخل معيار</div>
