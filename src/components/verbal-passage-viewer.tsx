@@ -376,6 +376,7 @@ export function VerbalPassageViewer({
       | null = null;
 
     if (!isAnswerCorrect) {
+      const options = getQuestionOptions(currentQuestion).map((option) => option.text);
       mistakeTracking = await trackMistakeFromClient({
         questionKey: currentQuestionKey,
         section: "verbal",
@@ -385,7 +386,13 @@ export function VerbalPassageViewer({
         questionHref,
         metadata: {
           passageTitle: passage.title,
+          passageSlug: passage.slug,
           questionOrder: currentQuestion.questionOrder,
+          questionId: currentQuestion.id,
+          options,
+          correctAnswer: getCorrectAnswerText(currentQuestion),
+          explanation:
+            currentQuestion.explanation ?? "راجع تفسير السؤال داخل القطعة.",
         },
         outcome: "incorrect",
       });

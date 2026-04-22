@@ -2,6 +2,7 @@ import type { MistakeSection, TrackMistakePayload } from "@/lib/user-mistakes";
 
 export type ClientMistakeTrackingPayload = {
   questionKey: string;
+  questionId?: number | null;
   section: MistakeSection;
   sourceBank: string;
   questionTypeLabel: string;

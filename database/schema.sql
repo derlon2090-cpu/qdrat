@@ -449,7 +449,15 @@ create table if not exists app_user_mistakes (
   question_href text,
   correct_count integer not null default 0,
   removal_threshold integer not null default 5,
+  mastery_state varchar(20) not null default 'incorrect',
+  incorrect_count integer not null default 1,
+  training_attempts_count integer not null default 0,
+  training_correct_count integer not null default 0,
   metadata jsonb not null default '{}'::jsonb,
+  last_incorrect_at timestamptz,
+  last_correct_at timestamptz,
+  last_trained_at timestamptz,
+  mastered_at timestamptz,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
   unique (user_id, question_key)
@@ -460,6 +468,9 @@ create index if not exists idx_app_user_mistakes_user_section
 
 create index if not exists idx_app_user_mistakes_question_key
   on app_user_mistakes (question_key);
+
+create index if not exists idx_app_user_mistakes_user_state
+  on app_user_mistakes (user_id, mastery_state, updated_at desc);
 
 create table if not exists app_user_question_progress (
   id bigserial primary key,
@@ -652,6 +663,16 @@ alter table if exists app_user_question_progress
   add column if not exists last_attempt_at timestamptz,
   add column if not exists updated_at timestamptz not null default now();
 
+alter table if exists app_user_mistakes
+  add column if not exists mastery_state varchar(20) not null default 'incorrect',
+  add column if not exists incorrect_count integer not null default 1,
+  add column if not exists training_attempts_count integer not null default 0,
+  add column if not exists training_correct_count integer not null default 0,
+  add column if not exists last_incorrect_at timestamptz,
+  add column if not exists last_correct_at timestamptz,
+  add column if not exists last_trained_at timestamptz,
+  add column if not exists mastered_at timestamptz;
+
 create table if not exists app_verbal_passages (
   id uuid primary key default gen_random_uuid(),
   slug varchar(180),
@@ -793,7 +814,23 @@ begin
   if not exists (select 1 from pg_constraint where conname = 'chk_app_user_mistakes_counts_nonnegative') then
     alter table app_user_mistakes
       add constraint chk_app_user_mistakes_counts_nonnegative check (
-        correct_count >= 0 and removal_threshold > 0 and correct_count <= removal_threshold
+        correct_count >= 0
+        and incorrect_count >= 0
+        and training_attempts_count >= 0
+        and training_correct_count >= 0
+        and removal_threshold > 0
+        and training_correct_count <= training_attempts_count
+      );
+  end if;
+end
+$$;
+
+do $$
+begin
+  if not exists (select 1 from pg_constraint where conname = 'chk_app_user_mistakes_mastery_state') then
+    alter table app_user_mistakes
+      add constraint chk_app_user_mistakes_mastery_state check (
+        mastery_state in ('incorrect', 'training', 'mastered')
       );
   end if;
 end

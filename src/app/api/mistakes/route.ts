@@ -1,7 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { getAuthenticatedUserFromRequest } from "@/lib/auth";
-import { listUserMistakes, trackUserMistake, type MistakeSection } from "@/lib/user-mistakes";
+import {
+  buildMistakeAnalytics,
+  resolveMistakeTrainingQuestions,
+} from "@/lib/mistake-training";
+import {
+  listUserMistakes,
+  trackUserMistake,
+  type MistakeSection,
+} from "@/lib/user-mistakes";
 
 export async function GET(request: NextRequest) {
   const user = await getAuthenticatedUserFromRequest(request);
@@ -18,9 +26,14 @@ export async function GET(request: NextRequest) {
 
   try {
     const items = await listUserMistakes(user.id);
+    const { questions, unresolvedCount } = await resolveMistakeTrainingQuestions(items);
+    const stats = buildMistakeAnalytics(items, questions, unresolvedCount);
+
     return NextResponse.json({
       ok: true,
       items,
+      trainingQuestions: questions,
+      stats,
     });
   } catch (error) {
     return NextResponse.json(

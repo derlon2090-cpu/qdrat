@@ -7,6 +7,7 @@ import {
   type UserSolvedQuestionSummary,
   type UserSolvedSectionSummary,
 } from "@/lib/user-question-progress";
+import { ensureUserMistakesSchema } from "@/lib/user-mistakes";
 
 const DEFAULT_QUANT_SECTIONS = 18;
 const DEFAULT_VERBAL_SECTIONS = 12;
@@ -67,8 +68,13 @@ export type StudentPortalData = {
   xp: StudentPortalXpSummary;
   solvedQuestionsCount: number;
   totalMistakes: number;
+  activeMistakesCount: number;
   quantitativeMistakes: number;
   verbalMistakes: number;
+  mistakesInTrainingCount: number;
+  masteredMistakesCount: number;
+  mistakeMasteryPercent: number;
+  weakestMistakeLabel: string | null;
   summariesCount: number;
   lastActivityAt: string | null;
   lastActivityLabel: string | null;
@@ -419,6 +425,7 @@ function buildPlanTasks(input: {
 
 async function ensureStudentPortalSchema() {
   await ensureUserQuestionProgressSchema();
+  await ensureUserMistakesSchema();
   const sql = getSql();
 
   await sql.query(`
@@ -491,23 +498,58 @@ async function getMistakeStats(userId: string) {
     `
       select
         count(*)::int as total_mistakes,
+        count(*) filter (where mastery_state <> 'mastered')::int as active_mistakes,
         count(*) filter (where section = 'quantitative')::int as quantitative_mistakes,
-        count(*) filter (where section = 'verbal')::int as verbal_mistakes
+        count(*) filter (where section = 'verbal')::int as verbal_mistakes,
+        count(*) filter (where mastery_state = 'training')::int as training_mistakes,
+        count(*) filter (where mastery_state = 'mastered')::int as mastered_mistakes,
+        coalesce(
+          round(
+            avg(
+              case
+                when mastery_state = 'mastered' then 100
+                else least(
+                  95,
+                  round((greatest(correct_count, 0)::numeric / greatest(removal_threshold, 1)::numeric) * 100)
+                )
+              end
+            )
+          ),
+          0
+        )::int as mastery_percent,
+        (
+          select question_type_label
+          from app_user_mistakes worst
+          where worst.user_id = $1::uuid
+          group by question_type_label
+          order by count(*) desc, max(updated_at) desc
+          limit 1
+        ) as weakest_type_label
       from app_user_mistakes
       where user_id = $1::uuid
     `,
     [userId],
   )) as Array<{
     total_mistakes: number;
+    active_mistakes: number;
     quantitative_mistakes: number;
     verbal_mistakes: number;
+    training_mistakes: number;
+    mastered_mistakes: number;
+    mastery_percent: number;
+    weakest_type_label: string | null;
   }>;
 
   return (
     rows[0] ?? {
       total_mistakes: 0,
+      active_mistakes: 0,
       quantitative_mistakes: 0,
       verbal_mistakes: 0,
+      training_mistakes: 0,
+      mastered_mistakes: 0,
+      mastery_percent: 0,
+      weakest_type_label: null,
     }
   );
 }
@@ -784,8 +826,13 @@ function mapPortalData(
     xp,
     solvedQuestionsCount: progress.solvedQuestionsCount,
     totalMistakes: mistakes.total_mistakes,
+    activeMistakesCount: mistakes.active_mistakes,
     quantitativeMistakes: mistakes.quantitative_mistakes,
     verbalMistakes: mistakes.verbal_mistakes,
+    mistakesInTrainingCount: mistakes.training_mistakes,
+    masteredMistakesCount: mistakes.mastered_mistakes,
+    mistakeMasteryPercent: mistakes.mastery_percent,
+    weakestMistakeLabel: mistakes.weakest_type_label,
     summariesCount: summaries.total_summaries,
     lastActivityAt: row?.last_activity_at ?? null,
     lastActivityLabel: row?.last_activity_label ?? null,

@@ -55,7 +55,7 @@ const quickActions = [
   {
     href: "/question-bank?track=mistakes",
     label: "الأخطاء",
-    description: "راجع الأسئلة المتكررة حتى تقل الأخطاء في المحاولات القادمة.",
+    description: "ادخل إلى تدريب الأخطاء الذكي، وابدأ من الأسئلة الأضعف حتى تصل إلى الإتقان.",
     icon: TriangleAlert,
   },
   {
@@ -330,9 +330,7 @@ export function StudentDashboard() {
   const primaryResumeItem = data.resumeItems[0] ?? null;
   const secondaryResumeItem = data.resumeItems[1] ?? null;
   const upcomingTask = data.upcomingTasks[0] ?? null;
-  const mistakeRatio = data.solvedQuestionsCount
-    ? Math.round((data.totalMistakes / Math.max(data.solvedQuestionsCount, 1)) * 100)
-    : 0;
+  const weakestMistakeLabel = data.weakestMistakeLabel ?? "لم تتضح نقطة ضعف واحدة بعد";
 
   async function handleToggleTask(task: StudentPortalTask, nextValue: boolean) {
     try {
@@ -455,8 +453,8 @@ export function StudentDashboard() {
             />
             <MetricCard
               title="أخطاء تحتاج مراجعة"
-              value={String(data.totalMistakes)}
-              caption={`${mistakeRatio}% من نشاطك الأخير يحتاج تثبيتًا ومراجعة.`}
+              value={String(data.activeMistakesCount)}
+              caption={`${data.mistakeMasteryPercent}% نسبة الإتقان الحالية، و${data.mistakesInTrainingCount} سؤال في التدريب الآن.`}
               icon={TriangleAlert}
               className="border-white/14 bg-white/8"
               iconWrapClass="bg-white/14 text-white"
@@ -605,6 +603,66 @@ export function StudentDashboard() {
         </div>
 
         <div className="space-y-6">
+          <Card className="rounded-[2rem] border border-[#dbe6f6] bg-[linear-gradient(180deg,rgba(255,255,255,0.99),rgba(243,248,255,0.96))] shadow-[0_18px_42px_rgba(18,59,122,0.08)]">
+            <CardContent className="space-y-5 p-8">
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <p className="section-eyebrow text-[#123B7A]">تدرب على أخطائك</p>
+                  <h3 className="display-font text-2xl font-bold text-slate-950">حوّل الأخطاء إلى إتقان</h3>
+                  <p className="mt-2 text-sm leading-7 text-slate-500">
+                    ابدأ جلسة مركزة من أخطائك السابقة، مع تتبع ذكي للحالات: أخطأت فيه، قيد التدريب، ثم أتقنته.
+                  </p>
+                </div>
+                <ProgressRing value={data.mistakeMasteryPercent} label="إتقان" tone="gold" />
+              </div>
+
+              <div className="grid gap-3 sm:grid-cols-3">
+                <div className="rounded-[1.4rem] border border-rose-200 bg-rose-50/80 p-4">
+                  <div className="text-xs font-semibold text-rose-600">تحتاج مراجعة</div>
+                  <div className="mt-3 display-font text-2xl font-bold text-rose-700">
+                    {data.activeMistakesCount}
+                  </div>
+                </div>
+                <div className="rounded-[1.4rem] border border-sky-200 bg-sky-50/80 p-4">
+                  <div className="text-xs font-semibold text-sky-600">قيد التدريب</div>
+                  <div className="mt-3 display-font text-2xl font-bold text-sky-700">
+                    {data.mistakesInTrainingCount}
+                  </div>
+                </div>
+                <div className="rounded-[1.4rem] border border-emerald-200 bg-emerald-50/80 p-4">
+                  <div className="text-xs font-semibold text-emerald-600">أتقنتها</div>
+                  <div className="mt-3 display-font text-2xl font-bold text-emerald-700">
+                    {data.masteredMistakesCount}
+                  </div>
+                </div>
+              </div>
+
+              <div className="rounded-[1.5rem] border border-slate-200 bg-white/85 p-4">
+                <div className="text-xs font-semibold text-slate-500">أكثر جزء يحتاج تركيزًا</div>
+                <div className="mt-2 text-base font-bold text-slate-950">{weakestMistakeLabel}</div>
+                <div className="mt-2 text-sm leading-7 text-slate-500">
+                  نسبة التثبيت الحالية من كامل أخطائك هي {data.mistakeMasteryPercent}%، ومع كل جلسة ناجحة ستنتقل الأسئلة من
+                  الأخطاء إلى التدريب ثم إلى الإتقان.
+                </div>
+              </div>
+
+              <div className="flex flex-wrap gap-3">
+                <Link href="/question-bank?track=mistakes#mistakes-trainer">
+                  <Button className="gap-2">
+                    <TriangleAlert className="h-4 w-4" />
+                    ابدأ تدريب الأخطاء الآن
+                  </Button>
+                </Link>
+                <Link href="/question-bank?track=mistakes">
+                  <Button variant="outline" className="gap-2">
+                    <Brain className="h-4 w-4" />
+                    افتح لوحة الأخطاء
+                  </Button>
+                </Link>
+              </div>
+            </CardContent>
+          </Card>
+
           <Card className="rounded-[2rem] border border-slate-200 bg-white/98 shadow-[0_18px_42px_rgba(15,23,42,0.06)]">
             <CardContent className="space-y-5 p-8">
               <div>

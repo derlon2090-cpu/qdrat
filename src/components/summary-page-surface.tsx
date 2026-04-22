@@ -1071,11 +1071,11 @@ export function SummaryPageSurface({
 
   return (
     <div className="relative isolate z-0 space-y-4">
-      <div className="pointer-events-none mx-auto w-full max-w-[900px]">
+      <div className="mx-auto w-full max-w-[900px]">
         <div
           ref={surfaceRef}
           className="pointer-events-auto relative isolate overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-[0_20px_70px_rgba(15,23,42,0.08)]"
-          style={{ aspectRatio: surfaceAspectCss, minHeight: "520px" }}
+          style={{ aspectRatio: surfaceAspectCss, minHeight: "520px", contain: "layout paint" }}
         >
           {clientPreviewEnabled ? (
             <canvas
@@ -1102,9 +1102,10 @@ export function SummaryPageSurface({
           <canvas
             ref={canvasRef}
             className={cn(
-              "absolute inset-0 z-20 h-full w-full touch-none",
+              "absolute inset-0 z-20 h-full w-full",
               activeTool === "navigate" ? "pointer-events-none" : "pointer-events-auto",
             )}
+            style={{ touchAction: activeTool === "navigate" ? "manipulation" : "none" }}
             onPointerDown={startDrawing}
           />
 

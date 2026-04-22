@@ -178,7 +178,14 @@ export function VerbalReadingFromDocument({
         questionHref,
         metadata: {
           passageTitle: currentPassage.title,
+          passageSlug: currentPassageRouteId,
           questionOrder: currentQuestion.order,
+          questionId: currentQuestion.id,
+          options: currentQuestion.options,
+          correctAnswer: currentQuestion.correctAnswer,
+          explanation:
+            currentQuestion.explanations[currentQuestion.correctAnswer] ??
+            "راجع تفسير السؤال داخل القطعة.",
         },
         outcome: "incorrect",
       });

@@ -270,6 +270,10 @@ export function VerbalPracticeBank({
           source: currentQuestion.source,
           categoryId: currentCategory.id,
           categoryTitle: currentCategory.title,
+          questionId: currentQuestion.id,
+          options: currentQuestion.options,
+          correctAnswer: currentQuestion.correctAnswer,
+          explanation: currentQuestion.explanation,
         },
         outcome: "incorrect",
       });

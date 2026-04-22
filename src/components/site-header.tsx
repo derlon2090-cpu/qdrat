@@ -85,7 +85,7 @@ export function SiteHeader({
   }
 
   return (
-    <header className="sticky top-0 z-[200] border-b border-white/70 bg-white/82 backdrop-blur-2xl">
+    <header className="sticky top-0 z-[1000] isolate pointer-events-auto border-b border-white/70 bg-white/82 backdrop-blur-2xl">
       <div className="mx-auto flex w-[min(calc(100%-2rem),1180px)] items-center justify-between gap-4 py-4">
         <MiyaarLogo />
 
