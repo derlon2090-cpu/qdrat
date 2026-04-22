@@ -368,7 +368,7 @@ export function VerbalPassageViewer({
         questionOrder: currentQuestion.questionOrder,
       },
       outcome: isAnswerCorrect ? "correct" : "incorrect",
-      xpValue: 5,
+      xpValue: 10,
     });
 
     let mistakeTracking:

@@ -12,6 +12,7 @@ import {
   House,
   NotebookPen,
   ShieldCheck,
+  Trophy,
   UserRound,
 } from "lucide-react";
 
@@ -92,6 +93,13 @@ export const studentTopNavItems: SiteNavItem[] = [
     iconWrap: "bg-[#fff7ed]",
   },
   {
+    href: "/challenge",
+    label: "تحدي الشهر",
+    icon: Trophy,
+    accent: "text-[#b7791f]",
+    iconWrap: "bg-[#fff8e5]",
+  },
+  {
     href: "/summaries",
     label: "الملخصات",
     icon: FileText,
@@ -124,11 +132,11 @@ export const studentTopNavItems: SiteNavItem[] = [
 export const studentSidebarItems: SiteNavItem[] = [
   {
     href: "/dashboard",
-    label: "لوحتي",
+    label: "لوحة الطالب",
     icon: House,
     accent: "text-[#123B7A]",
     iconWrap: "bg-[#eef4ff]",
-    description: "لوحة اليوم والإنجاز",
+    description: "خطة اليوم وتقدمك",
   },
   {
     href: "/my-plan",
@@ -136,7 +144,7 @@ export const studentSidebarItems: SiteNavItem[] = [
     icon: NotebookPen,
     accent: "text-[#2f855a]",
     iconWrap: "bg-[#edfdf3]",
-    description: "مهامك اليومية الذكية",
+    description: "مهامك الذكية",
   },
   {
     href: "/question-bank",
@@ -161,6 +169,14 @@ export const studentSidebarItems: SiteNavItem[] = [
     accent: "text-[#2563eb]",
     iconWrap: "bg-[#eff6ff]",
     description: "الكمي واللفظي",
+  },
+  {
+    href: "/challenge",
+    label: "تحدي الشهر",
+    icon: Trophy,
+    accent: "text-[#b7791f]",
+    iconWrap: "bg-[#fff8e5]",
+    description: "XP ولوحة الأبطال",
   },
   {
     href: "/summaries",
@@ -205,6 +221,7 @@ export const studentFooterLinks = [
   { href: "/question-bank", label: "بنك الأسئلة" },
   { href: "/question-bank?track=mistakes", label: "الأخطاء" },
   { href: "/dashboard#progress", label: "المراجعة" },
+  { href: "/challenge", label: "تحدي الشهر" },
   { href: "/summaries", label: "الملخصات" },
   { href: "/paper-models", label: "النماذج" },
   { href: "/account", label: "الإعدادات" },

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import {
   AlertTriangle,
   Brain,
@@ -39,6 +40,43 @@ type MistakesPayload = {
   message?: string;
 };
 
+type SessionXpPayload = {
+  ok?: boolean;
+  data?: {
+    totalAwarded?: number;
+    awarded?: Array<{
+      title: string;
+      points: number;
+    }>;
+    duel?: {
+      id: number;
+      status: "active" | "completed" | "expired";
+      opponentName: string;
+      myPercent: number | null;
+      opponentPercent: number | null;
+      resultLabel: string;
+    } | null;
+  };
+  message?: string;
+};
+
+type DuelPayload = {
+  ok?: boolean;
+  data?: {
+    duel: {
+      id: number;
+      canStart: boolean;
+      track: MistakeTrackFilter;
+      questionCount: number;
+      opponentName: string;
+      resultLabel: string;
+      status: "active" | "completed" | "expired";
+    };
+    questions: UserMistakeTrainingQuestion[];
+  };
+  message?: string;
+};
+
 type TrainingSession = {
   sessionKey: number;
   mode: TrainingMode;
@@ -52,6 +90,22 @@ type TrainingSession = {
   deadlineAt: number | null;
   completedAt: number | null;
   timedOut: boolean;
+  duelId?: number | null;
+  duelLabel?: string | null;
+  isDuel?: boolean;
+};
+
+type LoadedDuel = {
+  duel: {
+    id: number;
+    canStart: boolean;
+    track: MistakeTrackFilter;
+    questionCount: number;
+    opponentName: string;
+    resultLabel: string;
+    status: "active" | "completed" | "expired";
+  };
+  questions: UserMistakeTrainingQuestion[];
 };
 
 const SESSION_SUCCESS_PERCENT = 90;
@@ -267,6 +321,7 @@ export function QuestionBankMistakesPanel({
   sessionStatus: SessionStatus;
   user: AuthSessionUser | null;
 }) {
+  const searchParams = useSearchParams();
   const [items, setItems] = useState<UserMistakeRecord[]>([]);
   const [trainingQuestions, setTrainingQuestions] = useState<
     UserMistakeTrainingQuestion[]
@@ -274,6 +329,7 @@ export function QuestionBankMistakesPanel({
   const [stats, setStats] = useState<MistakeAnalytics | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
   const [trackFilter, setTrackFilter] =
     useState<MistakeTrackFilter>("all");
   const [countPreset, setCountPreset] =
@@ -281,6 +337,13 @@ export function QuestionBankMistakesPanel({
   const [mode, setMode] = useState<TrainingMode>("standard");
   const [session, setSession] = useState<TrainingSession | null>(null);
   const [pendingMistakeId, setPendingMistakeId] = useState<number | null>(null);
+  const [recordedSessions, setRecordedSessions] = useState<Record<number, true>>(
+    {},
+  );
+  const [loadedDuel, setLoadedDuel] = useState<LoadedDuel | null>(null);
+  const [isLoadingDuel, setIsLoadingDuel] = useState(false);
+  const duelIdParam = Number(searchParams.get("duelId") ?? "");
+  const shouldAutoStartDuel = searchParams.get("duelStart") === "1";
 
   async function loadMistakes() {
     if (sessionStatus !== "authenticated" || !user) return;
@@ -316,6 +379,60 @@ export function QuestionBankMistakesPanel({
   useEffect(() => {
     void loadMistakes();
   }, [sessionStatus, user]);
+
+  useEffect(() => {
+    if (
+      sessionStatus !== "authenticated" ||
+      !user ||
+      !Number.isFinite(duelIdParam) ||
+      duelIdParam <= 0
+    ) {
+      setLoadedDuel(null);
+      setIsLoadingDuel(false);
+      return;
+    }
+
+    let cancelled = false;
+
+    async function loadDuel() {
+      setIsLoadingDuel(true);
+
+      try {
+        const response = await fetch(`/api/student/challenge/duels/${duelIdParam}`, {
+          cache: "no-store",
+        });
+        const payload = (await response.json()) as DuelPayload;
+
+        if (!response.ok || !payload.ok || !payload.data) {
+          throw new Error(payload.message ?? "تعذر تحميل بيانات نزال 1v1.");
+        }
+
+        if (!cancelled) {
+          setLoadedDuel(payload.data);
+          setTrackFilter(payload.data.duel.track);
+          setCountPreset(payload.data.duel.questionCount >= 20 ? 20 : 10);
+          setMode("challenge");
+        }
+      } catch (error) {
+        if (!cancelled) {
+          setLoadedDuel(null);
+          setMessage(
+            error instanceof Error ? error.message : "تعذر تحميل بيانات نزال 1v1.",
+          );
+        }
+      } finally {
+        if (!cancelled) {
+          setIsLoadingDuel(false);
+        }
+      }
+    }
+
+    void loadDuel();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [duelIdParam, sessionStatus, user]);
 
   useEffect(() => {
     if (!session?.deadlineAt || session.completedAt) return;
@@ -384,6 +501,40 @@ export function QuestionBankMistakesPanel({
       passed: percent >= SESSION_SUCCESS_PERCENT,
     };
   }, [session]);
+
+  useEffect(() => {
+    if (!loadedDuel || !shouldAutoStartDuel || session) return;
+    if (!loadedDuel.duel.canStart || loadedDuel.duel.status !== "active") return;
+    if (!loadedDuel.questions.length) return;
+
+    startTraining("challenge", loadedDuel.questions, {
+      duelId: loadedDuel.duel.id,
+      duelLabel: `1v1 ضد ${loadedDuel.duel.opponentName}`,
+      isDuel: true,
+    });
+  }, [loadedDuel, session, shouldAutoStartDuel]);
+
+  useEffect(() => {
+    if (!session?.completedAt || !sessionSummary) return;
+    if (recordedSessions[session.sessionKey]) return;
+
+    void recordSessionXp({
+      sessionKey: session.sessionKey,
+      mode: session.mode,
+      track: session.trackFilter,
+      questionCount: session.questions.length,
+      percent: sessionSummary.percent,
+      passed: sessionSummary.passed,
+      duelId: session.duelId ?? null,
+      durationMs: Math.max(0, (session.completedAt ?? Date.now()) - session.startedAt),
+    }).catch((error) => {
+      setMessage(
+        error instanceof Error
+          ? error.message
+          : "تعذر حفظ XP الخاص بنتيجة الجلسة.",
+      );
+    });
+  }, [recordedSessions, session, sessionSummary]);
 
   function updateLocalMistake(nextItem: UserMistakeRecord | null) {
     if (!nextItem) return;
@@ -527,13 +678,147 @@ export function QuestionBankMistakesPanel({
     return payload.item;
   }
 
-  function startTraining(nextMode = mode) {
-    const selectedQuestions = pickSessionQuestions(
-      trainingQuestions,
-      trackFilter,
-      countPreset,
-      nextMode,
-    );
+  async function recordSessionXp(input: {
+    sessionKey: number;
+    mode: TrainingMode;
+    track: MistakeTrackFilter;
+    questionCount: number;
+    percent: number;
+    passed: boolean;
+    abandoned?: boolean;
+    duelId?: number | null;
+    durationMs?: number | null;
+  }) {
+    if (recordedSessions[input.sessionKey]) return;
+
+    const response = await fetch("/api/student/gamification/session", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        sessionKey: String(input.sessionKey),
+        mode: input.mode,
+        track: input.track,
+        questionCount: input.questionCount,
+        percent: input.percent,
+        passed: input.passed,
+        abandoned: input.abandoned ?? false,
+        duelId: input.duelId ?? null,
+        durationMs: input.durationMs ?? null,
+      }),
+    });
+
+    const payload = (await response.json()) as SessionXpPayload;
+
+    if (!response.ok || !payload.ok) {
+      throw new Error(
+        payload.message ?? "تعذر حفظ نقاط XP الخاصة بجلسة الأخطاء.",
+      );
+    }
+
+    setRecordedSessions((previous) => ({
+      ...previous,
+      [input.sessionKey]: true,
+    }));
+
+    const totalAwarded = payload.data?.totalAwarded ?? 0;
+    const awardedLabels =
+      payload.data?.awarded
+        ?.map((item) => `${item.points > 0 ? "+" : ""}${item.points} XP`)
+        .join(" + ") ?? "";
+
+    if (totalAwarded !== 0) {
+      let nextMessage = `تم تحديث نقاطك: ${awardedLabels || `${totalAwarded > 0 ? "+" : ""}${totalAwarded} XP`}.`;
+      if (payload.data?.duel) {
+        nextMessage += ` ${payload.data.duel.resultLabel}`;
+        if (payload.data.duel.opponentPercent != null) {
+          nextMessage += ` (${payload.data.duel.myPercent ?? 0}% مقابل ${payload.data.duel.opponentPercent}%).`;
+        } else {
+          nextMessage += ".";
+        }
+      }
+      setSuccessMessage(nextMessage);
+      return;
+    }
+
+    if (input.abandoned) {
+      setSuccessMessage("تم حفظ إنهاء الجلسة.");
+      return;
+    }
+
+    if (payload.data?.duel) {
+      setSuccessMessage(payload.data.duel.resultLabel);
+    }
+  }
+
+  async function handleExitSession() {
+    if (!session) return;
+
+    const correct = session.questions.filter(
+      (question) => session.submissions[question.mistakeId]?.isCorrect,
+    ).length;
+    const percent = session.questions.length
+      ? Math.round((correct / session.questions.length) * 100)
+      : 0;
+
+    try {
+      if (
+        session.completedAt &&
+        !recordedSessions[session.sessionKey]
+      ) {
+        await recordSessionXp({
+          sessionKey: session.sessionKey,
+          mode: session.mode,
+          track: session.trackFilter,
+          questionCount: session.questions.length,
+          percent,
+          passed: percent >= SESSION_SUCCESS_PERCENT,
+          duelId: session.duelId ?? null,
+          durationMs: Math.max(0, Date.now() - session.startedAt),
+        });
+      }
+      if (!session.completedAt && session.mode === "challenge") {
+        await recordSessionXp({
+          sessionKey: session.sessionKey,
+          mode: session.mode,
+          track: session.trackFilter,
+          questionCount: session.questions.length,
+          percent,
+          passed: false,
+          abandoned: true,
+          duelId: session.duelId ?? null,
+          durationMs: Math.max(0, Date.now() - session.startedAt),
+        });
+      }
+    } catch (error) {
+      setMessage(
+        error instanceof Error
+          ? error.message
+          : "تعذر حفظ إنهاء جلسة التحدي.",
+      );
+    }
+
+    setSession(null);
+  }
+
+  function startTraining(
+    nextMode = mode,
+    overrideQuestions?: UserMistakeTrainingQuestion[],
+    duelMeta?: {
+      duelId?: number | null;
+      duelLabel?: string | null;
+      isDuel?: boolean;
+    },
+  ) {
+    const selectedQuestions =
+      overrideQuestions ??
+      pickSessionQuestions(
+        trainingQuestions,
+        trackFilter,
+        countPreset,
+        nextMode,
+      );
 
     if (!selectedQuestions.length) {
       setMessage(
@@ -543,7 +828,9 @@ export function QuestionBankMistakesPanel({
     }
 
     setMessage("");
+    setSuccessMessage("");
     setMode(nextMode);
+    setSuccessMessage("");
     setSession({
       sessionKey: Date.now(),
       mode: nextMode,
@@ -560,6 +847,9 @@ export function QuestionBankMistakesPanel({
           : null,
       completedAt: null,
       timedOut: false,
+      duelId: duelMeta?.duelId ?? null,
+      duelLabel: duelMeta?.duelLabel ?? null,
+      isDuel: Boolean(duelMeta?.isDuel),
     });
   }
 
@@ -591,6 +881,9 @@ export function QuestionBankMistakesPanel({
           : null,
       completedAt: null,
       timedOut: false,
+      duelId: null,
+      duelLabel: null,
+      isDuel: false,
     });
   }
 
@@ -614,10 +907,12 @@ export function QuestionBankMistakesPanel({
     const isCorrect = selectedAnswer === currentQuestion.correctAnswer;
 
     try {
-      await recordTrainingAttempt(
-        currentQuestion.mistakeId,
-        isCorrect ? "correct" : "incorrect",
-      );
+      if (!session.isDuel) {
+        await recordTrainingAttempt(
+          currentQuestion.mistakeId,
+          isCorrect ? "correct" : "incorrect",
+        );
+      }
 
       const nextSession: TrainingSession = {
         ...session,
@@ -773,6 +1068,12 @@ export function QuestionBankMistakesPanel({
         </div>
       ) : null}
 
+      {successMessage ? (
+        <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+          {successMessage}
+        </div>
+      ) : null}
+
       <section className="rounded-[1.9rem] border border-[#E8D8B3] bg-[linear-gradient(180deg,rgba(255,255,255,0.99),rgba(250,248,244,0.96))] p-6 shadow-soft">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
@@ -925,17 +1226,40 @@ export function QuestionBankMistakesPanel({
               />
             </div>
 
-            <div className="mt-5 overflow-hidden rounded-[1.2rem] bg-slate-100">
-              <div
-                className={`h-3 ${masteryBadge.progressClassName}`}
-                style={{ width: `${Math.max(4, currentStats.masteryPercent)}%` }}
-              />
-            </div>
+          <div className="mt-5 overflow-hidden rounded-[1.2rem] bg-slate-100">
+            <div
+              className={`h-3 ${masteryBadge.progressClassName}`}
+              style={{ width: `${Math.max(4, currentStats.masteryPercent)}%` }}
+            />
+          </div>
 
-            <div className="mt-5 flex flex-wrap gap-3">
-              <button
-                type="button"
-                onClick={() => startTraining(mode)}
+          {isLoadingDuel ? (
+            <div className="mt-5 rounded-[1.4rem] border border-[#dbe6f6] bg-[#f3f8ff] p-4 text-sm text-[#123B7A]">
+              جاري تجهيز بيانات نزال 1v1...
+            </div>
+          ) : loadedDuel ? (
+            <div className="mt-5 rounded-[1.4rem] border border-[#dbe6f6] bg-[#f3f8ff] p-4">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <div className="text-sm font-bold text-slate-950">
+                    نزال 1v1 ضد {loadedDuel.duel.opponentName}
+                  </div>
+                  <div className="mt-2 text-sm leading-7 text-slate-600">
+                    {loadedDuel.duel.resultLabel} • {loadedDuel.duel.questionCount} أسئلة •{" "}
+                    {getTrackLabel(loadedDuel.duel.track)}
+                  </div>
+                </div>
+                <span className="rounded-full bg-white px-3 py-2 text-xs font-semibold text-[#123B7A]">
+                  الفائز يحصل على XP إضافي
+                </span>
+              </div>
+            </div>
+          ) : null}
+
+          <div className="mt-5 flex flex-wrap gap-3">
+            <button
+              type="button"
+              onClick={() => startTraining(mode)}
                 className="inline-flex items-center gap-2 rounded-2xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white"
               >
                 <Target className="h-4 w-4" />
@@ -949,6 +1273,22 @@ export function QuestionBankMistakesPanel({
                 <TimerReset className="h-4 w-4" />
                 اختبرني بتحدي
               </button>
+              {loadedDuel?.duel.canStart ? (
+                <button
+                  type="button"
+                  onClick={() =>
+                    startTraining("challenge", loadedDuel.questions, {
+                      duelId: loadedDuel.duel.id,
+                      duelLabel: `1v1 ضد ${loadedDuel.duel.opponentName}`,
+                      isDuel: true,
+                    })
+                  }
+                  className="inline-flex items-center gap-2 rounded-2xl border border-[#123B7A] bg-[#123B7A] px-5 py-3 text-sm font-semibold text-white"
+                >
+                  <Trophy className="h-4 w-4" />
+                  ابدأ نزال 1v1
+                </button>
+              ) : null}
             </div>
           </div>
         </div>
@@ -968,6 +1308,11 @@ export function QuestionBankMistakesPanel({
                   ? "نتيجة تدريب الأخطاء"
                   : "جلسة تدريب أخطاء فعّالة"}
               </div>
+              {session.duelLabel ? (
+                <div className="mt-2 text-sm font-semibold text-[#123B7A]">
+                  {session.duelLabel}
+                </div>
+              ) : null}
               <p className="mt-2 max-w-3xl text-sm leading-8 text-slate-600">
                 يجب أن تصل إلى {SESSION_SUCCESS_PERCENT}% أو أكثر حتى تعتبر هذا
                 الجزء متقنًا.
@@ -980,14 +1325,16 @@ export function QuestionBankMistakesPanel({
                   الوقت المتبقي: {formatSecondsRemaining(session.deadlineAt)}
                 </div>
               ) : null}
-              <button
-                type="button"
-                onClick={repeatCurrentConfig}
-                className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700"
-              >
-                <RefreshCcw className="h-4 w-4" />
-                إعادة الاختبار
-              </button>
+              {!session.isDuel ? (
+                <button
+                  type="button"
+                  onClick={repeatCurrentConfig}
+                  className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700"
+                >
+                  <RefreshCcw className="h-4 w-4" />
+                  إعادة الاختبار
+                </button>
+              ) : null}
             </div>
           </div>
 
@@ -1041,7 +1388,7 @@ export function QuestionBankMistakesPanel({
                 </button>
                 <button
                   type="button"
-                  onClick={() => setSession(null)}
+                  onClick={() => void handleExitSession()}
                   className="rounded-2xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700"
                 >
                   إنهاء الجلسة
@@ -1103,6 +1450,16 @@ export function QuestionBankMistakesPanel({
               </div>
 
               <div className="mt-6 flex flex-wrap gap-3">
+                {session.mode === "challenge" && !session.completedAt ? (
+                  <button
+                    type="button"
+                    onClick={() => void handleExitSession()}
+                    className="rounded-2xl border border-rose-200 bg-rose-50 px-5 py-3 text-sm font-semibold text-rose-700"
+                  >
+                    إنهاء مبكر
+                  </button>
+                ) : null}
+
                 {!currentSubmission ? (
                   <button
                     type="button"

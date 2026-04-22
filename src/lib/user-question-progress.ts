@@ -1,4 +1,6 @@
 import { getSqlClient } from "@/lib/db";
+import { applyActiveXpMultiplier } from "@/lib/gamification-rules";
+import { syncGamificationAfterQuestionSolve } from "@/lib/gamification";
 
 export type QuestionProgressSection = "verbal" | "quantitative";
 export type QuestionProgressOutcome = "correct" | "incorrect";
@@ -107,6 +109,24 @@ function clampPositiveInteger(value: number | null | undefined, fallback: number
   }
 
   return Math.max(0, Math.round(value));
+}
+
+function resolveQuestionXpValue(payload: TrackQuestionProgressPayload) {
+  if (payload.xpValue != null && !Number.isNaN(payload.xpValue)) {
+    return clampPositiveInteger(payload.xpValue, 10);
+  }
+
+  const metadataDifficulty =
+    typeof payload.metadata?.difficulty === "string"
+      ? payload.metadata.difficulty.toLowerCase()
+      : "";
+  const isHard =
+    metadataDifficulty.includes("hard") ||
+    metadataDifficulty.includes("elite") ||
+    metadataDifficulty.includes("صعب") ||
+    metadataDifficulty.includes("متقدم");
+
+  return isHard ? 20 : 10;
 }
 
 function mapQuestionProgressRow(row: UserQuestionProgressRow): UserQuestionProgressRecord {
@@ -391,7 +411,7 @@ export async function trackUserQuestionProgress(userId: string, payload: TrackQu
 
   const existing = existingRows[0] ?? null;
   const isCorrect = payload.outcome === "correct";
-  const xpValue = clampPositiveInteger(payload.xpValue, 5);
+  const xpValue = applyActiveXpMultiplier(resolveQuestionXpValue(payload));
   const awardedXp = isCorrect && !existing?.is_solved ? xpValue : 0;
   const nextAttemptsCount = clampPositiveInteger(existing?.attempts_count, 0) + 1;
   const nextCorrectAttemptsCount =
@@ -598,6 +618,10 @@ export async function trackUserQuestionProgress(userId: string, payload: TrackQu
   );
 
   const totals = await getUserQuestionProgressTotals(userId);
+
+  if (awardedXp > 0) {
+    await syncGamificationAfterQuestionSolve(userId);
+  }
 
   return {
     status: existing ? "updated" as const : "created" as const,

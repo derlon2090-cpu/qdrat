@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ArrowLeft,
@@ -107,7 +108,7 @@ function BackToSummariesLink({
 
   return (
     <div className={cn("relative z-[90]", centered ? "flex justify-center" : "")}>
-      <a
+      <Link
         href="/summaries"
         className={cn(
           "pointer-events-auto group inline-flex min-h-[5.5rem] w-full max-w-[23rem] cursor-pointer items-center justify-between gap-4 rounded-[1.55rem] border px-5 py-4 text-right transition duration-200 hover:-translate-y-0.5",
@@ -127,7 +128,7 @@ function BackToSummariesLink({
         >
           <ArrowRight className="h-5 w-5" />
         </span>
-      </a>
+      </Link>
     </div>
   );
 }

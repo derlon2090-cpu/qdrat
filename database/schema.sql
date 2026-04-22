@@ -1110,3 +1110,53 @@ left join lateral (
   from app_user_mistakes mistakes
   where mistakes.user_id = u.id
 ) mistake_stats on true;
+
+create table if not exists app_user_gamification_events (
+  id bigserial primary key,
+  user_id uuid not null references app_users(id) on delete cascade,
+  event_type varchar(40) not null,
+  title varchar(180) not null,
+  points integer not null,
+  unique_key varchar(255),
+  metadata jsonb not null default '{}'::jsonb,
+  created_at timestamptz not null default now()
+);
+
+create unique index if not exists idx_app_user_gamification_events_unique_key
+  on app_user_gamification_events (user_id, unique_key)
+  where unique_key is not null;
+
+create index if not exists idx_app_user_gamification_events_user_created
+  on app_user_gamification_events (user_id, created_at desc);
+
+create index if not exists idx_app_user_gamification_events_type_created
+  on app_user_gamification_events (event_type, created_at desc);
+
+create table if not exists app_user_challenge_duels (
+  id bigserial primary key,
+  challenger_id uuid not null references app_users(id) on delete cascade,
+  opponent_id uuid not null references app_users(id) on delete cascade,
+  status varchar(20) not null default 'active',
+  track varchar(20) not null default 'all',
+  question_count integer not null default 10,
+  questions jsonb not null default '[]'::jsonb,
+  challenger_percent integer,
+  opponent_percent integer,
+  challenger_duration_ms integer,
+  opponent_duration_ms integer,
+  challenger_completed_at timestamptz,
+  opponent_completed_at timestamptz,
+  winner_user_id uuid references app_users(id) on delete set null,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  expires_at timestamptz
+);
+
+create index if not exists idx_app_user_challenge_duels_challenger
+  on app_user_challenge_duels (challenger_id, created_at desc);
+
+create index if not exists idx_app_user_challenge_duels_opponent
+  on app_user_challenge_duels (opponent_id, created_at desc);
+
+create index if not exists idx_app_user_challenge_duels_status
+  on app_user_challenge_duels (status, expires_at desc, created_at desc);

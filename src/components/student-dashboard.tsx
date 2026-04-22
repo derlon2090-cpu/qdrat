@@ -53,6 +53,12 @@ const quickActions = [
     icon: ClipboardList,
   },
   {
+    href: "/challenge",
+    label: "تحدي الشهر",
+    description: "تابع XP وترتيبك الحالي واعرف كم يفصلك عن المركز التالي داخل لوحة الأبطال.",
+    icon: Trophy,
+  },
+  {
     href: "/question-bank?track=mistakes",
     label: "الأخطاء",
     description: "ادخل إلى تدريب الأخطاء الذكي، وابدأ من الأسئلة الأضعف حتى تصل إلى الإتقان.",
@@ -603,6 +609,88 @@ export function StudentDashboard() {
         </div>
 
         <div className="space-y-6">
+          <Card className="rounded-[2rem] border border-[#f1dfb8] bg-[linear-gradient(180deg,rgba(255,252,245,0.99),rgba(255,255,255,0.96))] shadow-[0_18px_42px_rgba(183,121,31,0.10)]">
+            <CardContent className="space-y-5 p-8">
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <p className="section-eyebrow text-[#b7791f]">تحدي الشهر</p>
+                  <h3 className="display-font text-2xl font-bold text-slate-950">
+                    {data.challenge.currentTitle}
+                  </h3>
+                  <p className="mt-2 text-sm leading-7 text-slate-500">
+                    {data.challenge.countdownLabel}
+                  </p>
+                </div>
+                <ProgressRing value={data.xp.progressPercent} label="XP" tone="gold" />
+              </div>
+
+              <div className="grid gap-3 sm:grid-cols-3">
+                <div className="rounded-[1.4rem] border border-amber-200 bg-amber-50/80 p-4">
+                  <div className="text-xs font-semibold text-amber-700">ترتيبك الشهري</div>
+                  <div className="mt-3 display-font text-2xl font-bold text-slate-950">
+                    {data.challenge.monthlyRank ? `#${data.challenge.monthlyRank}` : "خارج الترتيب"}
+                  </div>
+                </div>
+                <div className="rounded-[1.4rem] border border-slate-200 bg-white p-4">
+                  <div className="text-xs font-semibold text-slate-500">XP هذا الشهر</div>
+                  <div className="mt-3 display-font text-2xl font-bold text-slate-950">
+                    {data.challenge.monthlyXp.toLocaleString("en-US")}
+                  </div>
+                </div>
+                <div className="rounded-[1.4rem] border border-slate-200 bg-white p-4">
+                  <div className="text-xs font-semibold text-slate-500">السلسلة الحالية</div>
+                  <div className="mt-3 display-font text-2xl font-bold text-slate-950">
+                    {data.challenge.currentStreak} يوم
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex flex-wrap gap-2">
+                <Badge
+                  className={
+                    data.challenge.xpMultiplier.active
+                      ? "bg-emerald-100 text-emerald-800"
+                      : "bg-slate-100 text-slate-700"
+                  }
+                >
+                  {data.challenge.xpMultiplier.label}
+                </Badge>
+                <Badge
+                  className={
+                    data.challenge.rankProtection.active
+                      ? "bg-[#fff7e8] text-[#b7791f]"
+                      : "bg-slate-100 text-slate-700"
+                  }
+                >
+                  {data.challenge.rankProtection.label}
+                </Badge>
+              </div>
+
+              <div className="rounded-[1.5rem] border border-slate-200 bg-white/85 p-4 text-sm leading-8 text-slate-600">
+                {data.challenge.rankProtection.active
+                  ? data.challenge.rankProtection.description
+                  : data.challenge.nextMonthlyRankGap
+                  ? `تبقى لك ${data.challenge.nextMonthlyRankGap.toLocaleString("en-US")} XP للوصول إلى المركز التالي في التحدي.`
+                  : data.challenge.xpMultiplier.description}
+              </div>
+
+              <div className="flex flex-wrap gap-3">
+                <Link href="/challenge">
+                  <Button className="gap-2">
+                    <Trophy className="h-4 w-4" />
+                    افتح لوحة التحدي
+                  </Button>
+                </Link>
+                <Link href="/question-bank?track=mistakes#mistakes-trainer">
+                  <Button variant="outline" className="gap-2">
+                    <Zap className="h-4 w-4" />
+                    اجمع XP من الأخطاء
+                  </Button>
+                </Link>
+              </div>
+            </CardContent>
+          </Card>
+
           <Card className="rounded-[2rem] border border-[#dbe6f6] bg-[linear-gradient(180deg,rgba(255,255,255,0.99),rgba(243,248,255,0.96))] shadow-[0_18px_42px_rgba(18,59,122,0.08)]">
             <CardContent className="space-y-5 p-8">
               <div className="flex items-start justify-between gap-4">

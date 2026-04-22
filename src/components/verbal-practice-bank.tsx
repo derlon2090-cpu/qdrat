@@ -251,7 +251,7 @@ export function VerbalPracticeBank({
         categoryTitle: currentCategory.title,
       },
       outcome: isCorrect ? "correct" : "incorrect",
-      xpValue: 5,
+      xpValue: 10,
     });
 
     let mistakeTracking:

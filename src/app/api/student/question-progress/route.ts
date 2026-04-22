@@ -48,7 +48,7 @@ export async function POST(request: NextRequest) {
       correctAnswer: payload.correctAnswer ?? null,
       metadata: payload.metadata ?? {},
       outcome: payload.outcome === "incorrect" ? "incorrect" : "correct",
-      xpValue: payload.xpValue ?? 5,
+      xpValue: payload.xpValue ?? 10,
     });
 
     return NextResponse.json({

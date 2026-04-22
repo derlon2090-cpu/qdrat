@@ -1,5 +1,10 @@
 import { getSqlClient } from "@/lib/db";
 import {
+  getStudentChallengeData,
+  type StudentChallengeAchievement,
+  type StudentChallengeMission,
+} from "@/lib/gamification";
+import {
   ensureUserQuestionProgressSchema,
   getUserQuestionProgressTotals,
   listRecentSolvedQuestions,
@@ -13,7 +18,7 @@ const DEFAULT_QUANT_SECTIONS = 18;
 const DEFAULT_VERBAL_SECTIONS = 12;
 const DEFAULT_DAILY_MINUTES = 120;
 const PLAN_GENERATION_DAYS = 14;
-const XP_PER_SOLVED_QUESTION = 5;
+const XP_PER_SOLVED_QUESTION = 10;
 const XP_PRO_TARGET = 10_000;
 
 export type StudentPlanType = "light" | "medium" | "intensive";
@@ -40,12 +45,39 @@ export type StudentPortalResumeItem = {
 
 export type StudentPortalXpSummary = {
   total: number;
+  questionTotal: number;
+  bonusTotal: number;
   perQuestion: number;
   target: number;
   remainingToTarget: number;
   progressPercent: number;
   levelLabel: string;
+  nextLevelLabel: string | null;
+  xpToNextLevel: number;
   statusMessage: string;
+};
+
+export type StudentPortalChallengeSummary = {
+  currentTitle: string;
+  monthlyRank: number | null;
+  monthlyXp: number;
+  weeklyXp: number;
+  dailyXp: number;
+  nextMonthlyRankGap: number | null;
+  currentStreak: number;
+  bestStreak: number;
+  monthLabel: string;
+  countdownLabel: string;
+  xpMultiplier: {
+    active: boolean;
+    label: string;
+    description: string;
+  };
+  rankProtection: {
+    active: boolean;
+    label: string;
+    description: string;
+  };
 };
 
 export type StudentPortalSolvedSection = UserSolvedSectionSummary;
@@ -66,6 +98,7 @@ export type StudentPortalData = {
   quantProgressPercent: number;
   verbalProgressPercent: number;
   xp: StudentPortalXpSummary;
+  challenge: StudentPortalChallengeSummary;
   solvedQuestionsCount: number;
   totalMistakes: number;
   activeMistakesCount: number;
@@ -90,6 +123,8 @@ export type StudentPortalData = {
   };
   resumeItems: StudentPortalResumeItem[];
   recommendations: string[];
+  missions: StudentChallengeMission[];
+  achievements: StudentChallengeAchievement[];
 };
 
 type StudentPortalRow = {
@@ -231,7 +266,14 @@ function calculatePressure(
   return "needs_more_time";
 }
 
-function buildXpSummary(totalXp: number): StudentPortalXpSummary {
+function buildXpSummary(
+  totalXp: number,
+  questionXp: number,
+  bonusXp: number,
+  currentLevelLabel: string,
+  nextLevelLabel: string | null,
+  xpToNextLevel: number,
+): StudentPortalXpSummary {
   const normalizedXp = Math.max(0, Math.round(totalXp));
   const remainingToTarget = Math.max(0, XP_PRO_TARGET - normalizedXp);
 
@@ -246,7 +288,8 @@ function buildXpSummary(totalXp: number): StudentPortalXpSummary {
     levelLabel = "مستوى متمكن";
   }
 
-  let statusMessage = "ابدأ بتجميع النقاط من الأسئلة الصحيحة، وكل سؤال صحيح يمنحك 5 XP.";
+  let statusMessage =
+    "ابدأ بتجميع النقاط من الأسئلة الصحيحة، وكل سؤال صحيح يمنحك 10 XP مع مكافآت إضافية من الأخطاء والتحديات.";
   if (normalizedXp >= XP_PRO_TARGET) {
     statusMessage = "وصلت للفل المحترف وأنت جاهز تقريبًا للاختبار. حافظ على المراجعة اليومية.";
   } else if (normalizedXp >= 7500) {
@@ -257,13 +300,19 @@ function buildXpSummary(totalXp: number): StudentPortalXpSummary {
     statusMessage = `أنت على الطريق الصحيح، واستمر حتى تقلص الفارق المتبقي ${remainingToTarget} XP.`;
   }
 
+  levelLabel = currentLevelLabel;
+
   return {
     total: normalizedXp,
+    questionTotal: Math.max(0, Math.round(questionXp)),
+    bonusTotal: Math.max(0, Math.round(bonusXp)),
     perQuestion: XP_PER_SOLVED_QUESTION,
     target: XP_PRO_TARGET,
     remainingToTarget,
     progressPercent: clamp(Math.round((normalizedXp / XP_PRO_TARGET) * 100), 0, 100),
-    levelLabel,
+    levelLabel: currentLevelLabel,
+    nextLevelLabel,
+    xpToNextLevel: Math.max(0, xpToNextLevel),
     statusMessage,
   };
 }
@@ -742,6 +791,7 @@ function mapPortalData(
   recentSolvedQuestions: Awaited<ReturnType<typeof listRecentSolvedQuestions>>,
   mistakes: Awaited<ReturnType<typeof getMistakeStats>>,
   summaries: Awaited<ReturnType<typeof getSummaryStats>>,
+  challengeData: Awaited<ReturnType<typeof getStudentChallengeData>>,
 ) {
   const planType = toPlanType(row?.plan_type);
   const quantRemainingSections = inferRemainingSections(
@@ -775,7 +825,40 @@ function mapPortalData(
     targetQuestions: todayTasks.reduce((sum, task) => sum + (task.targetQuestions ?? 0), 0) * 3 || 90,
     mistakesReview: Math.max(5, Math.min(15, mistakes.total_mistakes || 5)),
   };
-  const xp = buildXpSummary(progress.totalXp);
+  const xp = buildXpSummary(
+    challengeData.totalXp,
+    challengeData.questionXp,
+    challengeData.bonusXp,
+    challengeData.level.label,
+    challengeData.level.nextLevelLabel,
+    challengeData.level.xpToNextLevel,
+  );
+  const challenge: StudentPortalChallengeSummary = {
+    currentTitle: challengeData.currentTitle,
+    monthlyRank: challengeData.monthlyRank,
+    monthlyXp: challengeData.monthlyXp,
+    weeklyXp: challengeData.weeklyXp,
+    dailyXp: challengeData.dailyXp,
+    nextMonthlyRankGap: challengeData.nextMonthlyRankGap,
+    currentStreak: challengeData.currentStreak,
+    bestStreak: challengeData.bestStreak,
+    monthLabel: challengeData.monthLabel,
+    countdownLabel: challengeData.countdownLabel,
+    xpMultiplier: {
+      active: challengeData.xpMultiplier.active,
+      label: challengeData.xpMultiplier.active
+        ? "XP x2 مفعل"
+        : challengeData.xpMultiplier.nextLabel ?? challengeData.xpMultiplier.label,
+      description: challengeData.xpMultiplier.description,
+    },
+    rankProtection: {
+      active: challengeData.rankProtection.active,
+      label: challengeData.rankProtection.active
+        ? challengeData.rankProtection.label
+        : "حماية المركز غير مفعلة",
+      description: challengeData.rankProtection.description,
+    },
+  };
 
   const resumeItems: StudentPortalResumeItem[] = [];
 
@@ -824,6 +907,7 @@ function mapPortalData(
     quantProgressPercent: clamp(quantProgressPercent, 0, 100),
     verbalProgressPercent: clamp(verbalProgressPercent, 0, 100),
     xp,
+    challenge,
     solvedQuestionsCount: progress.solvedQuestionsCount,
     totalMistakes: mistakes.total_mistakes,
     activeMistakesCount: mistakes.active_mistakes,
@@ -849,6 +933,8 @@ function mapPortalData(
       planPressure,
       planType,
     }),
+    missions: challengeData.missions,
+    achievements: challengeData.achievements,
   } satisfies StudentPortalData;
 }
 
@@ -902,6 +988,13 @@ export async function getStudentPortalData(userId: string) {
     getMistakeStats(userId),
     getSummaryStats(userId),
   ]);
+  const challengeData = await getStudentChallengeData(userId, {
+    includeLeaderboards: false,
+    solvedQuestionsCount: progress.solvedQuestionsCount,
+    questionXp: progress.totalXp,
+    activeMistakesCount: mistakes.active_mistakes,
+    masteredMistakesCount: mistakes.mastered_mistakes,
+  });
 
   if (portalRow.onboarding_completed) {
     const tasks = await listPlanTasks(userId);
@@ -911,7 +1004,16 @@ export async function getStudentPortalData(userId: string) {
   }
 
   const nextTasks = await listPlanTasks(userId);
-  return mapPortalData(portalRow, nextTasks, progress, solvedSections, recentSolvedQuestions, mistakes, summaries);
+  return mapPortalData(
+    portalRow,
+    nextTasks,
+    progress,
+    solvedSections,
+    recentSolvedQuestions,
+    mistakes,
+    summaries,
+    challengeData,
+  );
 }
 
 export async function saveStudentOnboarding(userId: string, input: OnboardingInput) {

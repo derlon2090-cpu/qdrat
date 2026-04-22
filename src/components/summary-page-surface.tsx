@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import {
   useCallback,
   useEffect,
@@ -1049,12 +1050,12 @@ export function SummaryPageSurface({
             {pdfError}
           </div>
           <div className="mt-5 flex flex-wrap justify-center gap-3">
-            <a
+            <Link
               href="/summaries"
               className="rounded-full border border-rose-200 bg-white px-5 py-2.5 text-sm font-bold text-rose-700 transition hover:border-rose-300 hover:bg-rose-50"
             >
               العودة إلى مكتبة الملخصات
-            </a>
+            </Link>
             <a
               href={directPageUrl}
               target="_blank"

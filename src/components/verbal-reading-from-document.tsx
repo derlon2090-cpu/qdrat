@@ -144,6 +144,9 @@ export function VerbalReadingFromDocument({
     });
 
     const isCorrect = selectedAnswer === currentQuestion.correctAnswer;
+    const normalizedDifficulty = currentPassage.difficulty.toLowerCase();
+    const questionXpValue =
+      normalizedDifficulty.includes("صعب") || normalizedDifficulty.includes("متقدم") ? 20 : 10;
 
     const progressResult = await trackQuestionProgressFromClient({
       questionKey,
@@ -159,9 +162,10 @@ export function VerbalReadingFromDocument({
       metadata: {
         passageTitle: currentPassage.title,
         questionOrder: currentQuestion.order,
+        difficulty: currentPassage.difficulty,
       },
       outcome: isCorrect ? "correct" : "incorrect",
-      xpValue: 5,
+      xpValue: questionXpValue,
     });
 
     let mistakeTracking:
