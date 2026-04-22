@@ -8,7 +8,12 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import type { StudentPortalData } from "@/lib/student-portal";
+import type {
+  StudentPortalData,
+  StudentPortalSolvedQuestion,
+  StudentPortalSolvedSection,
+  StudentPortalXpSummary,
+} from "@/lib/student-portal";
 
 type StudentAchievementsPanelProps = {
   data: Pick<
@@ -17,6 +22,20 @@ type StudentAchievementsPanelProps = {
   >;
   sectionId?: string;
   compact?: boolean;
+};
+
+const fallbackXp: StudentPortalXpSummary = {
+  total: 0,
+  questionTotal: 0,
+  bonusTotal: 0,
+  perQuestion: 10,
+  target: 10_000,
+  remainingToTarget: 10_000,
+  progressPercent: 0,
+  levelLabel: "بداية",
+  nextLevelLabel: null,
+  xpToNextLevel: 0,
+  statusMessage: "ابدأ بحل أول سؤال صحيح ليظهر تقدمك هنا.",
 };
 
 function truncateText(value: string, maxLength = 108) {
@@ -33,15 +52,36 @@ function getRetryLabel(href: string | null) {
   return href.includes("/verbal/reading") ? "إعادة القطعة" : "إعادة الأسئلة";
 }
 
+function normalizePanelData(data: StudentAchievementsPanelProps["data"]) {
+  const xp = data?.xp ?? fallbackXp;
+  const solvedQuestionsCount = Number(data?.solvedQuestionsCount ?? 0);
+  const solvedSections: StudentPortalSolvedSection[] = Array.isArray(data?.solvedSections)
+    ? data.solvedSections
+    : [];
+  const recentSolvedQuestions: StudentPortalSolvedQuestion[] = Array.isArray(data?.recentSolvedQuestions)
+    ? data.recentSolvedQuestions
+    : [];
+
+  return {
+    xp,
+    solvedQuestionsCount,
+    solvedSections,
+    recentSolvedQuestions,
+  };
+}
+
 export function StudentAchievementsPanel({
   data,
   sectionId,
   compact = false,
 }: StudentAchievementsPanelProps) {
-  const visibleSections = compact ? data.solvedSections.slice(0, 4) : data.solvedSections.slice(0, 8);
+  const normalized = normalizePanelData(data);
+  const visibleSections = compact
+    ? normalized.solvedSections.slice(0, 4)
+    : normalized.solvedSections.slice(0, 8);
   const visibleQuestions = compact
-    ? data.recentSolvedQuestions.slice(0, 4)
-    : data.recentSolvedQuestions.slice(0, 6);
+    ? normalized.recentSolvedQuestions.slice(0, 4)
+    : normalized.recentSolvedQuestions.slice(0, 6);
 
   return (
     <div className="space-y-6" id={sectionId}>
@@ -54,14 +94,17 @@ export function StudentAchievementsPanel({
                 تقدّمك الحقيقي داخل بنك الأسئلة
               </h3>
               <p className="mt-2 max-w-3xl text-sm leading-8 text-slate-600">
-                كل سؤال صحيح يمنحك {data.xp.perQuestion} XP، وعند الوصول إلى {data.xp.target.toLocaleString("en-US")} XP
-                يظهر لك مستوى الجاهزية والاحتراف داخل ملف الطالب.
+                كل سؤال صحيح يمنحك {normalized.xp.perQuestion} XP، وعند الوصول إلى{" "}
+                {normalized.xp.target.toLocaleString("en-US")} XP يظهر لك مستوى الجاهزية
+                والاحتراف داخل ملف الطالب.
               </p>
             </div>
 
             <div className="rounded-[1.5rem] border border-[#E8D8B3] bg-[#fffaf0] px-5 py-4 text-right">
               <div className="text-xs font-semibold text-slate-500">المستوى الحالي</div>
-              <div className="mt-2 display-font text-2xl font-bold text-slate-950">{data.xp.levelLabel}</div>
+              <div className="mt-2 display-font text-2xl font-bold text-slate-950">
+                {normalized.xp.levelLabel}
+              </div>
             </div>
           </div>
 
@@ -72,25 +115,27 @@ export function StudentAchievementsPanel({
                 إجمالي XP
               </div>
               <div className="mt-3 display-font text-3xl font-bold text-slate-950">
-                {data.xp.total.toLocaleString("en-US")}
+                {normalized.xp.total.toLocaleString("en-US")}
               </div>
             </div>
+
             <div className="rounded-[1.4rem] border border-slate-200 bg-slate-50/80 p-4">
               <div className="flex items-center gap-2 text-xs font-semibold text-slate-500">
                 <BookCheck className="h-4 w-4" />
                 الأسئلة المحلولة
               </div>
               <div className="mt-3 display-font text-3xl font-bold text-slate-950">
-                {data.solvedQuestionsCount.toLocaleString("en-US")}
+                {normalized.solvedQuestionsCount.toLocaleString("en-US")}
               </div>
             </div>
+
             <div className="rounded-[1.4rem] border border-slate-200 bg-slate-50/80 p-4">
               <div className="flex items-center gap-2 text-xs font-semibold text-slate-500">
                 <Sparkles className="h-4 w-4" />
                 المتبقي للهدف
               </div>
               <div className="mt-3 display-font text-3xl font-bold text-slate-950">
-                {data.xp.remainingToTarget.toLocaleString("en-US")}
+                {normalized.xp.remainingToTarget.toLocaleString("en-US")}
               </div>
             </div>
           </div>
@@ -98,13 +143,13 @@ export function StudentAchievementsPanel({
           <div className="space-y-3">
             <div className="flex items-center justify-between text-sm font-semibold text-slate-600">
               <span>التقدم نحو 10,000 XP</span>
-              <span>{data.xp.progressPercent}%</span>
+              <span>{normalized.xp.progressPercent}%</span>
             </div>
-            <Progress value={data.xp.progressPercent} />
+            <Progress value={normalized.xp.progressPercent} />
           </div>
 
           <div className="rounded-[1.4rem] border border-[#E8D8B3] bg-[#fffaf0] px-4 py-4 text-sm leading-8 text-slate-700">
-            {data.xp.statusMessage}
+            {normalized.xp.statusMessage}
           </div>
         </CardContent>
       </Card>
@@ -158,7 +203,8 @@ export function StudentAchievementsPanel({
               </div>
             ) : (
               <div className="rounded-[1.5rem] border border-dashed border-slate-300 bg-slate-50/70 p-6 text-sm leading-8 text-slate-600">
-                عندما يحفظ النظام أول أسئلة صحيحة لك، ستظهر هنا الأقسام التي أنهيتها مع زر إعادة الحل لكل قسم.
+                عندما يحفظ النظام أول أسئلة صحيحة لك، ستظهر هنا الأقسام التي أنهيتها مع
+                زر إعادة الحل لكل قسم.
               </div>
             )}
           </CardContent>
@@ -211,7 +257,8 @@ export function StudentAchievementsPanel({
               </div>
             ) : (
               <div className="rounded-[1.5rem] border border-dashed border-slate-300 bg-slate-50/70 p-6 text-sm leading-8 text-slate-600">
-                لا توجد أسئلة محلولة محفوظة بعد. ابدأ الحل من بنك الأسئلة، وسيظهر سجل الإجابات هنا تلقائيًا.
+                لا توجد أسئلة محلولة محفوظة بعد. ابدأ الحل من بنك الأسئلة، وسيظهر سجل
+                الإجابات هنا تلقائيًا.
               </div>
             )}
           </CardContent>
