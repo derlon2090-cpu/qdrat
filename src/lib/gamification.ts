@@ -918,7 +918,7 @@ async function getPeriodRankings(
       ),
       ranked as (
         select
-          u.id::text as user_id,
+          u.id as user_id,
           u.full_name,
           c.xp,
           row_number() over (
