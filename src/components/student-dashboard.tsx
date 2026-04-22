@@ -8,8 +8,6 @@ import {
   Brain,
   ClipboardList,
   Compass,
-  FileText,
-  Files,
   Loader2,
   NotebookPen,
   RefreshCcw,
@@ -17,7 +15,6 @@ import {
   Target,
   TriangleAlert,
   Trophy,
-  UserRound,
   Zap,
   type LucideIcon,
 } from "lucide-react";
@@ -45,63 +42,6 @@ import type { StudentPortalTask } from "@/lib/student-portal";
 import { cn } from "@/lib/utils";
 
 type ActionState = "idle" | "loading";
-
-const quickActions = [
-  {
-    href: "/question-bank",
-    label: "بنك الأسئلة",
-    description: "ابدأ تدريبًا سريعًا أو افتح جلسة مركزة في الكمي أو اللفظي.",
-    icon: ClipboardList,
-  },
-  {
-    href: "/challenge",
-    label: "تحدي الشهر",
-    description: "تابع XP وترتيبك الحالي واعرف كم يفصلك عن المركز التالي داخل لوحة الأبطال.",
-    icon: Trophy,
-  },
-  {
-    href: "/question-bank?track=mistakes",
-    label: "الأخطاء",
-    description: "ادخل إلى تدريب الأخطاء الذكي، وابدأ من الأسئلة الأضعف حتى تصل إلى الإتقان.",
-    icon: TriangleAlert,
-  },
-  {
-    href: "/dashboard#progress",
-    label: "المراجعة",
-    description: "تابع الكمي واللفظي، واعرف أين يبدأ التركيز اليوم.",
-    icon: Target,
-  },
-  {
-    href: "/summaries",
-    label: "الملخصات",
-    description: "ارجع إلى ملفاتك المحفوظة وأكمل من آخر صفحة توقفت عندها.",
-    icon: FileText,
-  },
-  {
-    href: "/paper-models",
-    label: "النماذج",
-    description: "اختبر نفسك بنماذج تدريبية واقعية ومحاكية للاختبار.",
-    icon: Files,
-  },
-  {
-    href: "/diagnostic",
-    label: "اختبار سريع",
-    description: "قِس مستواك الحالي وحدد نقطة الانطلاق الأنسب لك.",
-    icon: Compass,
-  },
-  {
-    href: "/statistics",
-    label: "الإحصائيات",
-    description: "شاهد تقدمك ونِسب الإتقان في الأقسام المختلفة.",
-    icon: BarChart3,
-  },
-  {
-    href: "/account",
-    label: "الإعدادات",
-    description: "عدّل بياناتك وإعدادات خطتك الدراسية من مكان واحد.",
-    icon: UserRound,
-  },
-];
 
 const trainingTracks = [
   {
@@ -227,35 +167,6 @@ function MetricCard({
         </div>
       </CardContent>
     </Card>
-  );
-}
-
-function QuickActionCard({
-  href,
-  label,
-  description,
-  icon: Icon,
-}: {
-  href: string;
-  label: string;
-  description: string;
-  icon: LucideIcon;
-}) {
-  return (
-    <Link
-      href={href}
-      className="group rounded-[1.7rem] border border-slate-200/90 bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(248,250,252,0.92))] p-4 shadow-[0_14px_36px_rgba(15,23,42,0.05)] transition duration-200 hover:-translate-y-1 hover:border-[#bfd3f3] hover:shadow-[0_20px_46px_rgba(29,78,216,0.10)]"
-    >
-      <div className="flex items-start gap-3">
-        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[1rem] bg-[#eef4ff] text-[#123B7A] transition group-hover:scale-105">
-          <Icon className="h-5 w-5" />
-        </div>
-        <div className="min-w-0">
-          <div className="display-font text-lg font-bold text-slate-950">{label}</div>
-          <div className="mt-1 text-sm leading-7 text-slate-500">{description}</div>
-        </div>
-      </div>
-    </Link>
   );
 }
 
@@ -420,55 +331,33 @@ export function StudentDashboard() {
         : "جاهز تبدأ بخطوة واضحة";
   const heroQuickStartCards = [
     {
-      href: primaryResumeItem?.href ?? "/question-bank",
-      label: primaryResumeItem ? "أكمل من آخر نقطة" : "ابدأ تدريبًا سريعًا",
-      description: primaryResumeItem
-        ? primaryResumeItem.title
-        : "ادخل مباشرة إلى بنك الأسئلة وابدأ بجلسة قصيرة وواضحة.",
-      badge: primaryResumeItem ? "استكمال" : "بداية سريعة",
-      icon: Zap,
+      href: "/my-plan",
+      label: "ابدأ الخطة اليومية",
+      description: data.todayTasks.length
+        ? `لديك ${data.todayTasks.length} مهام لليوم، أنجز منها ${completedToday} حتى الآن.`
+        : "افتح الخطة اليومية ورتب أول خطوة دراسية بشكل واضح.",
+      badge: "الخطة",
+      icon: Target,
+      iconWrapClass: "bg-[#edfdf3] text-[#2f855a]",
+      borderClass: "border-[#d9f2e1] hover:border-[#9fdfb7]",
+    },
+    {
+      href: "/question-bank",
+      label: "ادخل بنك الأسئلة",
+      description: "ابدأ تدريبًا كميًا أو لفظيًا مباشرة من القسم الأنسب لك الآن.",
+      badge: "التدريب",
+      icon: ClipboardList,
       iconWrapClass: "bg-[#eef4ff] text-[#123B7A]",
       borderClass: "border-[#d8e5f7] hover:border-[#bfd3f3]",
     },
     {
       href: "/question-bank?track=mistakes#mistakes-trainer",
-      label: "راجع أخطاءك الآن",
+      label: "راجع الأخطاء",
       description: `${data.activeMistakesCount} سؤال يحتاج مراجعة، ونسبة الإتقان الحالية ${data.mistakeMasteryPercent}%.`,
       badge: "الأخطاء",
       icon: TriangleAlert,
       iconWrapClass: "bg-[#fff1f2] text-[#dc2626]",
       borderClass: "border-[#ffd4da] hover:border-[#f8a8b5]",
-    },
-    {
-      href: "/challenge",
-      label: "ادخل تحدي الشهر",
-      description: data.challenge.monthlyRank
-        ? `ترتيبك الحالي #${data.challenge.monthlyRank}، وتستطيع رفعه من نفس اللوحة.`
-        : "ابدأ جمع XP وادخل لوحة الأبطال هذا الشهر.",
-      badge: "تحفيز",
-      icon: Trophy,
-      iconWrapClass: "bg-[#fff8e5] text-[#b7791f]",
-      borderClass: "border-[#f1dfb8] hover:border-[#e7c981]",
-    },
-    {
-      href: "/diagnostic",
-      label: "كويز سريع",
-      description: "اختبار قصير يحدد أين تبدأ الآن إذا كنت محتارًا بين أكثر من قسم.",
-      badge: "سريع",
-      icon: Sparkles,
-      iconWrapClass: "bg-[#f5f3ff] text-[#7c3aed]",
-      borderClass: "border-[#e6ddfb] hover:border-[#c9b5fa]",
-    },
-    {
-      href: upcomingTask ? "/my-plan" : "/summaries",
-      label: upcomingTask ? "نفّذ مهمة اليوم" : "افتح مكتبة الملخصات",
-      description: upcomingTask
-        ? upcomingTask.title
-        : `لديك ${data.summariesCount.toLocaleString("en-US")} ملفًا محفوظًا داخل مكتبتك.`,
-      badge: upcomingTask ? "الخطة اليومية" : "الملخصات",
-      icon: upcomingTask ? Target : FileText,
-      iconWrapClass: upcomingTask ? "bg-[#edfdf3] text-[#2f855a]" : "bg-[#eef4ff] text-[#123B7A]",
-      borderClass: upcomingTask ? "border-[#d9f2e1] hover:border-[#9fdfb7]" : "border-[#d8e5f7] hover:border-[#bfd3f3]",
     },
   ];
   const recentActivityItems = useMemo(
@@ -719,22 +608,50 @@ export function StudentDashboard() {
       </Reveal>
 
       <Reveal delay={0.04}>
-        <Card className="rounded-[2rem] border border-[#d9e7f9] bg-[linear-gradient(180deg,rgba(248,252,255,0.99),rgba(255,255,255,0.97))] shadow-[0_18px_42px_rgba(15,23,42,0.05)]">
-          <CardContent className="space-y-5 p-6 md:p-8">
-            <div className="flex flex-wrap items-end justify-between gap-3">
-              <div>
-                <p className="section-eyebrow text-[#123B7A]">توصية اليوم</p>
-                <h3 className="display-font text-[clamp(1.45rem,2.3vw,2.05rem)] font-bold text-slate-950">
-                  ابدأ من الأكثر أثرًا اليوم
-                </h3>
-                <p className="mt-2 text-sm leading-7 text-slate-500">
-                  توصية قصيرة تساعدك على اختيار الخطوة التالية بدل التشتت بين الأقسام.
-                </p>
+        <div className="grid gap-6 xl:grid-cols-[1.02fr,0.98fr]">
+          <Card className="rounded-[2.1rem] border border-[#dde7f6] bg-white/96 shadow-[0_18px_44px_rgba(15,23,42,0.05)]">
+            <CardContent className="space-y-5 p-6 md:p-8">
+              <div className="flex flex-wrap items-end justify-between gap-3">
+                <div>
+                  <p className="section-eyebrow text-[#123B7A]">ابدأ الآن</p>
+                  <h3 className="display-font text-[clamp(1.5rem,2.4vw,2.15rem)] font-bold text-slate-950">
+                    ثلاث خطوات عملية واضحة
+                  </h3>
+                  <p className="mt-2 text-sm leading-7 text-slate-500">
+                    افتح الخطة اليومية، ادخل بنك الأسئلة، ثم راجع الأخطاء. هذه أهم 3 خطوات يحتاجها الطالب فور دخوله.
+                  </p>
+                </div>
+                <Link href="/question-bank">
+                  <Button variant="outline" className="gap-2">
+                    <ClipboardList className="h-4 w-4" />
+                    ابدأ تدريب الآن
+                  </Button>
+                </Link>
               </div>
-              <Badge className="bg-[#eef4ff] text-[#1d4ed8]">ذكية ومباشرة</Badge>
-            </div>
 
-            <div className="grid gap-4 lg:grid-cols-[1.1fr,0.9fr]">
+              <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+                {heroQuickStartCards.map((item) => (
+                  <HeroQuickStartCard key={item.href + item.label} {...item} />
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="rounded-[2rem] border border-[#d9e7f9] bg-[linear-gradient(180deg,rgba(248,252,255,0.99),rgba(255,255,255,0.97))] shadow-[0_18px_42px_rgba(15,23,42,0.05)]">
+            <CardContent className="space-y-5 p-6 md:p-8">
+              <div className="flex flex-wrap items-end justify-between gap-3">
+                <div>
+                  <p className="section-eyebrow text-[#123B7A]">توصية اليوم</p>
+                  <h3 className="display-font text-[clamp(1.45rem,2.3vw,2rem)] font-bold text-slate-950">
+                    ابدأ من الأكثر أثرًا اليوم
+                  </h3>
+                  <p className="mt-2 text-sm leading-7 text-slate-500">
+                    توصية ذكية مختصرة تساعدك على معرفة أفضل خطوة تالية بدل التشتت بين الأقسام.
+                  </p>
+                </div>
+                <Badge className="bg-[#eef4ff] text-[#1d4ed8]">ذكية ومباشرة</Badge>
+              </div>
+
               <div className="rounded-[1.7rem] border border-slate-200 bg-white p-5 shadow-[0_12px_28px_rgba(15,23,42,0.04)]">
                 <div className="flex items-start gap-3">
                   <div className="mt-1 flex h-11 w-11 shrink-0 items-center justify-center rounded-[1rem] bg-[#eef4ff] text-[#123B7A]">
@@ -748,14 +665,14 @@ export function StudentDashboard() {
                       {upcomingTask
                         ? `أفضل خطوة تالية لك الآن: ${upcomingTask.title}`
                         : secondaryResumeItem
-                          ? `يمكنك بعد ذلك الانتقال إلى: ${secondaryResumeItem.title}`
+                          ? `بعدها مباشرة يمكنك الانتقال إلى: ${secondaryResumeItem.title}`
                           : "لوحتك جاهزة لتبدأ من بنك الأسئلة أو تراجع الأخطاء مباشرة."}
                     </p>
                   </div>
                 </div>
               </div>
 
-              <div className="grid gap-3">
+              <div className="grid gap-3 md:grid-cols-2">
                 {data.recommendations.slice(1, 3).map((item) => (
                   <div
                     key={item}
@@ -765,39 +682,18 @@ export function StudentDashboard() {
                   </div>
                 ))}
               </div>
-            </div>
-          </CardContent>
-        </Card>
-      </Reveal>
 
-      <Reveal delay={0.05}>
-        <Card className="rounded-[2.1rem] border border-[#dde7f6] bg-white/96 shadow-[0_18px_44px_rgba(15,23,42,0.05)]">
-          <CardContent className="space-y-5 p-6 md:p-8">
-            <div className="flex flex-wrap items-end justify-between gap-3">
-              <div>
-                <p className="section-eyebrow text-[#123B7A]">ابدأ من هنا</p>
-                <h3 className="display-font text-[clamp(1.5rem,2.4vw,2.2rem)] font-bold text-slate-950">
-                  أربع خطوات واضحة بدل البحث الطويل
-                </h3>
-                <p className="mt-2 text-sm leading-7 text-slate-500">
-                  هذه أهم الأكشنات التي يحتاجها الطالب فور دخوله: ابدأ، راجع، أكمل، ثم تابع ترتيبك.
-                </p>
+              <div className="pt-1">
+                <Link href={upcomingTask ? "/my-plan" : secondaryResumeItem?.href ?? "/question-bank"}>
+                  <Button variant="outline" className="gap-2">
+                    افتح التوصية الآن
+                    <ArrowLeft className="h-4 w-4" />
+                  </Button>
+                </Link>
               </div>
-              <Link href="/question-bank">
-                <Button variant="outline" className="gap-2">
-                  <ClipboardList className="h-4 w-4" />
-                  ابدأ تدريب الآن
-                </Button>
-              </Link>
-            </div>
-
-            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
-              {heroQuickStartCards.map((item) => (
-                <HeroQuickStartCard key={item.href + item.label} {...item} />
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        </div>
       </Reveal>
 
       {actionError ? (
@@ -1035,8 +931,8 @@ export function StudentDashboard() {
             <CardContent className="space-y-5 p-8">
               <div className="flex items-start justify-between gap-4">
                 <div>
-                  <p className="section-eyebrow text-[#123B7A]">تدرب على أخطائك</p>
-                  <h3 className="display-font text-2xl font-bold text-slate-950">حوّل الأخطاء إلى إتقان</h3>
+                  <p className="section-eyebrow text-[#123B7A]">أخطاء تحتاج مراجعة</p>
+                  <h3 className="display-font text-2xl font-bold text-slate-950">راجعها الآن قبل أن تتكرر</h3>
                   <p className="mt-2 text-sm leading-7 text-slate-500">
                     ابدأ جلسة مركزة من أخطائك السابقة، مع تتبع ذكي للحالات: أخطأت فيه، قيد التدريب، ثم أتقنته.
                   </p>
@@ -1126,66 +1022,6 @@ export function StudentDashboard() {
               </div>
             </CardContent>
           </Card>
-
-          <Card className="hidden rounded-[2rem] border border-slate-200 bg-white/98 shadow-[0_18px_42px_rgba(15,23,42,0.06)]">
-            <CardContent className="space-y-5 p-8">
-              <div>
-                <p className="section-eyebrow text-[#123B7A]">الأقسام الرئيسية</p>
-                <h3 className="display-font text-2xl font-bold text-slate-950">لوحة بطاقات واضحة</h3>
-                <p className="mt-2 text-sm leading-7 text-slate-500">
-                  كل قسم رئيسي ظاهر كبطاقة مستقلة حتى يبدأ الطالب فورًا بدون بحث طويل.
-                </p>
-              </div>
-
-              <div className="grid gap-3 sm:grid-cols-2">
-                {quickActions.map((item) => (
-                  <QuickActionCard key={item.href} href={item.href} label={item.label} description={item.description} icon={item.icon} />
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="hidden rounded-[2rem] border border-slate-200 bg-white/98 shadow-[0_18px_42px_rgba(15,23,42,0.06)]">
-            <CardContent className="space-y-5 p-8">
-              <div>
-                <p className="section-eyebrow text-[#123B7A]">توصيات اليوم</p>
-                <h3 className="display-font text-2xl font-bold text-slate-950">ابدأ من الأكثر أثرًا</h3>
-                <p className="mt-2 text-sm leading-7 text-slate-500">
-                  توصيات قصيرة تساعدك على اختيار أفضل خطوة تالية بدل التشتت بين الأقسام.
-                </p>
-              </div>
-
-              <div className="space-y-3">
-                {data.recommendations.map((item) => (
-                  <div
-                    key={item}
-                    className="rounded-[1.5rem] border border-slate-200 bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(248,250,252,0.92))] p-4"
-                  >
-                    <div className="flex items-start gap-3">
-                      <div className="mt-1 flex h-10 w-10 shrink-0 items-center justify-center rounded-[1rem] bg-[#eef4ff] text-[#123B7A]">
-                        <Sparkles className="h-4 w-4" />
-                      </div>
-                      <div className="text-sm leading-8 text-slate-600">{item}</div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              <div className="grid gap-3 sm:grid-cols-2">
-                <div className="rounded-[1.4rem] border border-[#E8D8B3] bg-[#fffaf0] px-4 py-4 text-sm font-semibold text-slate-700">
-                  آخر استخدام: {formatLastActivity(data.lastActivityAt)}
-                  {data.lastActivityLabel ? ` - ${data.lastActivityLabel}` : ""}
-                </div>
-                <div className="rounded-[1.4rem] border border-[#dcefe8] bg-[#f0fdf7] px-4 py-4 text-sm font-semibold text-slate-700">
-                  {upcomingTask
-                    ? `التالي في الخطة: ${upcomingTask.title}`
-                    : secondaryResumeItem
-                      ? `بعدها مباشرة: ${secondaryResumeItem.title}`
-                      : "لوحتك جاهزة لتبدأ من أي قسم الآن."}
-                </div>
-              </div>
-            </CardContent>
-          </Card>
         </div>
       </div>
       </Reveal>
@@ -1193,3 +1029,4 @@ export function StudentDashboard() {
     </div>
   );
 }
+
