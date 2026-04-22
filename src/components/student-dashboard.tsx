@@ -15,7 +15,6 @@ import {
   RefreshCcw,
   Sparkles,
   Target,
-  TimerReset,
   TriangleAlert,
   Trophy,
   UserRound,
@@ -472,6 +471,42 @@ export function StudentDashboard() {
       borderClass: upcomingTask ? "border-[#d9f2e1] hover:border-[#9fdfb7]" : "border-[#d8e5f7] hover:border-[#bfd3f3]",
     },
   ];
+  const recentActivityItems = useMemo(
+    () => {
+      const items: Array<{
+        id: string;
+        title: string;
+        description: string;
+        href: string;
+      }> = [];
+
+      if (data.lastActivityLabel || data.lastActivityAt) {
+        items.push({
+          id: "latest-session",
+          title: data.lastActivityLabel ?? "آخر تفاعل داخل المنصة",
+          description: formatLastActivity(data.lastActivityAt),
+          href: primaryResumeItem?.href ?? "/question-bank",
+        });
+      }
+
+      data.recentSolvedQuestions.slice(0, 3).forEach((question, index) => {
+        const title = question.categoryTitle?.trim() || question.questionTypeLabel || "سؤال محلول";
+        const preview = question.questionText.trim();
+
+        items.push({
+          id: `recent-question-${question.id}-${index}`,
+          title,
+          description: `${preview.slice(0, 64)}${preview.length > 64 ? "..." : ""} • ${formatLastActivity(question.solvedAt)}`,
+          href:
+            question.questionHref ??
+            (question.section === "quantitative" ? "/question-bank?track=quant" : "/question-bank?track=verbal"),
+        });
+      });
+
+      return items.slice(0, 3);
+    },
+    [data.lastActivityAt, data.lastActivityLabel, data.recentSolvedQuestions, primaryResumeItem?.href],
+  );
 
   async function handleToggleTask(task: StudentPortalTask, nextValue: boolean) {
     try {
@@ -589,18 +624,18 @@ export function StudentDashboard() {
               iconWrapClass="bg-emerald-100 text-emerald-700"
             />
             <MetricCard
-              title="آخر نشاط"
-              value={data.lastActivityLabel ?? "بداية"}
-              caption={formatLastActivity(data.lastActivityAt)}
-              icon={TimerReset}
+              title="تقدم الكمي"
+              value={`${data.quantProgressPercent}%`}
+              caption={`المتبقي ${data.quantRemainingSections ?? "غير محدد"} قسم في هذا المسار.`}
+              icon={BarChart3}
               className="border-sky-200 bg-[linear-gradient(180deg,rgba(240,249,255,0.96),rgba(255,255,255,0.98))]"
               iconWrapClass="bg-sky-100 text-sky-700"
             />
             <MetricCard
-              title="إجمالي XP"
-              value={data.xp.total.toLocaleString("en-US")}
-              caption={data.xp.levelLabel}
-              icon={Trophy}
+              title="تقدم اللفظي"
+              value={`${data.verbalProgressPercent}%`}
+              caption={`المتبقي ${data.verbalRemainingSections ?? "غير محدد"} قسم في هذا المسار.`}
+              icon={Brain}
               className="border-amber-200 bg-[linear-gradient(180deg,rgba(255,251,235,0.96),rgba(255,255,255,0.98))]"
               iconWrapClass="bg-amber-100 text-amber-700"
             />
@@ -617,7 +652,125 @@ export function StudentDashboard() {
         </Card>
       </Reveal>
 
+      <Reveal delay={0.03}>
+        <Card className="rounded-[2.1rem] border border-[#dde7f6] bg-white/96 shadow-[0_18px_44px_rgba(15,23,42,0.05)]">
+          <CardContent className="space-y-5 p-6 md:p-8">
+            <div className="flex flex-wrap items-end justify-between gap-3">
+              <div>
+                <p className="section-eyebrow text-[#123B7A]">أكمل من آخر نقطة</p>
+                <h3 className="display-font text-[clamp(1.5rem,2.4vw,2.2rem)] font-bold text-slate-950">
+                  ادخل مباشرة إلى آخر ملف أو تدريب توقفت عنده
+                </h3>
+                <p className="mt-2 text-sm leading-7 text-slate-500">
+                  هذا أول قسم عملي تحت لوحتك، لأن أهم شيء للطالب أن يكمل من حيث توقف دون بحث طويل.
+                </p>
+              </div>
+              <Link href={primaryResumeItem?.href ?? "/question-bank"}>
+                <Button className="gap-2">
+                  <Zap className="h-4 w-4" />
+                  {primaryResumeItem?.ctaLabel ?? "أكمل الآن"}
+                </Button>
+              </Link>
+            </div>
+
+            <div className="grid gap-4 md:grid-cols-3">
+              {data.resumeItems.slice(0, 2).map((item) => (
+                <div
+                  key={item.id}
+                  className="rounded-[1.6rem] border border-slate-200 bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(248,250,252,0.9))] p-5 shadow-[0_12px_28px_rgba(15,23,42,0.04)]"
+                >
+                  <div className="display-font text-lg font-bold text-slate-950">{item.title}</div>
+                  <p className="mt-2 text-sm leading-7 text-slate-600">{item.subtitle}</p>
+                  <div className="mt-4">
+                    <Link href={item.href}>
+                      <Button variant="outline" className="gap-2">
+                        {item.ctaLabel}
+                        <ArrowLeft className="h-4 w-4" />
+                      </Button>
+                    </Link>
+                  </div>
+                </div>
+              ))}
+
+              <div className="rounded-[1.6rem] border border-slate-200 bg-[linear-gradient(180deg,rgba(241,249,255,0.98),rgba(255,255,255,0.95))] p-5 shadow-[0_12px_28px_rgba(15,23,42,0.04)]">
+                <div className="text-xs font-semibold text-slate-500">الخطوة التالية</div>
+                <div className="mt-3 display-font text-lg font-bold text-slate-950">
+                  {upcomingTask ? upcomingTask.title : secondaryResumeItem?.title ?? "ابدأ من بنك الأسئلة"}
+                </div>
+                <p className="mt-2 text-sm leading-7 text-slate-600">
+                  {upcomingTask
+                    ? "مهمتك التالية جاهزة داخل الخطة اليومية ويمكنك تنفيذها مباشرة من نفس اللوحة."
+                    : secondaryResumeItem
+                      ? secondaryResumeItem.subtitle
+                      : "إذا لم يكن لديك سجل سابق واضح، ابدأ بجلسة مركزة قصيرة ثم ابنِ عليها."}
+                </p>
+                <div className="mt-4">
+                  <Link href={upcomingTask ? "/my-plan" : secondaryResumeItem?.href ?? "/question-bank"}>
+                    <Button variant="outline" className="gap-2">
+                      افتح الآن
+                      <ArrowLeft className="h-4 w-4" />
+                    </Button>
+                  </Link>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </Reveal>
+
       <Reveal delay={0.04}>
+        <Card className="rounded-[2rem] border border-[#d9e7f9] bg-[linear-gradient(180deg,rgba(248,252,255,0.99),rgba(255,255,255,0.97))] shadow-[0_18px_42px_rgba(15,23,42,0.05)]">
+          <CardContent className="space-y-5 p-6 md:p-8">
+            <div className="flex flex-wrap items-end justify-between gap-3">
+              <div>
+                <p className="section-eyebrow text-[#123B7A]">توصية اليوم</p>
+                <h3 className="display-font text-[clamp(1.45rem,2.3vw,2.05rem)] font-bold text-slate-950">
+                  ابدأ من الأكثر أثرًا اليوم
+                </h3>
+                <p className="mt-2 text-sm leading-7 text-slate-500">
+                  توصية قصيرة تساعدك على اختيار الخطوة التالية بدل التشتت بين الأقسام.
+                </p>
+              </div>
+              <Badge className="bg-[#eef4ff] text-[#1d4ed8]">ذكية ومباشرة</Badge>
+            </div>
+
+            <div className="grid gap-4 lg:grid-cols-[1.1fr,0.9fr]">
+              <div className="rounded-[1.7rem] border border-slate-200 bg-white p-5 shadow-[0_12px_28px_rgba(15,23,42,0.04)]">
+                <div className="flex items-start gap-3">
+                  <div className="mt-1 flex h-11 w-11 shrink-0 items-center justify-center rounded-[1rem] bg-[#eef4ff] text-[#123B7A]">
+                    <Sparkles className="h-5 w-5" />
+                  </div>
+                  <div className="min-w-0">
+                    <div className="display-font text-lg font-bold text-slate-950">
+                      {data.recommendations[0] ?? "ابدأ اليوم بما يرفع ثباتك أولًا ثم انتقل إلى التدريب."}
+                    </div>
+                    <p className="mt-2 text-sm leading-7 text-slate-600">
+                      {upcomingTask
+                        ? `أفضل خطوة تالية لك الآن: ${upcomingTask.title}`
+                        : secondaryResumeItem
+                          ? `يمكنك بعد ذلك الانتقال إلى: ${secondaryResumeItem.title}`
+                          : "لوحتك جاهزة لتبدأ من بنك الأسئلة أو تراجع الأخطاء مباشرة."}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid gap-3">
+                {data.recommendations.slice(1, 3).map((item) => (
+                  <div
+                    key={item}
+                    className="rounded-[1.4rem] border border-slate-200 bg-white/90 px-4 py-4 text-sm leading-7 text-slate-600"
+                  >
+                    {item}
+                  </div>
+                ))}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </Reveal>
+
+      <Reveal delay={0.05}>
         <Card className="rounded-[2.1rem] border border-[#dde7f6] bg-white/96 shadow-[0_18px_44px_rgba(15,23,42,0.05)]">
           <CardContent className="space-y-5 p-6 md:p-8">
             <div className="flex flex-wrap items-end justify-between gap-3">
@@ -715,8 +868,8 @@ export function StudentDashboard() {
           >
             <CardContent className="space-y-5 p-8">
               <div>
-                <p className="section-eyebrow text-[#123B7A]">المسار الأكاديمي</p>
-                <h3 className="display-font text-2xl font-bold text-slate-950">الكمي واللفظي في لوحة واحدة</h3>
+                <p className="section-eyebrow text-[#123B7A]">مساراتك الرئيسية</p>
+                <h3 className="display-font text-2xl font-bold text-slate-950">كمي ولفظي بصورة عملية واضحة</h3>
                 <p className="mt-2 text-sm leading-7 text-slate-500">
                   اعرف ما أنجزته، وما الذي بقي، وأين يجب أن يبدأ تركيزك اليوم.
                 </p>
@@ -750,6 +903,14 @@ export function StudentDashboard() {
                       </div>
                       <div className="mt-4 rounded-[1.2rem] border border-white/70 bg-white/70 px-4 py-3 text-sm font-semibold text-slate-700">
                         المتبقي الآن: {remaining ?? "غير محدد"} قسم
+                      </div>
+                      <div className="mt-4">
+                        <Link href={isQuant ? "/question-bank?track=quant" : "/question-bank?track=verbal"}>
+                          <Button variant="outline" className="gap-2">
+                            ادخل {isQuant ? "الكمي" : "اللفظي"}
+                            <ArrowLeft className="h-4 w-4" />
+                          </Button>
+                        </Link>
                       </div>
                     </div>
                   );
@@ -933,36 +1094,40 @@ export function StudentDashboard() {
           <Card className="rounded-[2rem] border border-slate-200 bg-white/98 shadow-[0_18px_42px_rgba(15,23,42,0.06)]">
             <CardContent className="space-y-5 p-8">
               <div>
-                <p className="section-eyebrow text-[#123B7A]">استكمال ذكي</p>
-                <h3 className="display-font text-2xl font-bold text-slate-950">أكمل من آخر نقطة توقفت عندها</h3>
+                <p className="section-eyebrow text-[#123B7A]">آخر نشاطاتك</p>
+                <h3 className="display-font text-2xl font-bold text-slate-950">آخر ما فعلته داخل المنصة</h3>
                 <p className="mt-2 text-sm leading-7 text-slate-500">
-                  بدلاً من البدء العشوائي، افتح آخر ملف أو آخر تدريب مناسب لك الآن.
+                  سجل مختصر لآخر ما أنجزته أو فتحته حتى تعرف أين كنت وماذا يجب أن تكمل بعده.
                 </p>
               </div>
 
               <div className="space-y-3">
-                {data.resumeItems.map((item) => (
+                {recentActivityItems.length ? recentActivityItems.map((item) => (
                   <div
                     key={item.id}
                     className="rounded-[1.6rem] border border-slate-200 bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(248,250,252,0.9))] p-4 shadow-[0_12px_28px_rgba(15,23,42,0.04)]"
                   >
                     <div className="display-font text-lg font-bold text-slate-950">{item.title}</div>
-                    <p className="mt-2 text-sm leading-7 text-slate-600">{item.subtitle}</p>
+                    <p className="mt-2 text-sm leading-7 text-slate-600">{item.description}</p>
                     <div className="mt-4">
                       <Link href={item.href}>
                         <Button variant="outline" className="gap-2">
-                          {item.ctaLabel}
+                          افتح هذا القسم
                           <ArrowLeft className="h-4 w-4" />
                         </Button>
                       </Link>
                     </div>
                   </div>
-                ))}
+                )) : (
+                  <div className="rounded-[1.5rem] border border-dashed border-slate-300 bg-slate-50/70 p-6 text-sm leading-8 text-slate-600">
+                    لا يوجد نشاط حديث بعد. ابدأ من بنك الأسئلة أو الخطة اليومية وسيظهر سجلك هنا تلقائيًا.
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>
 
-          <Card className="rounded-[2rem] border border-slate-200 bg-white/98 shadow-[0_18px_42px_rgba(15,23,42,0.06)]">
+          <Card className="hidden rounded-[2rem] border border-slate-200 bg-white/98 shadow-[0_18px_42px_rgba(15,23,42,0.06)]">
             <CardContent className="space-y-5 p-8">
               <div>
                 <p className="section-eyebrow text-[#123B7A]">الأقسام الرئيسية</p>
@@ -980,7 +1145,7 @@ export function StudentDashboard() {
             </CardContent>
           </Card>
 
-          <Card className="rounded-[2rem] border border-slate-200 bg-white/98 shadow-[0_18px_42px_rgba(15,23,42,0.06)]">
+          <Card className="hidden rounded-[2rem] border border-slate-200 bg-white/98 shadow-[0_18px_42px_rgba(15,23,42,0.06)]">
             <CardContent className="space-y-5 p-8">
               <div>
                 <p className="section-eyebrow text-[#123B7A]">توصيات اليوم</p>
