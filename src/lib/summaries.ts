@@ -934,6 +934,25 @@ export async function getSummaryDetail(userId: string, summaryId: string) {
   } satisfies SummaryDetail;
 }
 
+export async function deleteUserSummary(userId: string, summaryId: string) {
+  const summaryRow = await assertSummaryOwnership(userId, summaryId);
+  const sql = getSql();
+
+  await sql.query(
+    `
+      delete from app_user_summaries
+      where id = $1::uuid
+        and user_id = $2::uuid
+    `,
+    [summaryId, userId],
+  );
+
+  return {
+    id: summaryRow.id,
+    fileName: summaryRow.file_name,
+  };
+}
+
 export async function updateSummaryLastOpenedPage(
   userId: string,
   summaryId: string,

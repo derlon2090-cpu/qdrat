@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, type ChangeEvent } from "react";
-import { FilePlus2, FileText, Loader2, UploadCloud } from "lucide-react";
+import { FilePlus2, FileText, Loader2, Trash2, UploadCloud } from "lucide-react";
 
 import { useAuthSession } from "@/hooks/use-auth-session";
 import type { SummaryListItem } from "@/lib/summaries";
@@ -170,12 +170,28 @@ async function readSummaries() {
   return payload.items;
 }
 
+async function deleteSummary(summaryId: string) {
+  const response = await fetch(`/api/summaries/${summaryId}`, {
+    method: "DELETE",
+  });
+
+  const payload = await readApiPayload<{
+    ok?: boolean;
+    message?: string;
+  }>(response);
+
+  if (!response.ok) {
+    throw new Error(payload.message || "تعذر حذف الملخص.");
+  }
+}
+
 export function SummaryLibrary() {
   const { status, user } = useAuthSession();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [items, setItems] = useState<SummaryListItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isUploading, setIsUploading] = useState(false);
+  const [deletingSummaryId, setDeletingSummaryId] = useState<string | null>(null);
   const [uploadProgress, setUploadProgress] = useState<number | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -230,6 +246,27 @@ export function SummaryLibrary() {
       setIsUploading(false);
       setUploadProgress(null);
       event.target.value = "";
+    }
+  }
+
+  async function handleDeleteSummary(item: SummaryListItem) {
+    const confirmed = window.confirm(`هل تريد حذف الملخص "${item.fileName}" نهائيًا من مكتبتك؟`);
+    if (!confirmed) {
+      return;
+    }
+
+    setDeletingSummaryId(item.id);
+    setMessage(null);
+    setError(null);
+
+    try {
+      await deleteSummary(item.id);
+      setItems((current) => current.filter((entry) => entry.id !== item.id));
+      setMessage(`تم حذف الملخص "${item.fileName}" من مكتبتك.`);
+    } catch (deleteError) {
+      setError(deleteError instanceof Error ? deleteError.message : "تعذر حذف الملخص.");
+    } finally {
+      setDeletingSummaryId(null);
     }
   }
 
@@ -366,6 +403,20 @@ export function SummaryLibrary() {
                   >
                     عرض الملف الأصلي
                   </a>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => handleDeleteSummary(item)}
+                    disabled={deletingSummaryId === item.id}
+                    className="gap-2 border-rose-200 text-rose-700 hover:bg-rose-50 hover:text-rose-800"
+                  >
+                    {deletingSummaryId === item.id ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Trash2 className="h-4 w-4" />
+                    )}
+                    حذف الملخص
+                  </Button>
                 </div>
               </CardContent>
             </Card>

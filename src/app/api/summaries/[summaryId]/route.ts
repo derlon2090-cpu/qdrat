@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { getAuthenticatedUserFromRequest } from "@/lib/auth";
-import { getSummaryDetail, updateSummaryLastOpenedPage } from "@/lib/summaries";
+import { deleteUserSummary, getSummaryDetail, updateSummaryLastOpenedPage } from "@/lib/summaries";
 
 export const runtime = "nodejs";
 
@@ -86,6 +86,42 @@ export async function PATCH(
       {
         ok: false,
         message: formatSummaryError(error, "تعذر تحديث آخر صفحة وصلت لها."),
+      },
+      { status: 400 },
+    );
+  }
+}
+
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ summaryId: string }> },
+) {
+  const user = await getAuthenticatedUserFromRequest(request);
+
+  if (!user) {
+    return NextResponse.json(
+      {
+        ok: false,
+        message:
+          "يجب إنشاء حساب وتسجيل الدخول لاستخدام قسم الملخصات وحفظ ملفاتك وملاحظاتك.",
+      },
+      { status: 401 },
+    );
+  }
+
+  try {
+    const { summaryId } = await params;
+    const deleted = await deleteUserSummary(user.id, summaryId);
+
+    return NextResponse.json({
+      ok: true,
+      deleted,
+    });
+  } catch (error) {
+    return NextResponse.json(
+      {
+        ok: false,
+        message: formatSummaryError(error, "تعذر حذف الملخص المطلوب."),
       },
       { status: 400 },
     );
