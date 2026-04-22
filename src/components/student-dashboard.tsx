@@ -43,6 +43,45 @@ import { cn } from "@/lib/utils";
 
 type ActionState = "idle" | "loading";
 
+function safeNumber(value: unknown, fallback = 0) {
+  const normalized = Number(value);
+  return Number.isFinite(normalized) ? normalized : fallback;
+}
+
+function safeNullableNumber(value: unknown) {
+  const normalized = Number(value);
+  return Number.isFinite(normalized) ? normalized : null;
+}
+
+function safeText(value: unknown, fallback = "") {
+  return typeof value === "string" && value.trim() ? value : fallback;
+}
+
+function safeOptionalText(value: unknown) {
+  return typeof value === "string" && value.trim() ? value : null;
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null;
+}
+
+function normalizeTaskKind(
+  value: unknown,
+): StudentPortalTask["taskKind"] {
+  return value === "diagnostic" ||
+    value === "practice" ||
+    value === "review" ||
+    value === "mock_exam"
+    ? value
+    : "practice";
+}
+
+function normalizePlanType(value: unknown) {
+  return value === "light" || value === "medium" || value === "intensive"
+    ? value
+    : "medium";
+}
+
 const trainingTracks = [
   {
     key: "quant",
@@ -465,11 +504,6 @@ export function StudentDashboard() {
   const [actionState, setActionState] = useState<ActionState>("idle");
   const [actionError, setActionError] = useState<string | null>(null);
 
-  const completedToday = useMemo(() => {
-    const tasks = Array.isArray(data?.todayTasks) ? data.todayTasks : [];
-    return tasks.filter((task) => task.isCompleted).length;
-  }, [data?.todayTasks]);
-
   if (status === "loading") {
     return <StudentPortalLoadingCard />;
   }
@@ -598,6 +632,7 @@ export function StudentDashboard() {
   const primaryResumeItem = resumeItems[0] ?? null;
   const secondaryResumeItem = resumeItems[1] ?? null;
   const upcomingTask = upcomingTasks[0] ?? null;
+  const completedToday = todayTasks.filter((task) => task.isCompleted).length;
   const weakestMistakeLabel = data.weakestMistakeLabel ?? "لم تتضح نقطة ضعف واحدة بعد";
   const dashboardToneLabel =
     todayTasks.length > 0 && completedToday >= Math.max(1, Math.ceil(todayTasks.length / 2))

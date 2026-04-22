@@ -1,9 +1,10 @@
-import { getSqlClient } from "@/lib/db";
+import { ensureColumnIsUuid, getSqlClient } from "@/lib/db";
 import {
   getStudentChallengeData,
   type StudentChallengeAchievement,
   type StudentChallengeMission,
 } from "@/lib/gamification";
+import { ensureSummaryTables } from "@/lib/summaries";
 import {
   ensureUserQuestionProgressSchema,
   getUserQuestionProgressTotals,
@@ -539,6 +540,10 @@ async function ensureStudentPortalSchema() {
       created_at timestamptz not null default now()
     )
   `);
+
+  await ensureColumnIsUuid("app_student_profiles", "user_id", { nullable: false });
+  await ensureColumnIsUuid("app_student_profiles", "last_opened_summary_id");
+  await ensureColumnIsUuid("app_study_plans", "user_id", { nullable: false });
 }
 
 async function getMistakeStats(userId: string) {
@@ -604,6 +609,7 @@ async function getMistakeStats(userId: string) {
 }
 
 async function getSummaryStats(userId: string) {
+  await ensureSummaryTables();
   const sql = getSql();
   const rows = (await sql.query(
     `

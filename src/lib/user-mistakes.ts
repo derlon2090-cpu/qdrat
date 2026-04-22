@@ -1,4 +1,4 @@
-import { getSqlClient } from "@/lib/db";
+import { ensureColumnIsUuid, getSqlClient } from "@/lib/db";
 
 export type MistakeSection = "verbal" | "quantitative";
 export type MistakeOutcome = "correct" | "incorrect";
@@ -293,6 +293,8 @@ export async function ensureUserMistakesSchema() {
     create index if not exists idx_app_user_mistakes_user_state
       on app_user_mistakes (user_id, mastery_state, updated_at desc)
   `);
+
+  await ensureColumnIsUuid("app_user_mistakes", "user_id", { nullable: false });
 }
 
 export async function listUserMistakes(userId: string) {

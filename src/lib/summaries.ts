@@ -1,6 +1,6 @@
 import PDFParser from "pdf2json";
 
-import { getSqlClient } from "@/lib/db";
+import { ensureColumnIsUuid, getSqlClient } from "@/lib/db";
 
 const MAX_SUMMARY_FILE_SIZE_BYTES = 25 * 1024 * 1024;
 export const SUMMARY_UPLOAD_CHUNK_SIZE_BYTES = 2 * 1024 * 1024;
@@ -402,7 +402,7 @@ function roughPageCountFromBuffer(buffer: Buffer) {
   return matches?.length ?? 0;
 }
 
-async function ensureSummaryTables() {
+export async function ensureSummaryTables() {
   if (ensureSummaryTablesPromise) {
     return ensureSummaryTablesPromise;
   }
@@ -487,6 +487,30 @@ async function ensureSummaryTables() {
     await sql.query(`
       create index if not exists idx_app_user_summary_upload_sessions_user_created
         on app_user_summary_upload_sessions (user_id, created_at desc);
+    `);
+
+    await ensureColumnIsUuid("app_user_summaries", "id", { nullable: false });
+    await ensureColumnIsUuid("app_user_summaries", "user_id", { nullable: false });
+    await ensureColumnIsUuid("app_user_summary_page_states", "id", { nullable: false });
+    await ensureColumnIsUuid("app_user_summary_page_states", "summary_id", { nullable: false });
+    await ensureColumnIsUuid("app_user_summary_page_states", "user_id", { nullable: false });
+    await ensureColumnIsUuid("app_user_summary_upload_sessions", "id", { nullable: false });
+    await ensureColumnIsUuid("app_user_summary_upload_sessions", "user_id", { nullable: false });
+    await ensureColumnIsUuid("app_user_summary_upload_chunks", "session_id", { nullable: false });
+
+    await sql.query(`
+      alter table app_user_summaries
+      alter column id set default gen_random_uuid()
+    `);
+
+    await sql.query(`
+      alter table app_user_summary_page_states
+      alter column id set default gen_random_uuid()
+    `);
+
+    await sql.query(`
+      alter table app_user_summary_upload_sessions
+      alter column id set default gen_random_uuid()
     `);
   })();
 

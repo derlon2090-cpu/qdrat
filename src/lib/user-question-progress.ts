@@ -1,4 +1,4 @@
-import { getSqlClient } from "@/lib/db";
+import { ensureColumnIsUuid, getSqlClient } from "@/lib/db";
 import { applyActiveXpMultiplier } from "@/lib/gamification-rules";
 import { syncGamificationAfterQuestionSolve } from "@/lib/gamification";
 
@@ -247,6 +247,9 @@ export async function ensureUserQuestionProgressSchema() {
     create index if not exists idx_app_user_question_progress_user_category
       on app_user_question_progress (user_id, section, category_id)
   `);
+
+  await ensureColumnIsUuid("app_student_profiles", "user_id", { nullable: false });
+  await ensureColumnIsUuid("app_user_question_progress", "user_id", { nullable: false });
 }
 
 export async function getUserQuestionProgressTotals(userId: string): Promise<UserQuestionProgressTotals> {

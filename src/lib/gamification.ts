@@ -1,4 +1,5 @@
-import { getSqlClient } from "@/lib/db";
+import { ensureColumnIsUuid, getSqlClient } from "@/lib/db";
+import { ensureSummaryTables } from "@/lib/summaries";
 import {
   applyActiveXpMultiplier,
   getXpMultiplierStatus,
@@ -1500,6 +1501,7 @@ function buildAchievements(input: {
 export async function ensureGamificationSchema() {
   await ensureUserQuestionProgressSchema();
   await ensureUserMistakesSchema();
+  await ensureSummaryTables();
   const sql = getSql();
 
   await sql.query(`
@@ -1595,6 +1597,11 @@ export async function ensureGamificationSchema() {
     create index if not exists idx_app_user_challenge_duels_status
       on app_user_challenge_duels (status, expires_at desc, created_at desc)
   `);
+
+  await ensureColumnIsUuid("app_user_gamification_events", "user_id", { nullable: false });
+  await ensureColumnIsUuid("app_user_challenge_duels", "challenger_id", { nullable: false });
+  await ensureColumnIsUuid("app_user_challenge_duels", "opponent_id", { nullable: false });
+  await ensureColumnIsUuid("app_user_challenge_duels", "winner_user_id");
 }
 
 export async function recordTrainingSessionOutcome(

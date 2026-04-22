@@ -32,6 +32,7 @@ const ENV_FILE_CANDIDATES = [
 ] as const;
 
 let cachedDatabaseUrlFromFile: string | undefined;
+const ensuredUuidColumns = new Set<string>();
 
 function stripWrappingQuotes(value: string) {
   return value.replace(/^["']|["']$/g, "").replace(/\s+/g, "").trim();
@@ -92,6 +93,87 @@ export function getSqlClient() {
   }
 
   return neon(databaseUrl);
+}
+
+function assertSqlIdentifier(identifier: string) {
+  if (!/^[a-z_][a-z0-9_]*$/i.test(identifier)) {
+    throw new Error(`Invalid SQL identifier: ${identifier}`);
+  }
+
+  return identifier;
+}
+
+type EnsureUuidColumnOptions = {
+  nullable?: boolean;
+};
+
+export async function ensureColumnIsUuid(
+  tableName: string,
+  columnName: string,
+  options: EnsureUuidColumnOptions = {},
+) {
+  const safeTableName = assertSqlIdentifier(tableName);
+  const safeColumnName = assertSqlIdentifier(columnName);
+  const cacheKey = `${safeTableName}.${safeColumnName}.${options.nullable !== false ? "nullable" : "required"}`;
+
+  if (ensuredUuidColumns.has(cacheKey)) {
+    return;
+  }
+
+  const sql = getSqlClient();
+  const columnRows = (await sql.query(
+    `
+      select
+        data_type,
+        udt_name,
+        is_nullable,
+        column_default
+      from information_schema.columns
+      where table_schema = 'public'
+        and table_name = $1
+        and column_name = $2
+      limit 1
+    `,
+    [safeTableName, safeColumnName],
+  )) as Array<{
+    data_type: string;
+    udt_name: string;
+    is_nullable: "YES" | "NO";
+    column_default: string | null;
+  }>;
+
+  const column = columnRows[0];
+
+  if (!column) {
+    return;
+  }
+
+  const isUuid = column.data_type === "uuid" || column.udt_name === "uuid";
+
+  if (!isUuid) {
+    await sql.query(`
+      alter table ${safeTableName}
+      alter column ${safeColumnName} drop default,
+      alter column ${safeColumnName} type uuid
+      using nullif(trim(${safeColumnName}::text), '')::uuid
+    `);
+
+    if (column.column_default) {
+      await sql.query(`
+        alter table ${safeTableName}
+        alter column ${safeColumnName} set default ${column.column_default}
+      `);
+    }
+  }
+
+  if (options.nullable === false) {
+    await sql.query(`
+      alter table ${safeTableName}
+      alter column ${safeColumnName} set not null
+    `);
+  }
+
+  ensuredUuidColumns.add(cacheKey);
 }
 
 export async function getDatabaseHealth(): Promise<DatabaseHealth> {
