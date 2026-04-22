@@ -49,7 +49,7 @@ const trainingTracks = [
     title: "المسار الكمي",
     description: "حسابي، هندسي، مقارنات ومسائل تحتاج متابعة منتظمة وواضحة.",
     accentClass:
-      "border-[#d7e5ff] bg-[linear-gradient(180deg,rgba(241,246,255,0.98),rgba(255,255,255,0.98))]",
+      "border-[#d7e5ff] bg-[#f8fbff]",
     iconWrapClass: "bg-[#eaf2ff] text-[#1d4ed8]",
     indicatorClassName: "bg-[linear-gradient(90deg,#1d4ed8,#60a5fa)]",
     ringTone: "blue" as const,
@@ -60,7 +60,7 @@ const trainingTracks = [
     title: "المسار اللفظي",
     description: "إكمال جمل، تناظر، مفردة شاذة، وفهم مقروء بمراجعة يومية.",
     accentClass:
-      "border-[#d5f0ec] bg-[linear-gradient(180deg,rgba(241,253,251,0.98),rgba(255,255,255,0.98))]",
+      "border-[#d5f0ec] bg-[#f4fdfa]",
     iconWrapClass: "bg-[#e9fbf8] text-[#0f766e]",
     indicatorClassName: "bg-[linear-gradient(90deg,#0f766e,#2dd4bf)]",
     ringTone: "teal" as const,
@@ -126,13 +126,13 @@ function ProgressRing({
 
   return (
     <div
-      className="grid h-24 w-24 place-items-center rounded-full"
+      className="grid h-20 w-20 place-items-center rounded-full sm:h-24 sm:w-24"
       style={{
         background: `conic-gradient(${ringColor} ${normalized * 3.6}deg, rgba(226,232,240,0.92) 0deg)`,
       }}
     >
-      <div className="grid h-[5.1rem] w-[5.1rem] place-items-center rounded-full bg-white text-center shadow-[inset_0_1px_0_rgba(255,255,255,0.85)]">
-        <div className="display-font text-2xl font-extrabold text-slate-950">{normalized}%</div>
+      <div className="grid h-[4.25rem] w-[4.25rem] place-items-center rounded-full bg-white text-center shadow-[inset_0_1px_0_rgba(255,255,255,0.85)] sm:h-[5.1rem] sm:w-[5.1rem]">
+        <div className="display-font text-xl font-extrabold text-slate-950 sm:text-2xl">{normalized}%</div>
         <div className="text-[11px] font-semibold text-slate-500">{label}</div>
       </div>
     </div>
@@ -156,14 +156,14 @@ function MetricCard({
 }) {
   return (
     <Card className={`rounded-[2rem] border shadow-[0_18px_38px_rgba(15,23,42,0.06)] ${className}`}>
-      <CardContent className="flex items-start justify-between gap-4 p-5">
+      <CardContent className="flex items-start justify-between gap-4 p-4 sm:p-5">
         <div className="min-w-0">
           <div className="text-xs font-semibold tracking-[0.14em] text-slate-400">{title}</div>
-          <div className="mt-3 display-font text-3xl font-extrabold text-slate-950">{value}</div>
+          <div className="mt-3 display-font text-2xl font-extrabold text-slate-950 sm:text-3xl">{value}</div>
           <div className="mt-2 text-sm leading-7 text-slate-500">{caption}</div>
         </div>
-        <div className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-[1.15rem] ${iconWrapClass}`}>
-          <Icon className="h-6 w-6" />
+        <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-[1.15rem] sm:h-14 sm:w-14 ${iconWrapClass}`}>
+          <Icon className="h-5 w-5 sm:h-6 sm:w-6" />
         </div>
       </CardContent>
     </Card>
@@ -191,17 +191,17 @@ function HeroQuickStartCard({
     <Link
       href={href}
       className={cn(
-        "group rounded-[1.8rem] border bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(248,250,252,0.94))] p-5 shadow-[0_16px_34px_rgba(15,23,42,0.05)] transition-all duration-200 hover:-translate-y-1 hover:shadow-[0_24px_48px_rgba(15,23,42,0.08)]",
+        "group rounded-[1.6rem] border bg-white p-4 shadow-[0_16px_34px_rgba(15,23,42,0.05)] transition-all duration-200 hover:-translate-y-1 hover:shadow-[0_24px_48px_rgba(15,23,42,0.08)] sm:rounded-[1.8rem] sm:p-5",
         borderClass,
       )}
     >
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0">
           <div className="mini-pill">{badge}</div>
-          <div className="mt-3 display-font text-xl font-bold text-slate-950">{label}</div>
+          <div className="mt-3 display-font text-lg font-bold text-slate-950 sm:text-xl">{label}</div>
           <div className="mt-2 text-sm leading-7 text-slate-500">{description}</div>
         </div>
-        <div className={cn("flex h-12 w-12 shrink-0 items-center justify-center rounded-[1rem]", iconWrapClass)}>
+        <div className={cn("flex h-11 w-11 shrink-0 items-center justify-center rounded-[1rem] sm:h-12 sm:w-12", iconWrapClass)}>
           <Icon className="h-5 w-5" />
         </div>
       </div>
@@ -215,14 +215,15 @@ function HeroQuickStartCard({
 
 function MobileQuickDock() {
   const items = [
-    { href: "/question-bank", label: "ابدأ", icon: Zap },
+    { href: "/dashboard", label: "لوحتي", icon: Compass },
     { href: "/my-plan", label: "الخطة", icon: Target },
-    { href: "/question-bank?track=mistakes", label: "الأخطاء", icon: TriangleAlert },
+    { href: "/question-bank", label: "الأسئلة", icon: ClipboardList },
+    { href: "/question-bank?track=mistakes", label: "المراجعة", icon: TriangleAlert },
   ];
 
   return (
-    <div className="fixed inset-x-4 bottom-4 z-[140] lg:hidden">
-      <div className="grid grid-cols-3 gap-2 rounded-[1.8rem] border border-white/80 bg-white/94 p-2 shadow-[0_20px_44px_rgba(15,23,42,0.14)] backdrop-blur-xl">
+    <div className="fixed inset-x-3 bottom-3 z-[140] lg:hidden [padding-bottom:env(safe-area-inset-bottom)]">
+      <div className="grid grid-cols-4 gap-2 rounded-[1.6rem] border border-white/80 bg-white/94 p-2 shadow-[0_20px_44px_rgba(15,23,42,0.14)] backdrop-blur-xl">
         {items.map((item) => {
           const Icon = item.icon;
 
@@ -230,9 +231,9 @@ function MobileQuickDock() {
             <Link
               key={item.href}
               href={item.href}
-              className="flex flex-col items-center justify-center gap-1 rounded-[1.2rem] px-3 py-3 text-center transition hover:bg-slate-50"
+              className="flex min-h-[4.5rem] flex-col items-center justify-center gap-1 rounded-[1.15rem] px-2 py-2.5 text-center transition hover:bg-slate-50"
             >
-              <div className="flex h-10 w-10 items-center justify-center rounded-[0.95rem] bg-[#eef4ff] text-[#123B7A]">
+              <div className="flex h-9 w-9 items-center justify-center rounded-[0.95rem] bg-[#eef4ff] text-[#123B7A]">
                 <Icon className="h-4 w-4" />
               </div>
               <span className="text-xs font-bold text-slate-700">{item.label}</span>
@@ -424,19 +425,19 @@ export function StudentDashboard() {
   }
 
   return (
-    <div className="space-y-8 pb-16 md:pb-20 lg:pb-0">
+    <div className="space-y-6 pb-24 sm:space-y-8 lg:pb-0">
       <StudentPlanSetupNotice onboardingCompleted={data.onboardingCompleted} />
 
       <Reveal>
-        <Card className="overflow-hidden rounded-[2.5rem] border border-[#dbe7f5] bg-[radial-gradient(circle_at_top_right,rgba(29,78,216,0.08),transparent_24%),radial-gradient(circle_at_16%_16%,rgba(14,165,164,0.08),transparent_20%),linear-gradient(180deg,rgba(255,255,255,0.99),rgba(248,250,252,0.96))] shadow-[0_22px_54px_rgba(15,23,42,0.06)]">
-        <CardContent className="space-y-8 p-8">
-          <div className="grid gap-8 xl:grid-cols-[1.15fr,0.85fr]">
+        <Card className="overflow-hidden rounded-[2rem] border border-[#dbe7f5] bg-white shadow-[0_22px_54px_rgba(15,23,42,0.06)] sm:rounded-[2.5rem]">
+        <CardContent className="space-y-6 p-5 sm:space-y-8 sm:p-6 lg:p-8">
+          <div className="grid gap-6 xl:grid-cols-[1.15fr,0.85fr] xl:gap-8">
             <div>
               <Badge className="border border-[#d7e5ff] bg-[#eef4ff] text-[#1d4ed8] shadow-none">لوحة الطالب</Badge>
-              <h2 className="mt-4 max-w-[12ch] display-font text-[clamp(2rem,4.1vw,3.45rem)] font-extrabold leading-[1.18] text-slate-950">
+              <h2 className="mt-4 max-w-[11ch] display-font text-[clamp(1.7rem,4.1vw,3.45rem)] font-extrabold leading-[1.18] text-slate-950 sm:max-w-[12ch]">
                 أهلًا يا {firstName}، نبدأ من هنا
               </h2>
-              <p className="mt-3 max-w-3xl text-base leading-8 text-slate-600">
+              <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-600 sm:text-base sm:leading-8">
                 هذه لوحة عملية وليست نصوصًا فقط: أكمل من آخر نقطة، افتح خطة اليوم، وادخل مباشرة إلى الأقسام التي تحتاجها الآن.
               </p>
 
@@ -452,21 +453,21 @@ export function StudentDashboard() {
                 </span>
               </div>
 
-              <div className="mt-6 flex flex-wrap gap-3">
+              <div className="mt-6 grid gap-3 sm:flex sm:flex-wrap">
                 <Link href={primaryResumeItem?.href ?? "/question-bank"}>
-                  <Button className="gap-2 bg-[#1d4ed8] text-white shadow-[0_14px_32px_rgba(29,78,216,0.18)] hover:bg-[#1e40af]">
+                  <Button className="w-full gap-2 bg-[#1d4ed8] text-white shadow-[0_14px_32px_rgba(29,78,216,0.18)] hover:bg-[#1e40af] sm:w-auto">
                     <Zap className="h-4 w-4" />
                     {primaryResumeItem ? primaryResumeItem.ctaLabel : "ابدأ الآن"}
                   </Button>
                 </Link>
                 <Link href="#today-plan">
-                  <Button variant="outline" className="gap-2 border-slate-200 bg-white text-slate-800 hover:bg-slate-50">
+                  <Button variant="outline" className="w-full gap-2 border-slate-200 bg-white text-slate-800 hover:bg-slate-50 sm:w-auto">
                     <Target className="h-4 w-4" />
                     خطة اليوم
                   </Button>
                 </Link>
                 <Link href="/onboarding">
-                  <Button variant="outline" className="gap-2 border-teal-200 bg-teal-50 text-teal-700 hover:bg-teal-100">
+                  <Button variant="outline" className="w-full gap-2 border-teal-200 bg-teal-50 text-teal-700 hover:bg-teal-100 sm:w-auto">
                     <Compass className="h-4 w-4" />
                     ضبط الخطة
                   </Button>
@@ -474,12 +475,12 @@ export function StudentDashboard() {
               </div>
             </div>
 
-            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-1">
-              <div className="rounded-[2rem] border border-slate-200 bg-white/90 p-5 shadow-[0_16px_34px_rgba(15,23,42,0.05)]">
+            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-1">
+              <div className="rounded-[1.7rem] border border-slate-200 bg-white/90 p-4 shadow-[0_16px_34px_rgba(15,23,42,0.05)] sm:rounded-[2rem] sm:p-5">
                 <div className="flex items-start justify-between gap-4">
                   <div className="min-w-0">
                     <div className="text-xs font-semibold tracking-[0.16em] text-slate-500">الإنجاز الأسبوعي</div>
-                    <div className="mt-3 display-font text-3xl font-bold text-slate-950">{data.progressPercent}%</div>
+                    <div className="mt-3 display-font text-2xl font-bold text-slate-950 sm:text-3xl">{data.progressPercent}%</div>
                     <div className="mt-2 text-sm leading-7 text-slate-600">
                       تقدمك الكلي في الكمي واللفظي والخطة يظهر هنا بصورة واضحة وسريعة.
                     </div>
@@ -489,27 +490,27 @@ export function StudentDashboard() {
               </div>
 
               <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-2">
-                <div className="rounded-[1.5rem] border border-slate-200 bg-slate-50 px-5 py-4 text-slate-800">
+                <div className="rounded-[1.4rem] border border-slate-200 bg-slate-50 px-4 py-4 text-slate-800 sm:px-5">
                   <div className="text-xs text-slate-500">الاختبار القادم</div>
-                  <div className="mt-2 display-font text-2xl font-bold text-slate-950">{formatDaysLeft(data.daysLeft)}</div>
+                  <div className="mt-2 display-font text-xl font-bold text-slate-950 sm:text-2xl">{formatDaysLeft(data.daysLeft)}</div>
                   <div className="mt-1 text-xs text-slate-500">{formatPortalDate(data.examDate)}</div>
                 </div>
-                <div className="rounded-[1.5rem] border border-slate-200 bg-slate-50 px-5 py-4 text-slate-800">
+                <div className="rounded-[1.4rem] border border-slate-200 bg-slate-50 px-4 py-4 text-slate-800 sm:px-5">
                   <div className="text-xs text-slate-500">إيقاع الخطة</div>
-                  <div className="mt-2 display-font text-2xl font-bold text-slate-950">{planTypeLabels[data.planType]}</div>
+                  <div className="mt-2 display-font text-xl font-bold text-slate-950 sm:text-2xl">{planTypeLabels[data.planType]}</div>
                   <div className="mt-1 text-xs text-slate-500">{pressure.label}</div>
                 </div>
               </div>
             </div>
           </div>
 
-          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
             <MetricCard
               title="خطة اليوم"
               value={`${completedToday}/${data.todayTasks.length || 0}`}
               caption="أنجز المهمات اليومية ثم انتقل إلى المراجعة الذكية."
               icon={Target}
-              className="border-emerald-200 bg-[linear-gradient(180deg,rgba(236,253,245,0.96),rgba(255,255,255,0.98))]"
+              className="border-emerald-200 bg-emerald-50/70"
               iconWrapClass="bg-emerald-100 text-emerald-700"
             />
             <MetricCard
@@ -517,7 +518,7 @@ export function StudentDashboard() {
               value={`${data.quantProgressPercent}%`}
               caption={`المتبقي ${data.quantRemainingSections ?? "غير محدد"} قسم في هذا المسار.`}
               icon={BarChart3}
-              className="border-sky-200 bg-[linear-gradient(180deg,rgba(240,249,255,0.96),rgba(255,255,255,0.98))]"
+              className="border-sky-200 bg-sky-50/70"
               iconWrapClass="bg-sky-100 text-sky-700"
             />
             <MetricCard
@@ -525,7 +526,7 @@ export function StudentDashboard() {
               value={`${data.verbalProgressPercent}%`}
               caption={`المتبقي ${data.verbalRemainingSections ?? "غير محدد"} قسم في هذا المسار.`}
               icon={Brain}
-              className="border-amber-200 bg-[linear-gradient(180deg,rgba(255,251,235,0.96),rgba(255,255,255,0.98))]"
+              className="border-amber-200 bg-amber-50/70"
               iconWrapClass="bg-amber-100 text-amber-700"
             />
             <MetricCard
@@ -533,7 +534,7 @@ export function StudentDashboard() {
               value={String(data.activeMistakesCount)}
               caption={`${data.mistakeMasteryPercent}% نسبة الإتقان الحالية، و${data.mistakesInTrainingCount} سؤال في التدريب الآن.`}
               icon={TriangleAlert}
-              className="border-rose-200 bg-[linear-gradient(180deg,rgba(255,241,242,0.96),rgba(255,255,255,0.98))]"
+              className="border-rose-200 bg-rose-50/70"
               iconWrapClass="bg-rose-100 text-rose-700"
             />
           </div>
@@ -543,7 +544,7 @@ export function StudentDashboard() {
 
       <Reveal delay={0.03}>
         <Card className="rounded-[2.1rem] border border-[#dde7f6] bg-white/96 shadow-[0_18px_44px_rgba(15,23,42,0.05)]">
-          <CardContent className="space-y-5 p-6 md:p-8">
+          <CardContent className="space-y-5 p-5 sm:p-6 lg:p-8">
             <div className="flex flex-wrap items-end justify-between gap-3">
               <div>
                 <p className="section-eyebrow text-[#123B7A]">أكمل من آخر نقطة</p>
@@ -555,7 +556,7 @@ export function StudentDashboard() {
                 </p>
               </div>
               <Link href={primaryResumeItem?.href ?? "/question-bank"}>
-                <Button className="gap-2">
+                <Button className="w-full gap-2 sm:w-auto">
                   <Zap className="h-4 w-4" />
                   {primaryResumeItem?.ctaLabel ?? "أكمل الآن"}
                 </Button>
@@ -566,13 +567,13 @@ export function StudentDashboard() {
               {data.resumeItems.slice(0, 2).map((item) => (
                 <div
                   key={item.id}
-                  className="rounded-[1.6rem] border border-slate-200 bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(248,250,252,0.9))] p-5 shadow-[0_12px_28px_rgba(15,23,42,0.04)]"
+                  className="rounded-[1.6rem] border border-slate-200 bg-white p-5 shadow-[0_12px_28px_rgba(15,23,42,0.04)]"
                 >
                   <div className="display-font text-lg font-bold text-slate-950">{item.title}</div>
                   <p className="mt-2 text-sm leading-7 text-slate-600">{item.subtitle}</p>
                   <div className="mt-4">
                     <Link href={item.href}>
-                      <Button variant="outline" className="gap-2">
+                      <Button variant="outline" className="w-full gap-2 sm:w-auto">
                         {item.ctaLabel}
                         <ArrowLeft className="h-4 w-4" />
                       </Button>
@@ -581,7 +582,7 @@ export function StudentDashboard() {
                 </div>
               ))}
 
-              <div className="rounded-[1.6rem] border border-slate-200 bg-[linear-gradient(180deg,rgba(241,249,255,0.98),rgba(255,255,255,0.95))] p-5 shadow-[0_12px_28px_rgba(15,23,42,0.04)]">
+              <div className="rounded-[1.6rem] border border-slate-200 bg-sky-50/60 p-5 shadow-[0_12px_28px_rgba(15,23,42,0.04)]">
                 <div className="text-xs font-semibold text-slate-500">الخطوة التالية</div>
                 <div className="mt-3 display-font text-lg font-bold text-slate-950">
                   {upcomingTask ? upcomingTask.title : secondaryResumeItem?.title ?? "ابدأ من بنك الأسئلة"}
@@ -595,7 +596,7 @@ export function StudentDashboard() {
                 </p>
                 <div className="mt-4">
                   <Link href={upcomingTask ? "/my-plan" : secondaryResumeItem?.href ?? "/question-bank"}>
-                    <Button variant="outline" className="gap-2">
+                    <Button variant="outline" className="w-full gap-2 sm:w-auto">
                       افتح الآن
                       <ArrowLeft className="h-4 w-4" />
                     </Button>
@@ -610,7 +611,7 @@ export function StudentDashboard() {
       <Reveal delay={0.04}>
         <div className="grid gap-6 xl:grid-cols-[1.02fr,0.98fr]">
           <Card className="rounded-[2.1rem] border border-[#dde7f6] bg-white/96 shadow-[0_18px_44px_rgba(15,23,42,0.05)]">
-            <CardContent className="space-y-5 p-6 md:p-8">
+            <CardContent className="space-y-5 p-5 sm:p-6 lg:p-8">
               <div className="flex flex-wrap items-end justify-between gap-3">
                 <div>
                   <p className="section-eyebrow text-[#123B7A]">ابدأ الآن</p>
@@ -622,7 +623,7 @@ export function StudentDashboard() {
                   </p>
                 </div>
                 <Link href="/question-bank">
-                  <Button variant="outline" className="gap-2">
+                  <Button variant="outline" className="w-full gap-2 sm:w-auto">
                     <ClipboardList className="h-4 w-4" />
                     ابدأ تدريب الآن
                   </Button>
@@ -637,8 +638,8 @@ export function StudentDashboard() {
             </CardContent>
           </Card>
 
-          <Card className="rounded-[2rem] border border-[#d9e7f9] bg-[linear-gradient(180deg,rgba(248,252,255,0.99),rgba(255,255,255,0.97))] shadow-[0_18px_42px_rgba(15,23,42,0.05)]">
-            <CardContent className="space-y-5 p-6 md:p-8">
+          <Card className="rounded-[2rem] border border-[#d9e7f9] bg-white shadow-[0_18px_42px_rgba(15,23,42,0.05)]">
+            <CardContent className="space-y-5 p-5 sm:p-6 lg:p-8">
               <div className="flex flex-wrap items-end justify-between gap-3">
                 <div>
                   <p className="section-eyebrow text-[#123B7A]">توصية اليوم</p>
@@ -685,7 +686,7 @@ export function StudentDashboard() {
 
               <div className="pt-1">
                 <Link href={upcomingTask ? "/my-plan" : secondaryResumeItem?.href ?? "/question-bank"}>
-                  <Button variant="outline" className="gap-2">
+                  <Button variant="outline" className="w-full gap-2 sm:w-auto">
                     افتح التوصية الآن
                     <ArrowLeft className="h-4 w-4" />
                   </Button>
@@ -704,12 +705,12 @@ export function StudentDashboard() {
 
       <Reveal delay={0.08}>
       <div className="grid gap-6 xl:grid-cols-[1.18fr,0.82fr]">
-        <div className="space-y-6">
+        <div className="grid gap-6">
           <Card
             id="today-plan"
-            className="rounded-[2rem] border border-[#dbe6f6] bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(247,250,255,0.96))] shadow-[0_18px_46px_rgba(18,59,122,0.08)]"
+            className="rounded-[2rem] border border-[#dbe6f6] bg-white shadow-[0_18px_46px_rgba(18,59,122,0.08)]"
           >
-            <CardContent className="space-y-5 p-8">
+            <CardContent className="space-y-5 p-5 sm:p-6 lg:p-8">
               <div className="flex flex-wrap items-center justify-between gap-4">
                 <div>
                   <p className="section-eyebrow text-[#123B7A]">الخطة اليومية</p>
@@ -739,7 +740,7 @@ export function StudentDashboard() {
 
               <div className="flex flex-wrap gap-3 pt-2">
                 <Link href="/onboarding">
-                  <Button className="gap-2">
+                  <Button className="w-full gap-2 sm:w-auto">
                     <NotebookPen className="h-4 w-4" />
                     تعديل إعدادات الخطة
                   </Button>
@@ -747,7 +748,7 @@ export function StudentDashboard() {
                 <Button
                   type="button"
                   variant="outline"
-                  className="gap-2"
+                  className="w-full gap-2 sm:w-auto"
                   onClick={handleResetPlan}
                   disabled={actionState === "loading"}
                 >
@@ -762,7 +763,7 @@ export function StudentDashboard() {
             className="rounded-[2rem] border border-slate-200 bg-white/98 shadow-[0_18px_42px_rgba(15,23,42,0.06)]"
             id="progress"
           >
-            <CardContent className="space-y-5 p-8">
+            <CardContent className="space-y-5 p-5 sm:p-6 lg:p-8">
               <div>
                 <p className="section-eyebrow text-[#123B7A]">مساراتك الرئيسية</p>
                 <h3 className="display-font text-2xl font-bold text-slate-950">كمي ولفظي بصورة عملية واضحة</h3>
@@ -802,7 +803,7 @@ export function StudentDashboard() {
                       </div>
                       <div className="mt-4">
                         <Link href={isQuant ? "/question-bank?track=quant" : "/question-bank?track=verbal"}>
-                          <Button variant="outline" className="gap-2">
+                          <Button variant="outline" className="w-full gap-2 sm:w-auto">
                             ادخل {isQuant ? "الكمي" : "اللفظي"}
                             <ArrowLeft className="h-4 w-4" />
                           </Button>
@@ -841,12 +842,11 @@ export function StudentDashboard() {
             </CardContent>
           </Card>
 
-          <StudentAchievementsPanel data={data} sectionId="xp-progress" />
         </div>
 
-        <div className="space-y-6">
-          <Card className="rounded-[2rem] border border-[#f1dfb8] bg-[linear-gradient(180deg,rgba(255,252,245,0.99),rgba(255,255,255,0.96))] shadow-[0_18px_42px_rgba(183,121,31,0.10)]">
-            <CardContent className="space-y-5 p-8">
+        <div className="grid gap-6">
+          <Card className="order-3 rounded-[2rem] border border-[#f1dfb8] bg-white shadow-[0_18px_42px_rgba(183,121,31,0.10)]">
+            <CardContent className="space-y-5 p-5 sm:p-6 lg:p-8">
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <p className="section-eyebrow text-[#b7791f]">تحدي الشهر</p>
@@ -912,13 +912,13 @@ export function StudentDashboard() {
 
               <div className="flex flex-wrap gap-3">
                 <Link href="/challenge">
-                  <Button className="gap-2">
+                  <Button className="w-full gap-2 sm:w-auto">
                     <Trophy className="h-4 w-4" />
                     افتح لوحة التحدي
                   </Button>
                 </Link>
                 <Link href="/question-bank?track=mistakes#mistakes-trainer">
-                  <Button variant="outline" className="gap-2">
+                  <Button variant="outline" className="w-full gap-2 sm:w-auto">
                     <Zap className="h-4 w-4" />
                     اجمع XP من الأخطاء
                   </Button>
@@ -927,8 +927,8 @@ export function StudentDashboard() {
             </CardContent>
           </Card>
 
-          <Card className="rounded-[2rem] border border-[#dbe6f6] bg-[linear-gradient(180deg,rgba(255,255,255,0.99),rgba(243,248,255,0.96))] shadow-[0_18px_42px_rgba(18,59,122,0.08)]">
-            <CardContent className="space-y-5 p-8">
+          <Card className="order-1 rounded-[2rem] border border-[#dbe6f6] bg-white shadow-[0_18px_42px_rgba(18,59,122,0.08)]">
+            <CardContent className="space-y-5 p-5 sm:p-6 lg:p-8">
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <p className="section-eyebrow text-[#123B7A]">أخطاء تحتاج مراجعة</p>
@@ -972,13 +972,13 @@ export function StudentDashboard() {
 
               <div className="flex flex-wrap gap-3">
                 <Link href="/question-bank?track=mistakes#mistakes-trainer">
-                  <Button className="gap-2">
+                  <Button className="w-full gap-2 sm:w-auto">
                     <TriangleAlert className="h-4 w-4" />
                     ابدأ تدريب الأخطاء الآن
                   </Button>
                 </Link>
                 <Link href="/question-bank?track=mistakes">
-                  <Button variant="outline" className="gap-2">
+                  <Button variant="outline" className="w-full gap-2 sm:w-auto">
                     <Brain className="h-4 w-4" />
                     افتح لوحة الأخطاء
                   </Button>
@@ -987,8 +987,8 @@ export function StudentDashboard() {
             </CardContent>
           </Card>
 
-          <Card className="rounded-[2rem] border border-slate-200 bg-white/98 shadow-[0_18px_42px_rgba(15,23,42,0.06)]">
-            <CardContent className="space-y-5 p-8">
+          <Card className="order-2 rounded-[2rem] border border-slate-200 bg-white/98 shadow-[0_18px_42px_rgba(15,23,42,0.06)]">
+            <CardContent className="space-y-5 p-5 sm:p-6 lg:p-8">
               <div>
                 <p className="section-eyebrow text-[#123B7A]">آخر نشاطاتك</p>
                 <h3 className="display-font text-2xl font-bold text-slate-950">آخر ما فعلته داخل المنصة</h3>
@@ -1001,13 +1001,13 @@ export function StudentDashboard() {
                 {recentActivityItems.length ? recentActivityItems.map((item) => (
                   <div
                     key={item.id}
-                    className="rounded-[1.6rem] border border-slate-200 bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(248,250,252,0.9))] p-4 shadow-[0_12px_28px_rgba(15,23,42,0.04)]"
+                    className="rounded-[1.6rem] border border-slate-200 bg-white p-4 shadow-[0_12px_28px_rgba(15,23,42,0.04)]"
                   >
                     <div className="display-font text-lg font-bold text-slate-950">{item.title}</div>
                     <p className="mt-2 text-sm leading-7 text-slate-600">{item.description}</p>
                     <div className="mt-4">
                       <Link href={item.href}>
-                        <Button variant="outline" className="gap-2">
+                        <Button variant="outline" className="w-full gap-2 sm:w-auto">
                           افتح هذا القسم
                           <ArrowLeft className="h-4 w-4" />
                         </Button>
@@ -1024,6 +1024,8 @@ export function StudentDashboard() {
           </Card>
         </div>
       </div>
+
+      <StudentAchievementsPanel data={data} sectionId="xp-progress" compact />
       </Reveal>
       <MobileQuickDock />
     </div>
