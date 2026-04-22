@@ -418,7 +418,17 @@ export function StudentDashboard() {
         });
       }
 
-      recentSolvedQuestions.slice(0, 3).forEach((question, index) => {
+      const safeRecentSolvedQuestions = recentSolvedQuestions.map((question) => ({
+        ...question,
+        categoryTitle: typeof question.categoryTitle === "string" ? question.categoryTitle : "",
+        questionTypeLabel:
+          typeof question.questionTypeLabel === "string" ? question.questionTypeLabel : "",
+        questionText: typeof question.questionText === "string" ? question.questionText : "",
+        questionHref: typeof question.questionHref === "string" ? question.questionHref : null,
+        section: question.section === "quantitative" ? "quantitative" : "verbal",
+      }));
+
+      safeRecentSolvedQuestions.slice(0, 3).forEach((question, index) => {
         const title = question.categoryTitle?.trim() || question.questionTypeLabel || "سؤال محلول";
         const preview = question.questionText.trim();
 
