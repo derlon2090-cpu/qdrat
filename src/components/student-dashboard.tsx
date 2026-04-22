@@ -291,10 +291,10 @@ export function StudentDashboard() {
   const [actionState, setActionState] = useState<ActionState>("idle");
   const [actionError, setActionError] = useState<string | null>(null);
 
-  const completedToday = useMemo(
-    () => data?.todayTasks.filter((task) => task.isCompleted).length ?? 0,
-    [data?.todayTasks],
-  );
+  const completedToday = useMemo(() => {
+    const tasks = Array.isArray(data?.todayTasks) ? data.todayTasks : [];
+    return tasks.filter((task) => task.isCompleted).length;
+  }, [data?.todayTasks]);
 
   if (status === "loading") {
     return <StudentPortalLoadingCard />;
@@ -318,24 +318,63 @@ export function StudentDashboard() {
     return <StudentPortalErrorCard message={error ?? "تعذر تحميل لوحة الطالب."} onRetry={() => void refresh()} />;
   }
 
-  const pressure = pressureConfig[data.planPressure];
-  const firstName = data.fullName.trim().split(/\s+/)[0] || data.fullName;
-  const primaryResumeItem = data.resumeItems[0] ?? null;
-  const secondaryResumeItem = data.resumeItems[1] ?? null;
-  const upcomingTask = data.upcomingTasks[0] ?? null;
+  const todayTasks = Array.isArray(data.todayTasks) ? data.todayTasks : [];
+  const upcomingTasks = Array.isArray(data.upcomingTasks) ? data.upcomingTasks : [];
+  const resumeItems = Array.isArray(data.resumeItems) ? data.resumeItems : [];
+  const recommendations =
+    Array.isArray(data.recommendations) && data.recommendations.length
+      ? data.recommendations
+      : ["ابدأ بجلسة قصيرة من القسم الذي يحتاجه مستواك الآن."];
+  const recentSolvedQuestions = Array.isArray(data.recentSolvedQuestions)
+    ? data.recentSolvedQuestions
+    : [];
+  const challenge = {
+    currentTitle: data.challenge?.currentTitle ?? "تحدي الشهر",
+    monthlyRank: data.challenge?.monthlyRank ?? null,
+    monthlyXp: Number(data.challenge?.monthlyXp ?? 0),
+    currentStreak: Number(data.challenge?.currentStreak ?? 0),
+    countdownLabel: data.challenge?.countdownLabel ?? "تابع ترتيبك الشهري داخل المنصة.",
+    nextMonthlyRankGap: data.challenge?.nextMonthlyRankGap ?? null,
+    xpMultiplier: {
+      active: Boolean(data.challenge?.xpMultiplier?.active),
+      label: data.challenge?.xpMultiplier?.label ?? "مضاعفة XP غير مفعلة الآن",
+      description:
+        data.challenge?.xpMultiplier?.description ?? "استمر في الحل اليومي لرفع نقاطك تدريجيًا.",
+    },
+    rankProtection: {
+      active: Boolean(data.challenge?.rankProtection?.active),
+      label: data.challenge?.rankProtection?.label ?? "بدون حماية مركز حاليًا",
+      description:
+        data.challenge?.rankProtection?.description ??
+        "كلما تقدمت في الترتيب ستظهر لك حماية المركز تلقائيًا.",
+    },
+  };
+  const weeklyGoal = {
+    quantSections: Number(data.weeklyGoal?.quantSections ?? 0),
+    verbalSections: Number(data.weeklyGoal?.verbalSections ?? 0),
+    targetQuestions: Number(data.weeklyGoal?.targetQuestions ?? 0),
+    mistakesReview: Number(data.weeklyGoal?.mistakesReview ?? 0),
+  };
+  const xpProgressPercent = Number(data.xp?.progressPercent ?? 0);
+  const pressure = pressureConfig[data.planPressure] ?? pressureConfig.balanced;
+  const normalizedFullName = (data.fullName ?? "").trim();
+  const firstName = normalizedFullName.split(/\s+/)[0] || normalizedFullName || "الطالب";
+  const primaryResumeItem = resumeItems[0] ?? null;
+  const secondaryResumeItem = resumeItems[1] ?? null;
+  const upcomingTask = upcomingTasks[0] ?? null;
   const weakestMistakeLabel = data.weakestMistakeLabel ?? "لم تتضح نقطة ضعف واحدة بعد";
   const dashboardToneLabel =
-    data.todayTasks.length > 0 && completedToday >= Math.max(1, Math.ceil(data.todayTasks.length / 2))
+    todayTasks.length > 0 && completedToday >= Math.max(1, Math.ceil(todayTasks.length / 2))
       ? "أنت ممتاز اليوم"
-      : data.challenge.currentStreak >= 5
+      : challenge.currentStreak >= 5
         ? "ثبات رائع هذا الأسبوع"
         : "جاهز تبدأ بخطوة واضحة";
   const heroQuickStartCards = [
     {
       href: "/my-plan",
       label: "ابدأ الخطة اليومية",
-      description: data.todayTasks.length
-        ? `لديك ${data.todayTasks.length} مهام لليوم، أنجز منها ${completedToday} حتى الآن.`
+      description: todayTasks.length
+        ? `لديك ${todayTasks.length} مهام لليوم، أنجز منها ${completedToday} حتى الآن.`
         : "افتح الخطة اليومية ورتب أول خطوة دراسية بشكل واضح.",
       badge: "الخطة",
       icon: Target,
@@ -379,7 +418,7 @@ export function StudentDashboard() {
         });
       }
 
-      data.recentSolvedQuestions.slice(0, 3).forEach((question, index) => {
+      recentSolvedQuestions.slice(0, 3).forEach((question, index) => {
         const title = question.categoryTitle?.trim() || question.questionTypeLabel || "سؤال محلول";
         const preview = question.questionText.trim();
 
@@ -395,7 +434,7 @@ export function StudentDashboard() {
 
       return items.slice(0, 3);
     },
-    [data.lastActivityAt, data.lastActivityLabel, data.recentSolvedQuestions, primaryResumeItem?.href],
+    [data.lastActivityAt, data.lastActivityLabel, recentSolvedQuestions, primaryResumeItem?.href],
   );
 
   async function handleToggleTask(task: StudentPortalTask, nextValue: boolean) {
@@ -443,10 +482,10 @@ export function StudentDashboard() {
 
               <div className="mt-4 flex flex-wrap gap-2">
                 <span className="mini-pill border-slate-200 bg-white/85 text-slate-700">
-                  {data.challenge.currentStreak} أيام متواصلة
+                  {challenge.currentStreak} أيام متواصلة
                 </span>
                 <span className="mini-pill border-slate-200 bg-white/85 text-slate-700">
-                  {completedToday}/{data.todayTasks.length || 0} من مهام اليوم
+                  {completedToday}/{todayTasks.length || 0} من مهام اليوم
                 </span>
                 <span className="mini-pill border-slate-200 bg-white/85 text-slate-700">
                   {dashboardToneLabel}
@@ -507,7 +546,7 @@ export function StudentDashboard() {
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
             <MetricCard
               title="خطة اليوم"
-              value={`${completedToday}/${data.todayTasks.length || 0}`}
+              value={`${completedToday}/${todayTasks.length || 0}`}
               caption="أنجز المهمات اليومية ثم انتقل إلى المراجعة الذكية."
               icon={Target}
               className="border-emerald-200 bg-emerald-50/70"
@@ -564,7 +603,7 @@ export function StudentDashboard() {
             </div>
 
             <div className="grid gap-4 md:grid-cols-3">
-              {data.resumeItems.slice(0, 2).map((item) => (
+              {resumeItems.slice(0, 2).map((item) => (
                 <div
                   key={item.id}
                   className="rounded-[1.6rem] border border-slate-200 bg-white p-5 shadow-[0_12px_28px_rgba(15,23,42,0.04)]"
@@ -660,7 +699,7 @@ export function StudentDashboard() {
                   </div>
                   <div className="min-w-0">
                     <div className="display-font text-lg font-bold text-slate-950">
-                      {data.recommendations[0] ?? "ابدأ اليوم بما يرفع ثباتك أولًا ثم انتقل إلى التدريب."}
+                      {recommendations[0] ?? "ابدأ اليوم بما يرفع ثباتك أولًا ثم انتقل إلى التدريب."}
                     </div>
                     <p className="mt-2 text-sm leading-7 text-slate-600">
                       {upcomingTask
@@ -674,7 +713,7 @@ export function StudentDashboard() {
               </div>
 
               <div className="grid gap-3 md:grid-cols-2">
-                {data.recommendations.slice(1, 3).map((item) => (
+                {recommendations.slice(1, 3).map((item) => (
                   <div
                     key={item}
                     className="rounded-[1.4rem] border border-slate-200 bg-white/90 px-4 py-4 text-sm leading-7 text-slate-600"
@@ -715,7 +754,7 @@ export function StudentDashboard() {
                 <div>
                   <p className="section-eyebrow text-[#123B7A]">الخطة اليومية</p>
                   <h3 className="display-font text-2xl font-bold text-slate-950">
-                    {data.todayTasks.length ? `أنجزت ${completedToday} من ${data.todayTasks.length}` : "لا توجد مهام لليوم"}
+                    {todayTasks.length ? `أنجزت ${completedToday} من ${todayTasks.length}` : "لا توجد مهام لليوم"}
                   </h3>
                   <p className="mt-2 text-sm leading-7 text-slate-500">
                     مهام واضحة، تنفيذ سريع، وتحديث مباشر بمجرد إنهاء كل مهمة.
@@ -726,9 +765,9 @@ export function StudentDashboard() {
                 </span>
               </div>
 
-              {data.todayTasks.length ? (
+              {todayTasks.length ? (
                 <div className="space-y-3">
-                  {data.todayTasks.map((task) => (
+                  {todayTasks.map((task) => (
                     <TaskRow key={task.id} task={task} pending={Boolean(taskState[task.id])} onToggle={handleToggleTask} />
                   ))}
                 </div>
@@ -818,23 +857,23 @@ export function StudentDashboard() {
                 <div className="rounded-[1.4rem] border border-slate-200 bg-slate-50/70 p-4">
                   <div className="text-xs font-semibold text-slate-500">هدف الأسبوع</div>
                   <div className="mt-3 display-font text-2xl font-bold text-slate-950">
-                    {data.weeklyGoal.targetQuestions} سؤالًا
+                    {weeklyGoal.targetQuestions} سؤالًا
                   </div>
                   <div className="mt-2 text-sm text-slate-500">
-                    مع مراجعة {data.weeklyGoal.mistakesReview} سؤال من الأخطاء.
+                    مع مراجعة {weeklyGoal.mistakesReview} سؤال من الأخطاء.
                   </div>
                 </div>
                 <div className="rounded-[1.4rem] border border-slate-200 bg-slate-50/70 p-4">
                   <div className="text-xs font-semibold text-slate-500">خطة الكمي</div>
                   <div className="mt-3 display-font text-2xl font-bold text-slate-950">
-                    {data.weeklyGoal.quantSections} مقطع
+                    {weeklyGoal.quantSections} مقطع
                   </div>
                   <div className="mt-2 text-sm text-slate-500">حافظ على توزيع متوازن بدل التكديس في نهاية الأسبوع.</div>
                 </div>
                 <div className="rounded-[1.4rem] border border-slate-200 bg-slate-50/70 p-4">
                   <div className="text-xs font-semibold text-slate-500">خطة اللفظي</div>
                   <div className="mt-3 display-font text-2xl font-bold text-slate-950">
-                    {data.weeklyGoal.verbalSections} مقطع
+                    {weeklyGoal.verbalSections} مقطع
                   </div>
                   <div className="mt-2 text-sm text-slate-500">الاستمرار اليومي القصير أفضل من جلسة متأخرة وطويلة.</div>
                 </div>
@@ -851,32 +890,32 @@ export function StudentDashboard() {
                 <div>
                   <p className="section-eyebrow text-[#b7791f]">تحدي الشهر</p>
                   <h3 className="display-font text-2xl font-bold text-slate-950">
-                    {data.challenge.currentTitle}
+                    {challenge.currentTitle}
                   </h3>
                   <p className="mt-2 text-sm leading-7 text-slate-500">
-                    {data.challenge.countdownLabel}
+                    {challenge.countdownLabel}
                   </p>
                 </div>
-                <ProgressRing value={data.xp.progressPercent} label="XP" tone="gold" />
+                <ProgressRing value={xpProgressPercent} label="XP" tone="gold" />
               </div>
 
               <div className="grid gap-3 sm:grid-cols-3">
                 <div className="rounded-[1.4rem] border border-amber-200 bg-amber-50/80 p-4">
                   <div className="text-xs font-semibold text-amber-700">ترتيبك الشهري</div>
                   <div className="mt-3 display-font text-2xl font-bold text-slate-950">
-                    {data.challenge.monthlyRank ? `#${data.challenge.monthlyRank}` : "خارج الترتيب"}
+                    {challenge.monthlyRank ? `#${challenge.monthlyRank}` : "خارج الترتيب"}
                   </div>
                 </div>
                 <div className="rounded-[1.4rem] border border-slate-200 bg-white p-4">
                   <div className="text-xs font-semibold text-slate-500">XP هذا الشهر</div>
                   <div className="mt-3 display-font text-2xl font-bold text-slate-950">
-                    {data.challenge.monthlyXp.toLocaleString("en-US")}
+                    {challenge.monthlyXp.toLocaleString("en-US")}
                   </div>
                 </div>
                 <div className="rounded-[1.4rem] border border-slate-200 bg-white p-4">
                   <div className="text-xs font-semibold text-slate-500">السلسلة الحالية</div>
                   <div className="mt-3 display-font text-2xl font-bold text-slate-950">
-                    {data.challenge.currentStreak} يوم
+                    {challenge.currentStreak} يوم
                   </div>
                 </div>
               </div>
@@ -884,30 +923,30 @@ export function StudentDashboard() {
               <div className="flex flex-wrap gap-2">
                 <Badge
                   className={
-                    data.challenge.xpMultiplier.active
+                    challenge.xpMultiplier.active
                       ? "bg-emerald-100 text-emerald-800"
                       : "bg-slate-100 text-slate-700"
                   }
                 >
-                  {data.challenge.xpMultiplier.label}
+                  {challenge.xpMultiplier.label}
                 </Badge>
                 <Badge
                   className={
-                    data.challenge.rankProtection.active
+                    challenge.rankProtection.active
                       ? "bg-[#fff7e8] text-[#b7791f]"
                       : "bg-slate-100 text-slate-700"
                   }
                 >
-                  {data.challenge.rankProtection.label}
+                  {challenge.rankProtection.label}
                 </Badge>
               </div>
 
               <div className="rounded-[1.5rem] border border-slate-200 bg-white/85 p-4 text-sm leading-8 text-slate-600">
-                {data.challenge.rankProtection.active
-                  ? data.challenge.rankProtection.description
-                  : data.challenge.nextMonthlyRankGap
-                  ? `تبقى لك ${data.challenge.nextMonthlyRankGap.toLocaleString("en-US")} XP للوصول إلى المركز التالي في التحدي.`
-                  : data.challenge.xpMultiplier.description}
+                {challenge.rankProtection.active
+                  ? challenge.rankProtection.description
+                  : challenge.nextMonthlyRankGap
+                  ? `تبقى لك ${challenge.nextMonthlyRankGap.toLocaleString("en-US")} XP للوصول إلى المركز التالي في التحدي.`
+                  : challenge.xpMultiplier.description}
               </div>
 
               <div className="flex flex-wrap gap-3">
