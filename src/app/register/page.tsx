@@ -1,31 +1,38 @@
-import { Suspense } from "react";
 import { UserPlus } from "lucide-react";
 
 import { AuthFormCard } from "@/components/auth-form-card";
+import { AuthHighlightPanel } from "@/components/auth-highlight-panel";
 import { PageShell } from "@/components/page-shell";
 
-export default function RegisterPage() {
+type RegisterPageProps = {
+  searchParams: Promise<{
+    next?: string | string[];
+  }>;
+};
+
+export default async function RegisterPage({ searchParams }: RegisterPageProps) {
+  const resolvedSearchParams = await searchParams;
+  const nextPath =
+    typeof resolvedSearchParams.next === "string"
+      ? resolvedSearchParams.next
+      : resolvedSearchParams.next?.[0] ?? "/dashboard";
+
   return (
     <PageShell
       eyebrow="إنشاء حساب"
-      title="أنشئ حسابك وابدأ حفظ الأخطاء تلقائيًا"
-      description="بمجرد إنشاء الحساب سيرتبط كل سؤال تخطئ فيه باسمك، وتستطيع مراجعته لاحقًا داخل قسم الأخطاء في بنك الأسئلة."
+      title="أنشئ حسابك وابدأ رحلة مرتبة من أول يوم"
+      description="من أول تسجيل سيتم حفظ تقدمك وأخطائك وخطتك اليومية داخل تجربة أوضح وأسرع وأكثر قابلية للمتابعة."
       icon={UserPlus}
       iconWrap="bg-[#fff7ed]"
       iconColor="text-[#C99A43]"
       accentClass="shadow-[0_20px_45px_rgba(201,154,67,0.16)]"
       ctaLabel="تسجيل الدخول"
-      ctaHref="/login"
+      ctaHref={`/login?next=${encodeURIComponent(nextPath)}`}
     >
-      <Suspense
-        fallback={
-          <div className="rounded-[2rem] border border-slate-200 bg-white p-8 text-center text-sm text-slate-500 shadow-soft">
-            جارٍ تجهيز صفحة إنشاء الحساب...
-          </div>
-        }
-      >
-        <AuthFormCard mode="register" />
-      </Suspense>
+      <div className="grid gap-6 xl:grid-cols-[1.06fr,0.94fr]">
+        <AuthHighlightPanel mode="register" />
+        <AuthFormCard mode="register" nextPath={nextPath} />
+      </div>
     </PageShell>
   );
 }

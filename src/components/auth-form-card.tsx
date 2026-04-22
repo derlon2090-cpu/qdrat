@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
 
@@ -71,10 +71,14 @@ function PasswordField({
   );
 }
 
-export function AuthFormCard({ mode }: { mode: Mode }) {
+export function AuthFormCard({
+  mode,
+  nextPath = "/dashboard",
+}: {
+  mode: Mode;
+  nextPath?: string;
+}) {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const next = searchParams.get("next") || "/dashboard";
   const { status } = useAuthSession();
 
   const [fullName, setFullName] = useState("");
@@ -91,9 +95,9 @@ export function AuthFormCard({ mode }: { mode: Mode }) {
 
   useEffect(() => {
     if (status === "authenticated") {
-      router.replace(next);
+      router.replace(nextPath);
     }
-  }, [next, router, status]);
+  }, [nextPath, router, status]);
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -137,7 +141,7 @@ export function AuthFormCard({ mode }: { mode: Mode }) {
         throw new Error(payload.message ?? "تعذر إكمال العملية.");
       }
 
-      router.push(next);
+      router.push(nextPath);
       router.refresh();
     } catch (submitError) {
       setError(submitError instanceof Error ? submitError.message : "تعذر إكمال العملية.");
@@ -269,14 +273,14 @@ export function AuthFormCard({ mode }: { mode: Mode }) {
         {mode === "register" ? (
           <>
             لديك حساب بالفعل؟{" "}
-            <Link href={`/login?next=${encodeURIComponent(next)}`} className="font-semibold text-[#123B7A]">
+            <Link href={`/login?next=${encodeURIComponent(nextPath)}`} className="font-semibold text-[#123B7A]">
               سجل الدخول
             </Link>
           </>
         ) : (
           <>
             ليس لديك حساب؟{" "}
-            <Link href={`/register?next=${encodeURIComponent(next)}`} className="font-semibold text-[#123B7A]">
+            <Link href={`/register?next=${encodeURIComponent(nextPath)}`} className="font-semibold text-[#123B7A]">
               أنشئ حسابًا
             </Link>
           </>

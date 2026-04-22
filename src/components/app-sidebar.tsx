@@ -46,7 +46,7 @@ export function AppSidebar() {
   }
 
   return (
-    <aside className="hidden xl:block xl:w-[292px]">
+    <aside className="hidden lg:block lg:w-[280px] xl:w-[292px]">
       <div className="sticky top-28 z-[120] rounded-[2.25rem] border border-white/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.97),rgba(249,251,255,0.94))] p-5 shadow-[0_24px_60px_rgba(15,23,42,0.08)] backdrop-blur-xl">
         <div className="rounded-[1.8rem] border border-[#dfe8f6] bg-[linear-gradient(135deg,rgba(238,244,255,0.92),rgba(255,255,255,0.92))] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.75)]">
           <div className="text-[11px] font-bold tracking-[0.24em] text-slate-400">STUDENT SPACE</div>

@@ -1,22 +1,21 @@
-import { House } from "lucide-react";
-
-import { PageShell } from "@/components/page-shell";
+import { AppSidebar } from "@/components/app-sidebar";
+import { SiteFooter } from "@/components/site-footer";
+import { SiteHeader } from "@/components/site-header";
 import { StudentDashboard } from "@/components/student-dashboard";
 
 export default function DashboardPage() {
   return (
-    <PageShell
-      eyebrow="لوحة الطالب"
-      title="ابدأ يومك من لوحة أكاديمية واضحة، ثم أكمل من آخر نقطة توقفت عندها"
-      description="خطة اليوم، التقدم، المراجعة، والانتقال السريع بين الأقسام الأساسية داخل واجهة واحدة مرتبة وواضحة."
-      icon={House}
-      iconWrap="bg-[#eef4ff]"
-      iconColor="text-[#123B7A]"
-      accentClass="shadow-[0_20px_45px_rgba(18,59,122,0.14)]"
-      ctaLabel="ضبط الخطة"
-      ctaHref="/onboarding"
-    >
-      <StudentDashboard />
-    </PageShell>
+    <div className="min-h-screen">
+      <SiteHeader ctaHref="/question-bank" ctaLabel="ابدأ تدريب الآن" />
+      <main className="section-shell pt-8 md:pt-10">
+        <div className="mx-auto flex w-[min(calc(100%-2rem),1280px)] gap-8">
+          <AppSidebar />
+          <div className="min-w-0 flex-1 space-y-8">
+            <StudentDashboard />
+          </div>
+        </div>
+      </main>
+      <SiteFooter />
+    </div>
   );
 }

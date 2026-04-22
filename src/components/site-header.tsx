@@ -89,7 +89,12 @@ export function SiteHeader({
       <div className="mx-auto flex w-[min(calc(100%-2rem),1180px)] items-center justify-between gap-4 py-4">
         <MiyaarLogo />
 
-        <nav className="hidden items-center justify-center gap-2 text-sm font-semibold text-slate-600 lg:flex">
+        <nav
+          className={cn(
+            "hidden items-center justify-center gap-2 text-sm font-semibold text-slate-600",
+            isAuthenticated ? "xl:flex" : "lg:flex",
+          )}
+        >
           {desktopLinks.map((item) => (
             <Link
               key={item.href}
