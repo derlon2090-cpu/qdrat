@@ -59,7 +59,7 @@
 
   body {
     @apply min-w-80 bg-[image:var(--bg-page)] text-slate-900 antialiased;
-    --bg-page: radial-gradient(circle_at_top_right,rgba(201,161,91,.14),transparent_18%),radial-gradient(circle_at_18%_8%,rgba(18,59,122,.08),transparent_20%),linear-gradient(180deg,#f8f7f4_0%,#fbfaf8_42%,#f3f4f7_100%);
+    --bg-page: radial-gradient(circle_at_top_right,rgba(29,78,216,.06),transparent_18%),radial-gradient(circle_at_12%_8%,rgba(14,165,164,.05),transparent_18%),linear-gradient(180deg,#f8fafc_0%,#f8fafc_58%,#f1f5f9_100%);
     font-size: var(--fs-body);
     line-height: var(--lh-body);
     letter-spacing: 0;

@@ -500,49 +500,49 @@ export function StudentDashboard() {
   }
 
   return (
-    <div className="space-y-8 pb-28 lg:pb-0">
+    <div className="space-y-8 pb-16 md:pb-20 lg:pb-0">
       <StudentPlanSetupNotice onboardingCompleted={data.onboardingCompleted} />
 
       <Reveal>
-        <Card className="overflow-hidden rounded-[2.5rem] border-0 bg-[linear-gradient(135deg,#123B7A_0%,#16458C_40%,#0EA5A4_100%)] shadow-[0_28px_76px_rgba(18,59,122,0.26)]">
+        <Card className="overflow-hidden rounded-[2.5rem] border border-[#dbe7f5] bg-[radial-gradient(circle_at_top_right,rgba(29,78,216,0.08),transparent_24%),radial-gradient(circle_at_16%_16%,rgba(14,165,164,0.08),transparent_20%),linear-gradient(180deg,rgba(255,255,255,0.99),rgba(248,250,252,0.96))] shadow-[0_22px_54px_rgba(15,23,42,0.06)]">
         <CardContent className="space-y-8 p-8">
           <div className="grid gap-8 xl:grid-cols-[1.15fr,0.85fr]">
             <div>
-              <Badge className="bg-white/12 text-white shadow-[inset_0_0_0_1px_rgba(255,255,255,0.12)]">لوحة الطالب</Badge>
-              <h2 className="mt-4 max-w-[12ch] display-font text-[clamp(2rem,4.1vw,3.45rem)] font-extrabold leading-[1.18] text-white">
+              <Badge className="border border-[#d7e5ff] bg-[#eef4ff] text-[#1d4ed8] shadow-none">لوحة الطالب</Badge>
+              <h2 className="mt-4 max-w-[12ch] display-font text-[clamp(2rem,4.1vw,3.45rem)] font-extrabold leading-[1.18] text-slate-950">
                 أهلًا يا {firstName}، نبدأ من هنا
               </h2>
-              <p className="mt-3 max-w-3xl text-base leading-8 text-white/82">
+              <p className="mt-3 max-w-3xl text-base leading-8 text-slate-600">
                 هذه لوحة عملية وليست نصوصًا فقط: أكمل من آخر نقطة، افتح خطة اليوم، وادخل مباشرة إلى الأقسام التي تحتاجها الآن.
               </p>
 
               <div className="mt-4 flex flex-wrap gap-2">
-                <span className="mini-pill border-white/12 bg-white/10 text-white/90">
+                <span className="mini-pill border-slate-200 bg-white/85 text-slate-700">
                   {data.challenge.currentStreak} أيام متواصلة
                 </span>
-                <span className="mini-pill border-white/12 bg-white/10 text-white/90">
+                <span className="mini-pill border-slate-200 bg-white/85 text-slate-700">
                   {completedToday}/{data.todayTasks.length || 0} من مهام اليوم
                 </span>
-                <span className="mini-pill border-white/12 bg-white/10 text-white/90">
+                <span className="mini-pill border-slate-200 bg-white/85 text-slate-700">
                   {dashboardToneLabel}
                 </span>
               </div>
 
               <div className="mt-6 flex flex-wrap gap-3">
                 <Link href={primaryResumeItem?.href ?? "/question-bank"}>
-                  <Button className="gap-2 bg-white text-[#123B7A] shadow-[0_14px_32px_rgba(255,255,255,0.18)] hover:bg-white/95">
+                  <Button className="gap-2 bg-[#1d4ed8] text-white shadow-[0_14px_32px_rgba(29,78,216,0.18)] hover:bg-[#1e40af]">
                     <Zap className="h-4 w-4" />
                     {primaryResumeItem ? primaryResumeItem.ctaLabel : "ابدأ الآن"}
                   </Button>
                 </Link>
                 <Link href="#today-plan">
-                  <Button variant="outline" className="gap-2 border-white/20 bg-white/8 text-white hover:bg-white/14">
+                  <Button variant="outline" className="gap-2 border-slate-200 bg-white text-slate-800 hover:bg-slate-50">
                     <Target className="h-4 w-4" />
                     خطة اليوم
                   </Button>
                 </Link>
                 <Link href="/onboarding">
-                  <Button variant="outline" className="gap-2 border-white/20 bg-white/8 text-white hover:bg-white/14">
+                  <Button variant="outline" className="gap-2 border-teal-200 bg-teal-50 text-teal-700 hover:bg-teal-100">
                     <Compass className="h-4 w-4" />
                     ضبط الخطة
                   </Button>
@@ -551,12 +551,12 @@ export function StudentDashboard() {
             </div>
 
             <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-1">
-              <div className="rounded-[2rem] border border-white/14 bg-white/10 p-5 backdrop-blur-sm">
+              <div className="rounded-[2rem] border border-slate-200 bg-white/90 p-5 shadow-[0_16px_34px_rgba(15,23,42,0.05)]">
                 <div className="flex items-start justify-between gap-4">
                   <div className="min-w-0">
-                    <div className="text-xs font-semibold tracking-[0.16em] text-white/60">الإنجاز الأسبوعي</div>
-                    <div className="mt-3 display-font text-3xl font-bold text-white">{data.progressPercent}%</div>
-                    <div className="mt-2 text-sm leading-7 text-white/74">
+                    <div className="text-xs font-semibold tracking-[0.16em] text-slate-500">الإنجاز الأسبوعي</div>
+                    <div className="mt-3 display-font text-3xl font-bold text-slate-950">{data.progressPercent}%</div>
+                    <div className="mt-2 text-sm leading-7 text-slate-600">
                       تقدمك الكلي في الكمي واللفظي والخطة يظهر هنا بصورة واضحة وسريعة.
                     </div>
                   </div>
@@ -565,15 +565,15 @@ export function StudentDashboard() {
               </div>
 
               <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-2">
-                <div className="rounded-[1.5rem] border border-white/12 bg-white/8 px-5 py-4 text-white/88">
-                  <div className="text-xs text-white/60">الاختبار القادم</div>
-                  <div className="mt-2 display-font text-2xl font-bold">{formatDaysLeft(data.daysLeft)}</div>
-                  <div className="mt-1 text-xs text-white/70">{formatPortalDate(data.examDate)}</div>
+                <div className="rounded-[1.5rem] border border-slate-200 bg-slate-50 px-5 py-4 text-slate-800">
+                  <div className="text-xs text-slate-500">الاختبار القادم</div>
+                  <div className="mt-2 display-font text-2xl font-bold text-slate-950">{formatDaysLeft(data.daysLeft)}</div>
+                  <div className="mt-1 text-xs text-slate-500">{formatPortalDate(data.examDate)}</div>
                 </div>
-                <div className="rounded-[1.5rem] border border-white/12 bg-white/8 px-5 py-4 text-white/88">
-                  <div className="text-xs text-white/60">إيقاع الخطة</div>
-                  <div className="mt-2 display-font text-2xl font-bold">{planTypeLabels[data.planType]}</div>
-                  <div className="mt-1 text-xs text-white/70">{pressure.label}</div>
+                <div className="rounded-[1.5rem] border border-slate-200 bg-slate-50 px-5 py-4 text-slate-800">
+                  <div className="text-xs text-slate-500">إيقاع الخطة</div>
+                  <div className="mt-2 display-font text-2xl font-bold text-slate-950">{planTypeLabels[data.planType]}</div>
+                  <div className="mt-1 text-xs text-slate-500">{pressure.label}</div>
                 </div>
               </div>
             </div>
@@ -585,32 +585,32 @@ export function StudentDashboard() {
               value={`${completedToday}/${data.todayTasks.length || 0}`}
               caption="أنجز المهمات اليومية ثم انتقل إلى المراجعة الذكية."
               icon={Target}
-              className="border-white/14 bg-white/8"
-              iconWrapClass="bg-white/14 text-white"
+              className="border-emerald-200 bg-[linear-gradient(180deg,rgba(236,253,245,0.96),rgba(255,255,255,0.98))]"
+              iconWrapClass="bg-emerald-100 text-emerald-700"
             />
             <MetricCard
               title="آخر نشاط"
               value={data.lastActivityLabel ?? "بداية"}
               caption={formatLastActivity(data.lastActivityAt)}
               icon={TimerReset}
-              className="border-white/14 bg-white/8"
-              iconWrapClass="bg-white/14 text-white"
+              className="border-sky-200 bg-[linear-gradient(180deg,rgba(240,249,255,0.96),rgba(255,255,255,0.98))]"
+              iconWrapClass="bg-sky-100 text-sky-700"
             />
             <MetricCard
               title="إجمالي XP"
               value={data.xp.total.toLocaleString("en-US")}
               caption={data.xp.levelLabel}
               icon={Trophy}
-              className="border-white/14 bg-white/8"
-              iconWrapClass="bg-white/14 text-white"
+              className="border-amber-200 bg-[linear-gradient(180deg,rgba(255,251,235,0.96),rgba(255,255,255,0.98))]"
+              iconWrapClass="bg-amber-100 text-amber-700"
             />
             <MetricCard
               title="أخطاء تحتاج مراجعة"
               value={String(data.activeMistakesCount)}
               caption={`${data.mistakeMasteryPercent}% نسبة الإتقان الحالية، و${data.mistakesInTrainingCount} سؤال في التدريب الآن.`}
               icon={TriangleAlert}
-              className="border-white/14 bg-white/8"
-              iconWrapClass="bg-white/14 text-white"
+              className="border-rose-200 bg-[linear-gradient(180deg,rgba(255,241,242,0.96),rgba(255,255,255,0.98))]"
+              iconWrapClass="bg-rose-100 text-rose-700"
             />
           </div>
         </CardContent>
