@@ -52,14 +52,74 @@ function getRetryLabel(href: string | null) {
   return href.includes("/verbal/reading") ? "إعادة القطعة" : "إعادة الأسئلة";
 }
 
+function safeNumber(value: unknown, fallback = 0) {
+  const normalized = Number(value);
+  return Number.isFinite(normalized) ? normalized : fallback;
+}
+
+function safeString(value: unknown, fallback = "") {
+  return typeof value === "string" && value.trim() ? value : fallback;
+}
+
 function normalizePanelData(data: StudentAchievementsPanelProps["data"]) {
-  const xp = data?.xp ?? fallbackXp;
-  const solvedQuestionsCount = Number(data?.solvedQuestionsCount ?? 0);
+  const xp: StudentPortalXpSummary = {
+    total: safeNumber(data?.xp?.total, fallbackXp.total),
+    questionTotal: safeNumber(data?.xp?.questionTotal, fallbackXp.questionTotal),
+    bonusTotal: safeNumber(data?.xp?.bonusTotal, fallbackXp.bonusTotal),
+    perQuestion: safeNumber(data?.xp?.perQuestion, fallbackXp.perQuestion),
+    target: safeNumber(data?.xp?.target, fallbackXp.target),
+    remainingToTarget: safeNumber(data?.xp?.remainingToTarget, fallbackXp.remainingToTarget),
+    progressPercent: safeNumber(data?.xp?.progressPercent, fallbackXp.progressPercent),
+    levelLabel:
+      typeof data?.xp?.levelLabel === "string" && data.xp.levelLabel.trim()
+        ? data.xp.levelLabel
+        : fallbackXp.levelLabel,
+    nextLevelLabel:
+      typeof data?.xp?.nextLevelLabel === "string" && data.xp.nextLevelLabel.trim()
+        ? data.xp.nextLevelLabel
+        : fallbackXp.nextLevelLabel,
+    xpToNextLevel: safeNumber(data?.xp?.xpToNextLevel, fallbackXp.xpToNextLevel),
+    statusMessage:
+      typeof data?.xp?.statusMessage === "string" && data.xp.statusMessage.trim()
+        ? data.xp.statusMessage
+        : fallbackXp.statusMessage,
+  };
+
+  const solvedQuestionsCount = safeNumber(data?.solvedQuestionsCount);
   const solvedSections: StudentPortalSolvedSection[] = Array.isArray(data?.solvedSections)
-    ? data.solvedSections
+    ? data.solvedSections.map((section, index) => ({
+        ...section,
+        section: section.section === "quantitative" ? "quantitative" : "verbal",
+        categoryId: safeString(section.categoryId, `category-${index + 1}`),
+        categoryTitle: safeString(section.categoryTitle, "قسم محفوظ"),
+        questionTypeLabel: safeString(section.questionTypeLabel, "تدريب عام"),
+        solvedCount: safeNumber(section.solvedCount),
+        xpEarned: safeNumber(section.xpEarned),
+        retryHref: typeof section.retryHref === "string" ? section.retryHref : null,
+      }))
     : [];
+
   const recentSolvedQuestions: StudentPortalSolvedQuestion[] = Array.isArray(data?.recentSolvedQuestions)
-    ? data.recentSolvedQuestions
+    ? data.recentSolvedQuestions.map((question, index) => ({
+        ...question,
+        id: safeNumber(question.id, index + 1),
+        categoryId:
+          typeof question.categoryId === "string" && question.categoryId.trim()
+            ? question.categoryId
+            : null,
+        categoryTitle: safeString(question.categoryTitle, "سؤال محفوظ"),
+        questionTypeLabel: safeString(question.questionTypeLabel, "تدريب عام"),
+        questionText: safeString(
+          question.questionText,
+          "تم حل هذا السؤال سابقًا داخل بنك الأسئلة.",
+        ),
+        questionHref: typeof question.questionHref === "string" ? question.questionHref : null,
+        xpEarned: safeNumber(question.xpEarned),
+        solvedAt: typeof question.solvedAt === "string" ? question.solvedAt : null,
+        questionKey: safeString(question.questionKey, `question-${index + 1}`),
+        sourceBank: safeString(question.sourceBank, "question-bank"),
+        section: question.section === "quantitative" ? "quantitative" : "verbal",
+      }))
     : [];
 
   return {

@@ -284,9 +284,183 @@ function TaskRow({
   );
 }
 
+function DashboardFallbackMetric({
+  title,
+  value,
+  caption,
+}: {
+  title: string;
+  value: string;
+  caption: string;
+}) {
+  return (
+    <div className="rounded-[1.5rem] border border-slate-200 bg-white/92 p-4 shadow-[0_10px_24px_rgba(15,23,42,0.04)]">
+      <div className="text-xs font-semibold tracking-[0.14em] text-slate-400">{title}</div>
+      <div className="mt-3 display-font text-2xl font-extrabold text-slate-950 sm:text-3xl">{value}</div>
+      <div className="mt-2 text-sm leading-7 text-slate-500">{caption}</div>
+    </div>
+  );
+}
+
+function StudentDashboardFallback({
+  mode,
+  onRetry,
+}: {
+  mode: "loading" | "error";
+  onRetry: () => void;
+}) {
+  const isLoading = mode === "loading";
+
+  return (
+    <div className="space-y-6 pb-24 sm:space-y-8 lg:pb-0">
+      <Card className="overflow-hidden rounded-[2rem] border border-[#dbe7f5] bg-white shadow-[0_22px_54px_rgba(15,23,42,0.06)] sm:rounded-[2.5rem]">
+        <CardContent className="space-y-6 p-5 sm:space-y-8 sm:p-6 lg:p-8">
+          <div className="grid gap-6 xl:grid-cols-[1.15fr,0.85fr] xl:gap-8">
+            <div>
+              <Badge className="border border-[#d7e5ff] bg-[#eef4ff] text-[#1d4ed8] shadow-none">
+                لوحة الطالب
+              </Badge>
+              <h2 className="mt-4 max-w-[12ch] display-font text-[clamp(1.7rem,4.1vw,3.2rem)] font-extrabold leading-[1.18] text-slate-950">
+                {isLoading ? "جار تجهيز بيانات لوحتك الآن" : "صار خلل بسيط في بيانات اللوحة"}
+              </h2>
+              <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-600 sm:text-base sm:leading-8">
+                {isLoading
+                  ? "نحمّل الخطة والتقدم وآخر النشاطات الآن. أثناء ذلك تظل المسارات الأساسية والانتقال السريع متاحة لك بدون انتظار."
+                  : "تعثر طلب بيانات لوحة الطالب الآن، لكن تقدر تكمل مباشرة من الخطة اليومية أو بنك الأسئلة أو تعيد المحاولة من هنا."}
+              </p>
+
+              <div className="mt-6 flex flex-wrap gap-3">
+                <Button type="button" className="w-full gap-2 sm:w-auto" onClick={onRetry}>
+                  {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCcw className="h-4 w-4" />}
+                  {isLoading ? "تحديث البيانات" : "إعادة المحاولة"}
+                </Button>
+                <Link href="/my-plan">
+                  <Button variant="outline" className="w-full gap-2 sm:w-auto">
+                    <Target className="h-4 w-4" />
+                    اذهب إلى الخطة اليومية
+                  </Button>
+                </Link>
+                <Link href="/question-bank">
+                  <Button variant="outline" className="w-full gap-2 sm:w-auto">
+                    <ClipboardList className="h-4 w-4" />
+                    افتح بنك الأسئلة
+                  </Button>
+                </Link>
+              </div>
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-1">
+              <div className="rounded-[1.7rem] border border-slate-200 bg-slate-50/70 p-5">
+                <div className="text-xs font-semibold tracking-[0.16em] text-slate-500">حالة اللوحة</div>
+                <div className="mt-3 display-font text-2xl font-bold text-slate-950 sm:text-3xl">
+                  {isLoading ? "جاري التحميل" : "تحتاج إعادة مزامنة"}
+                </div>
+                <div className="mt-2 text-sm leading-7 text-slate-600">
+                  {isLoading
+                    ? "سيتم عرض التقدم والمهام فور اكتمال الاستجابة."
+                    : "بمجرد نجاح إعادة المحاولة ستعود الإحصاءات والمهام كما كانت."}
+                </div>
+              </div>
+
+              <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-2">
+                <div className="rounded-[1.4rem] border border-slate-200 bg-slate-50 px-4 py-4 text-slate-800 sm:px-5">
+                  <div className="text-xs text-slate-500">بديل سريع</div>
+                  <div className="mt-2 display-font text-xl font-bold text-slate-950 sm:text-2xl">الخطة</div>
+                  <div className="mt-1 text-xs text-slate-500">ابدأ من مهام اليوم مباشرة</div>
+                </div>
+                <div className="rounded-[1.4rem] border border-slate-200 bg-slate-50 px-4 py-4 text-slate-800 sm:px-5">
+                  <div className="text-xs text-slate-500">بديل سريع</div>
+                  <div className="mt-2 display-font text-xl font-bold text-slate-950 sm:text-2xl">الأسئلة</div>
+                  <div className="mt-1 text-xs text-slate-500">افتح التدريب بدون انتظار</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            <DashboardFallbackMetric
+              title="مهام اليوم"
+              value={isLoading ? "..." : "--"}
+              caption="ستظهر هنا خطة اليوم فور وصول البيانات."
+            />
+            <DashboardFallbackMetric
+              title="التقدم الكمي"
+              value={isLoading ? "..." : "--"}
+              caption="يبقى هذا القسم جاهزًا بعد أول استجابة ناجحة."
+            />
+            <DashboardFallbackMetric
+              title="التقدم اللفظي"
+              value={isLoading ? "..." : "--"}
+              caption="سنملأ هذا المؤشر تلقائيًا عند رجوع البيانات."
+            />
+            <DashboardFallbackMetric
+              title="مراجعة الأخطاء"
+              value={isLoading ? "..." : "--"}
+              caption="يمكنك الدخول إلى قسم الأخطاء حتى أثناء التعثر."
+            />
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card className="rounded-[2rem] border border-[#dde7f6] bg-white/96 shadow-[0_18px_44px_rgba(15,23,42,0.05)]">
+        <CardContent className="space-y-5 p-5 sm:p-6 lg:p-8">
+          <div>
+            <p className="section-eyebrow text-[#123B7A]">ابدأ الآن</p>
+            <h3 className="display-font text-[clamp(1.45rem,2.3vw,2rem)] font-bold text-slate-950">
+              المسارات الرئيسية ما زالت متاحة
+            </h3>
+            <p className="mt-2 text-sm leading-7 text-slate-500">
+              لا نوقفك بسبب تعثر مؤقت. اختر ما تريد متابعته الآن ثم ارجع لاحقًا للوحة الكاملة.
+            </p>
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-3">
+            <HeroQuickStartCard
+              href="/my-plan"
+              label="ابدأ الخطة اليومية"
+              description="افتح مهام اليوم وتابع التنفيذ مباشرة بدون انتظار تحميل اللوحة."
+              badge="الخطة"
+              icon={Target}
+              iconWrapClass="bg-[#edfdf3] text-[#2f855a]"
+              borderClass="border-[#d9f2e1] hover:border-[#9fdfb7]"
+            />
+            <HeroQuickStartCard
+              href="/question-bank"
+              label="ادخل بنك الأسئلة"
+              description="ابدأ تدريبًا كميًا أو لفظيًا فورًا حتى لو كانت بيانات اللوحة تتأخر."
+              badge="التدريب"
+              icon={ClipboardList}
+              iconWrapClass="bg-[#eef4ff] text-[#123B7A]"
+              borderClass="border-[#d8e5f7] hover:border-[#bfd3f3]"
+            />
+            <HeroQuickStartCard
+              href="/question-bank?track=mistakes#mistakes-trainer"
+              label="راجع أخطاءك"
+              description="إذا كانت لديك أخطاء محفوظة، يمكنك متابعة تدريبها مباشرة من هذا المسار."
+              badge="الأخطاء"
+              icon={TriangleAlert}
+              iconWrapClass="bg-[#fff1f2] text-[#dc2626]"
+              borderClass="border-[#ffd4da] hover:border-[#f8a8b5]"
+            />
+          </div>
+        </CardContent>
+      </Card>
+
+      <MobileQuickDock />
+    </div>
+  );
+}
+
 export function StudentDashboard() {
   const { status, user } = useAuthSession();
-  const { status: portalStatus, data, error, refresh, setData } = useStudentPortal(status === "authenticated");
+  const {
+    status: portalStatus,
+    data,
+    error,
+    isRefreshing,
+    refresh,
+    setData,
+  } = useStudentPortal(status === "authenticated");
   const [taskState, setTaskState] = useState<Record<number, boolean>>({});
   const [actionState, setActionState] = useState<ActionState>("idle");
   const [actionError, setActionError] = useState<string | null>(null);
@@ -310,7 +484,15 @@ export function StudentDashboard() {
     );
   }
 
-  if (portalStatus === "loading" || portalStatus === "idle") {
+  if ((portalStatus === "loading" || portalStatus === "idle") && !data) {
+    return <StudentDashboardFallback mode="loading" onRetry={() => void refresh()} />;
+  }
+
+  if ((portalStatus === "error" || !data) && !data) {
+    return <StudentDashboardFallback mode="error" onRetry={() => void refresh()} />;
+  }
+
+  if ((portalStatus === "loading" || portalStatus === "idle") && !data) {
     return <StudentPortalLoadingCard label="جارٍ تحميل لوحة الطالب..." />;
   }
 
@@ -318,12 +500,66 @@ export function StudentDashboard() {
     return <StudentPortalErrorCard message={error ?? "تعذر تحميل لوحة الطالب."} onRetry={() => void refresh()} />;
   }
 
-  const todayTasks = Array.isArray(data.todayTasks) ? data.todayTasks : [];
-  const upcomingTasks = Array.isArray(data.upcomingTasks) ? data.upcomingTasks : [];
-  const resumeItems = Array.isArray(data.resumeItems) ? data.resumeItems : [];
+  const todayTasks = Array.isArray(data.todayTasks)
+    ? data.todayTasks.map((task) => ({
+        ...task,
+        title: typeof task.title === "string" && task.title.trim() ? task.title : "مهمة يومية",
+        description: typeof task.description === "string" ? task.description : null,
+        scheduledFor:
+          typeof task.scheduledFor === "string" && task.scheduledFor.trim()
+            ? task.scheduledFor
+            : new Date().toISOString().slice(0, 10),
+        estimatedMinutes: Number.isFinite(Number(task.estimatedMinutes))
+          ? Number(task.estimatedMinutes)
+          : null,
+        targetQuestions: Number.isFinite(Number(task.targetQuestions))
+          ? Number(task.targetQuestions)
+          : null,
+        isCompleted: Boolean(task.isCompleted),
+      }))
+    : [];
+  const upcomingTasks = Array.isArray(data.upcomingTasks)
+    ? data.upcomingTasks.map((task) => ({
+        ...task,
+        title: typeof task.title === "string" && task.title.trim() ? task.title : "مهمة قادمة",
+        description: typeof task.description === "string" ? task.description : null,
+        scheduledFor:
+          typeof task.scheduledFor === "string" && task.scheduledFor.trim()
+            ? task.scheduledFor
+            : new Date().toISOString().slice(0, 10),
+        estimatedMinutes: Number.isFinite(Number(task.estimatedMinutes))
+          ? Number(task.estimatedMinutes)
+          : null,
+        targetQuestions: Number.isFinite(Number(task.targetQuestions))
+          ? Number(task.targetQuestions)
+          : null,
+        isCompleted: Boolean(task.isCompleted),
+      }))
+    : [];
+  const resumeItems = Array.isArray(data.resumeItems)
+    ? data.resumeItems
+        .map((item, index) => ({
+          id:
+            typeof item.id === "string" && item.id.trim() ? item.id : `resume-item-${index + 1}`,
+          title:
+            typeof item.title === "string" && item.title.trim() ? item.title : "متابعة سريعة",
+          subtitle:
+            typeof item.subtitle === "string" && item.subtitle.trim()
+              ? item.subtitle
+              : "افتح هذا المسار لإكمال ما توقفت عنده.",
+          href: typeof item.href === "string" && item.href.trim() ? item.href : "/question-bank",
+          ctaLabel:
+            typeof item.ctaLabel === "string" && item.ctaLabel.trim()
+              ? item.ctaLabel
+              : "أكمل الآن",
+        }))
+        .slice(0, 3)
+    : [];
   const recommendations =
     Array.isArray(data.recommendations) && data.recommendations.length
-      ? data.recommendations
+      ? data.recommendations.filter(
+          (item): item is string => typeof item === "string" && item.trim().length > 0,
+        )
       : ["ابدأ بجلسة قصيرة من القسم الذي يحتاجه مستواك الآن."];
   const recentSolvedQuestions = Array.isArray(data.recentSolvedQuestions)
     ? data.recentSolvedQuestions
@@ -476,6 +712,31 @@ export function StudentDashboard() {
   return (
     <div className="space-y-6 pb-24 sm:space-y-8 lg:pb-0">
       <StudentPlanSetupNotice onboardingCompleted={data.onboardingCompleted} />
+
+      {error ? (
+        <Card className="rounded-[1.7rem] border border-amber-200 bg-amber-50/80 shadow-[0_10px_28px_rgba(217,119,6,0.08)]">
+          <CardContent className="flex flex-col gap-4 p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
+            <div className="min-w-0">
+              <div className="text-sm font-bold text-amber-800">تعذر تحديث بعض بيانات اللوحة الآن</div>
+              <p className="mt-1 text-sm leading-7 text-amber-900/80">
+                نعرض لك آخر نسخة محفوظة حتى لا تتوقف. يمكنك إعادة المزامنة الآن أو متابعة
+                الخطة والتدريب كالمعتاد.
+              </p>
+            </div>
+            <Button type="button" variant="outline" className="gap-2 border-amber-300 bg-white sm:shrink-0" onClick={() => void refresh()}>
+              <RefreshCcw className="h-4 w-4" />
+              إعادة المزامنة
+            </Button>
+          </CardContent>
+        </Card>
+      ) : null}
+
+      {isRefreshing ? (
+        <div className="flex items-center gap-2 text-sm font-semibold text-slate-500">
+          <Loader2 className="h-4 w-4 animate-spin" />
+          جار تحديث بيانات لوحة الطالب في الخلفية...
+        </div>
+      ) : null}
 
       <Reveal>
         <Card className="overflow-hidden rounded-[2rem] border border-[#dbe7f5] bg-white shadow-[0_22px_54px_rgba(15,23,42,0.06)] sm:rounded-[2.5rem]">
