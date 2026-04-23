@@ -19,8 +19,10 @@
     --border: 220 25% 88%;
     --input: 220 25% 88%;
     --ring: 214 74% 28%;
-    --font-display: var(--font-heading), "Alexandria", "IBM Plex Sans Arabic", "Tajawal", "Segoe UI", sans-serif;
-    --font-body-fallback: var(--font-body), "IBM Plex Sans Arabic", "Alexandria", "Tajawal", "Segoe UI", sans-serif;
+    --font-heading: "Alexandria", "IBM Plex Sans Arabic", "Tajawal", "Segoe UI", Tahoma, system-ui, sans-serif;
+    --font-body: "IBM Plex Sans Arabic", "Alexandria", "Tajawal", "Segoe UI", Tahoma, system-ui, sans-serif;
+    --font-display: var(--font-heading);
+    --font-body-fallback: var(--font-body);
     --fs-display: clamp(2.4rem, 4.8vw, 4.6rem);
     --fs-h1: clamp(1.7rem, 2.45vw, 2.6rem);
     --fs-h2: clamp(1.6rem, 2.4vw, 2.2rem);

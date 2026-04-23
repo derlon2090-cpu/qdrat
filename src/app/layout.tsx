@@ -1,22 +1,7 @@
 import type { Metadata } from "next";
-import { Alexandria, IBM_Plex_Sans_Arabic } from "next/font/google";
 
 import { SearchOverlay } from "@/components/search-overlay";
 import "./globals.css";
-
-const alexandria = Alexandria({
-  subsets: ["arabic", "latin"],
-  weight: ["400", "500", "600", "700", "800"],
-  variable: "--font-heading",
-  display: "swap",
-});
-
-const ibmPlexArabic = IBM_Plex_Sans_Arabic({
-  subsets: ["arabic", "latin"],
-  weight: ["400", "500", "600", "700"],
-  variable: "--font-body",
-  display: "swap",
-});
 
 export const metadata: Metadata = {
   title: "معيار | منصة عربية ذكية للتحضير للقدرات",
@@ -33,11 +18,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html
-      lang="ar"
-      dir="rtl"
-      className={`${alexandria.variable} ${ibmPlexArabic.variable}`}
-    >
+    <html lang="ar" dir="rtl">
       <body className="miyaar-grid">
         {children}
         <SearchOverlay />
