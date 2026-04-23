@@ -17,6 +17,7 @@ type GlobalCanvasPolyfills = typeof globalThis & {
 
 let canvasModulePromise: Promise<CanvasModule> | null = null;
 let pdfJsNodeModulePromise: Promise<PdfJsNodeModule> | null = null;
+let arabicCanvasFontRegistered = false;
 const nodeRequire = createRequire(import.meta.url);
 
 function clamp(value: number, min: number, max: number) {
@@ -29,7 +30,28 @@ function getPdfJsAssetDirectoryUrl(...segments: string[]) {
 
 async function loadCanvasModule() {
   if (!canvasModulePromise) {
-    canvasModulePromise = Promise.resolve(nodeRequire("@napi-rs/canvas") as CanvasModule);
+    canvasModulePromise = Promise.resolve(nodeRequire("@napi-rs/canvas") as CanvasModule).then((module) => {
+      if (!arabicCanvasFontRegistered) {
+        arabicCanvasFontRegistered = true;
+
+        try {
+          const arabicFontPath = path.join(
+            process.cwd(),
+            "node_modules",
+            "@fontsource",
+            "noto-naskh-arabic",
+            "files",
+            "noto-naskh-arabic-arabic-400-normal.woff",
+          );
+
+          module.GlobalFonts.registerFromPath(arabicFontPath, "Noto Naskh Arabic");
+        } catch {
+          arabicCanvasFontRegistered = false;
+        }
+      }
+
+      return module;
+    });
   }
 
   return canvasModulePromise;

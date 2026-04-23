@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 
+import "@fontsource/noto-naskh-arabic/arabic.css";
+
 import { SearchOverlay } from "@/components/search-overlay";
 import "./globals.css";
 

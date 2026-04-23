@@ -14,6 +14,8 @@
   "include": [
     "../src/lib/arabic-pdf-text.ts",
     "../src/lib/verbal-passages-core.ts",
+    "../src/types/arabic-persian-reshaper.d.ts",
+    "../src/types/bidi-js.d.ts",
     "./arabic-pdf-text.test.ts",
     "./verbal-passages/**/*.ts"
   ]

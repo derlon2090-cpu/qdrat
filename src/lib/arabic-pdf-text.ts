@@ -1,9 +1,24 @@
+import arabicPersianReshaper from "arabic-persian-reshaper";
+
 const HIDDEN_BIDI_MARKS = /[\u061c\u200b-\u200f\u202a-\u202e\u2066-\u2069\ufeff]/g;
 const ARABIC_LETTER = /[\u0621-\u064a\u0671-\u06d3\u06fa-\u06ff]/;
 const ARABIC_LETTER_GLOBAL = /[\u0621-\u064a\u0671-\u06d3\u06fa-\u06ff]/g;
 const LATIN_LETTER_GLOBAL = /[A-Za-z]/g;
 const SPACED_ARABIC_WORD =
   /(^|[\s([{،؛:؟"'`\-])((?:[\u0621-\u064a]\s+){2,}[\u0621-\u064a])(?=$|[\s)\]},.،؛:؟!"'`\-])/g;
+const arabicShaper = arabicPersianReshaper.ArabicShaper;
+const MIRRORED_PUNCTUATION = new Map<string, string>([
+  ["(", ")"],
+  [")", "("],
+  ["[", "]"],
+  ["]", "["],
+  ["{", "}"],
+  ["}", "{"],
+  ["<", ">"],
+  [">", "<"],
+  ["«", "»"],
+  ["»", "«"],
+]);
 
 function getEnvFlag(name: string) {
   if (typeof process === "undefined" || !process.env) {
@@ -23,6 +38,12 @@ function countMatches(value: string, pattern: RegExp) {
 
 function reverseByCodePoint(value: string) {
   return Array.from(value).reverse().join("");
+}
+
+function mirrorReversedPunctuation(value: string) {
+  return Array.from(value)
+    .map((character) => MIRRORED_PUNCTUATION.get(character) ?? character)
+    .join("");
 }
 
 function joinSpacedArabicLetters(value: string) {
@@ -68,11 +89,43 @@ function scoreArabicDirection(value: string) {
   return score;
 }
 
+function scoreArabicReadability(value: string) {
+  let score = scoreArabicDirection(value);
+
+  if (/(?:[\u0621-\u064a]\s+){2,}[\u0621-\u064a]/.test(value)) {
+    score -= 8;
+  }
+
+  if (/[\u0621-\u064a]{2,}\s+[\u0621-\u064a]{2,}/.test(value)) {
+    score += 2;
+  }
+
+  if (/^[)\]}>»]/.test(value) || /[(\[{<«]$/.test(value)) {
+    score -= 3;
+  }
+
+  if (/^[\u0621-\u064a]/.test(value)) {
+    score += 1;
+  }
+
+  if (/[اأإآ][\u0621-\u064a]{1,}/.test(value)) {
+    score += 1;
+  }
+
+  return score;
+}
+
 function shouldTryReverseArabicLine(value: string) {
   const arabicCount = countMatches(value, ARABIC_LETTER_GLOBAL);
   const latinCount = countMatches(value, LATIN_LETTER_GLOBAL);
 
   return arabicCount >= 4 && arabicCount >= latinCount * 2;
+}
+
+function createArabicLineCandidates(line: string) {
+  const joinedLine = joinSpacedArabicLetters(line);
+  const reversedLine = joinSpacedArabicLetters(mirrorReversedPunctuation(reverseByCodePoint(joinedLine)));
+  return [joinedLine, reversedLine];
 }
 
 function normalizeArabicPdfLine(line: string) {
@@ -82,11 +135,19 @@ function normalizeArabicPdfLine(line: string) {
     return joinedLine;
   }
 
-  const reversedLine = joinSpacedArabicLetters(reverseByCodePoint(joinedLine));
-  const currentScore = scoreArabicDirection(joinedLine);
-  const reversedScore = scoreArabicDirection(reversedLine);
+  const candidates = createArabicLineCandidates(joinedLine);
+  let bestCandidate = joinedLine;
+  let bestScore = scoreArabicReadability(joinedLine);
 
-  return reversedScore >= currentScore + 3 ? reversedLine : joinedLine;
+  for (const candidate of candidates) {
+    const nextScore = scoreArabicReadability(candidate);
+    if (nextScore > bestScore) {
+      bestCandidate = candidate;
+      bestScore = nextScore;
+    }
+  }
+
+  return bestCandidate;
 }
 
 export function normalizeExtractedArabicPdfText(value: string) {
@@ -116,8 +177,16 @@ export function debugArabicPdfTextSample(label: string, rawText: string) {
   }
 
   const normalizedText = normalizeExtractedArabicPdfText(rawText);
+  const shapedText = (() => {
+    try {
+      return arabicShaper.convertArabic(normalizedText);
+    } catch {
+      return normalizedText;
+    }
+  })();
   const limit = 1200;
 
   console.info(`[pdf-text:${label}] raw`, rawText.slice(0, limit));
   console.info(`[pdf-text:${label}] normalized`, normalizedText.slice(0, limit));
+  console.info(`[pdf-text:${label}] shaped`, shapedText.slice(0, limit));
 }

@@ -50,6 +50,10 @@ type ClientPdfDocument = {
   }>;
   destroy: () => Promise<void>;
 };
+type PreviewMode = "client" | "native";
+type RenderClientPdfPageOptions = {
+  allowFontRecovery?: boolean;
+};
 
 let pdfJsBrowserModulePromise: Promise<PdfJsBrowserModule> | null = null;
 
@@ -86,6 +90,14 @@ function formatPdfRenderError(error: unknown) {
   }
 
   return "تعذر عرض هذه الصفحة الآن. جرّب فتح الصفحة مباشرة أو إعادة تحميل الملخص.";
+}
+
+function getDocumentFontFaceSet() {
+  if (typeof document === "undefined" || !("fonts" in document)) {
+    return null;
+  }
+
+  return document.fonts;
 }
 
 type Interaction =
@@ -198,6 +210,7 @@ export function SummaryPageSurface({
   const pdfDocumentRef = useRef<ClientPdfDocument | null>(null);
   const pdfDocumentUrlRef = useRef<string | null>(null);
   const renderTaskRef = useRef<{ promise: Promise<void>; cancel?: () => void } | null>(null);
+  const fontRecoveryKeyRef = useRef<string | null>(null);
   const pageStateRef = useRef(pageState);
   const pageNumberRef = useRef(pageNumber);
   const interactionRef = useRef<Interaction | null>(null);
@@ -205,7 +218,8 @@ export function SummaryPageSurface({
   const [resolvedPageDimension, setResolvedPageDimension] = useState(pageDimension);
   const [isPdfLoading, setIsPdfLoading] = useState(true);
   const [pdfError, setPdfError] = useState<string | null>(null);
-  const [clientPreviewEnabled, setClientPreviewEnabled] = useState(false);
+  const [previewMode, setPreviewMode] = useState<PreviewMode>("client");
+  const [previewNotice, setPreviewNotice] = useState<string | null>(null);
   const [selectedSolutionId, setSelectedSolutionId] = useState<string | null>(null);
   const [selectedHideId, setSelectedHideId] = useState<string | null>(null);
 
@@ -222,10 +236,6 @@ export function SummaryPageSurface({
   }, [pageDimension, pageNumber, summaryId]);
 
   const directPageUrl = useMemo(() => `${fileUrl}#page=${pageNumber}&view=FitH`, [fileUrl, pageNumber]);
-  const previewImageUrl = useMemo(
-    () => `/api/summaries/${summaryId}/pages/${pageNumber}/preview?width=1800`,
-    [pageNumber, summaryId],
-  );
   const surfaceAspectRatio = useMemo(() => {
     const width = Math.max(1, resolvedPageDimension.width || pageDimension.width || 1);
     const height = Math.max(1, resolvedPageDimension.height || pageDimension.height || 1);
@@ -293,13 +303,17 @@ export function SummaryPageSurface({
   }, []);
 
   const renderClientPdfPage = useCallback(
-    async (targetPageNumber = pageNumberRef.current) => {
-      if (!clientPreviewEnabled) {
+    async (
+      targetPageNumber = pageNumberRef.current,
+      options?: RenderClientPdfPageOptions,
+    ) => {
+      if (previewMode !== "client") {
         return;
       }
 
       const surface = surfaceRef.current;
       const pdfCanvas = pdfCanvasRef.current;
+      const allowFontRecovery = options?.allowFontRecovery ?? true;
 
       if (!surface || !pdfCanvas) {
         return;
@@ -387,6 +401,40 @@ export function SummaryPageSurface({
             renderTaskRef.current = null;
           }
 
+          const fontFaceSet = getDocumentFontFaceSet();
+          const renderKey = `${summaryId}:${fileUrl}:${normalizedPageNumber}`;
+          if (
+            allowFontRecovery &&
+            fontFaceSet &&
+            fontFaceSet.status !== "loaded" &&
+            fontRecoveryKeyRef.current !== renderKey
+          ) {
+            fontRecoveryKeyRef.current = renderKey;
+            void fontFaceSet.ready
+              .then(() => {
+                if (fontRecoveryKeyRef.current !== renderKey) {
+                  return;
+                }
+
+                fontRecoveryKeyRef.current = null;
+
+                if (!pdfDocumentRef.current || pageNumberRef.current !== normalizedPageNumber) {
+                  return;
+                }
+
+                void renderClientPdfPage(normalizedPageNumber, {
+                  allowFontRecovery: false,
+                });
+              })
+              .catch(() => {
+                if (fontRecoveryKeyRef.current === renderKey) {
+                  fontRecoveryKeyRef.current = null;
+                }
+              });
+          }
+
+          setPreviewNotice(null);
+          setPreviewMode("client");
           setIsPdfLoading(false);
           setPdfError(null);
         } finally {
@@ -398,11 +446,16 @@ export function SummaryPageSurface({
           return;
         }
 
+        console.error("Summary client PDF render failed.", error);
+        setPreviewMode("native");
+        setPreviewNotice(
+          "تعذر عرض الصفحة داخل المعاينة التفاعلية الآن. افتح الملف الأصلي في تبويب جديد، ثم عُد لإكمال الملاحظات والحفظ من نفس الصفحة.",
+        );
         setPdfError(formatPdfRenderError(error));
         setIsPdfLoading(false);
       }
     },
-    [clientPreviewEnabled, fileUrl],
+    [fileUrl, previewMode, summaryId],
   );
 
   /*
@@ -622,7 +675,7 @@ export function SummaryPageSurface({
   useEffect(() => {
     const handleResize = () => {
       renderCanvas();
-      if (clientPreviewEnabled) {
+      if (previewMode === "client") {
         void renderClientPdfPage(pageNumberRef.current);
       }
     };
@@ -632,7 +685,7 @@ export function SummaryPageSurface({
       typeof ResizeObserver !== "undefined" && surfaceRef.current
         ? new ResizeObserver(() => {
             renderCanvas();
-            if (clientPreviewEnabled) {
+            if (previewMode === "client") {
               void renderClientPdfPage(pageNumberRef.current);
             }
           })
@@ -646,19 +699,23 @@ export function SummaryPageSurface({
       window.removeEventListener("resize", handleResize);
       observer?.disconnect();
     };
-  }, [clientPreviewEnabled, renderCanvas, renderClientPdfPage]);
+  }, [previewMode, renderCanvas, renderClientPdfPage]);
 
   useEffect(() => {
+    fontRecoveryKeyRef.current = null;
+    setPreviewMode("client");
+    setPreviewNotice(null);
     setIsPdfLoading(true);
     setPdfError(null);
 
-    if (clientPreviewEnabled) {
-      void renderClientPdfPage(pageNumber);
-    }
-  }, [clientPreviewEnabled, pageNumber, previewImageUrl, renderClientPdfPage]);
+    void renderClientPdfPage(pageNumber, {
+      allowFontRecovery: true,
+    });
+  }, [pageNumber, renderClientPdfPage, summaryId]);
 
   useEffect(() => {
     return () => {
+      fontRecoveryKeyRef.current = null;
       renderTaskRef.current?.cancel?.();
       renderTaskRef.current = null;
 
@@ -1042,80 +1099,106 @@ export function SummaryPageSurface({
     };
   }, [continueBoxInteraction, continueDrawing, finishBoxInteraction, finishDrawing, renderCanvas]);
 
-  if (pdfError) {
-    return (
-      <div className="relative space-y-4">
-        <div className="pointer-events-auto mx-auto w-full max-w-[900px] rounded-[2rem] border border-amber-200 bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(255,251,242,0.98))] p-5 text-center shadow-[0_20px_55px_rgba(180,124,38,0.08)] sm:p-8">
-          <div className="mx-auto max-w-2xl rounded-[1.6rem] border border-amber-200 bg-amber-50 px-5 py-4 text-sm font-semibold leading-8 text-amber-800 shadow-sm">
-            تعذر تجهيز المعاينة التفاعلية لهذه الصفحة، لذلك عرضنا الملف الأصلي مؤقتًا. الأزرار والتنقل ما زالت تعمل.
-            <span className="mt-2 block text-xs text-amber-700/80">{pdfError}</span>
+  return (
+    <div className="relative isolate z-[1] space-y-4">
+      {previewNotice ? (
+        <div className="pointer-events-auto mx-auto w-full max-w-[900px] rounded-[1.8rem] border border-amber-200 bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(255,251,242,0.98))] p-4 text-center shadow-[0_18px_44px_rgba(180,124,38,0.1)] sm:p-5">
+          <div className="mx-auto max-w-3xl rounded-[1.35rem] border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-semibold leading-8 text-amber-800 shadow-sm">
+            {previewNotice}
+            {pdfError ? <span className="mt-2 block text-xs text-amber-700/80">{pdfError}</span> : null}
           </div>
-          <div className="mt-5 flex flex-wrap justify-center gap-3">
-            <a
-              href="/summaries"
+          <div className="mt-4 flex flex-wrap justify-center gap-3">
+            <button
+              type="button"
+              onClick={() => {
+                setPreviewMode("client");
+                setPreviewNotice(null);
+                setPdfError(null);
+                setIsPdfLoading(true);
+                void renderClientPdfPage(pageNumber, {
+                  allowFontRecovery: true,
+                });
+              }}
               className="rounded-full border border-amber-200 bg-white px-5 py-2.5 text-sm font-bold text-amber-800 transition hover:border-amber-300 hover:bg-amber-50"
             >
-              العودة إلى مكتبة الملخصات
-            </a>
+              إعادة محاولة المعاينة
+            </button>
             <a
               href={directPageUrl}
               target="_blank"
               rel="noreferrer"
               className="rounded-full border border-slate-200 bg-white px-5 py-2.5 text-sm font-bold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50"
             >
-              عرض الملف الأصلي
+              فتح الملف الأصلي
+            </a>
+            <a
+              href="/summaries"
+              className="rounded-full border border-slate-200 bg-white px-5 py-2.5 text-sm font-bold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50"
+            >
+              العودة إلى مكتبة الملخصات
             </a>
           </div>
-
-          <iframe
-            title={`عرض الملف الأصلي - صفحة ${pageNumber}`}
-            src={directPageUrl}
-            className="mt-6 h-[70vh] w-full rounded-[1.5rem] border border-slate-200 bg-white"
-          />
         </div>
-      </div>
-    );
-  }
+      ) : null}
 
-  return (
-    <div className="relative isolate z-[1] space-y-4">
       <div className="relative z-[1] mx-auto w-full max-w-[900px]">
         <div
           ref={surfaceRef}
           className="pointer-events-auto relative isolate z-0 overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-[0_20px_70px_rgba(15,23,42,0.08)]"
           style={{ aspectRatio: surfaceAspectCss, minHeight: "520px", contain: "layout paint" }}
         >
-          {clientPreviewEnabled ? (
+          {previewMode === "client" ? (
             <canvas
               ref={pdfCanvasRef}
               className="pointer-events-none absolute inset-0 h-full w-full select-none bg-white"
             />
           ) : (
-          <img
-            key={previewImageUrl}
-            src={previewImageUrl}
-            alt={`صفحة ${pageNumber}`}
-            className="pointer-events-none absolute inset-0 h-full w-full select-none bg-white object-fill"
-            draggable={false}
-            onLoad={() => {
-              setIsPdfLoading(false);
-              setPdfError(null);
-            }}
-            onError={() => {
-              setClientPreviewEnabled(true);
-            }}
-          />
+            <div className="absolute inset-0 flex items-center justify-center bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(248,250,252,0.98))] p-6 text-center">
+              <div className="max-w-xl space-y-4">
+                <div className="display-font text-2xl font-bold text-slate-950">المعاينة داخل الصفحة غير متاحة الآن</div>
+                <p className="text-sm leading-8 text-slate-600">
+                  افتح الملف الأصلي في تبويب جديد للقراءة، ثم ارجع هنا لإكمال الملاحظات والحفظ. لن نفقد عملك داخل هذه الصفحة.
+                </p>
+                <div className="flex flex-wrap justify-center gap-3">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setPreviewMode("client");
+                      setPreviewNotice(null);
+                      setPdfError(null);
+                      setIsPdfLoading(true);
+                      void renderClientPdfPage(pageNumber, {
+                        allowFontRecovery: true,
+                      });
+                    }}
+                    className="rounded-full border border-[#cfe0fb] bg-[#eef4ff] px-5 py-2.5 text-sm font-bold text-[#123B7A] transition hover:bg-[#e3efff]"
+                  >
+                    إعادة المحاولة
+                  </button>
+                  <a
+                    href={directPageUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="rounded-full border border-slate-200 bg-white px-5 py-2.5 text-sm font-bold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50"
+                  >
+                    عرض الملف الأصلي
+                  </a>
+                </div>
+              </div>
+            </div>
           )}
 
-          <canvas
-            ref={canvasRef}
-            className={cn(
-              "absolute inset-0 z-20 h-full w-full",
-              activeTool === "navigate" ? "pointer-events-none" : "pointer-events-auto",
-            )}
-            style={{ touchAction: activeTool === "navigate" ? "manipulation" : "none" }}
-            onPointerDown={startDrawing}
-          />
+          {previewMode === "client" ? (
+            <canvas
+              ref={canvasRef}
+              className={cn(
+                "absolute inset-0 z-20 h-full w-full",
+                activeTool === "navigate" ? "pointer-events-none" : "pointer-events-auto",
+              )}
+              style={{ touchAction: activeTool === "navigate" ? "manipulation" : "none" }}
+              onPointerDown={startDrawing}
+            />
+          ) : null}
 
           {isPdfLoading ? (
             <div className="pointer-events-none absolute inset-0 z-50 flex items-center justify-center bg-white/88 text-sm font-semibold text-slate-600 backdrop-blur-[1px]">
@@ -1126,7 +1209,8 @@ export function SummaryPageSurface({
             </div>
           ) : null}
 
-          {pageState.hideRegions.map((region) => (
+          {previewMode === "client"
+            ? pageState.hideRegions.map((region) => (
             <div
               key={region.id}
               className={cn(
@@ -1163,9 +1247,11 @@ export function SummaryPageSurface({
                 </button>
               </div>
             </div>
-          ))}
+          ))
+            : null}
 
-          {pageState.solutionBoxes.map((box) => (
+          {previewMode === "client"
+            ? pageState.solutionBoxes.map((box) => (
             <div
               key={box.id}
               className={cn(
@@ -1216,7 +1302,8 @@ export function SummaryPageSurface({
                 placeholder="اكتب حلك هنا..."
               />
             </div>
-          ))}
+          ))
+            : null}
         </div>
       </div>
 
