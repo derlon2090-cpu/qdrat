@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import {
   ArrowLeft,
   BarChart3,
@@ -671,14 +671,13 @@ export function StudentDashboard() {
       borderClass: "border-[#ffd4da] hover:border-[#f8a8b5]",
     },
   ];
-  const recentActivityItems = useMemo(
-    () => {
-      const items: Array<{
-        id: string;
-        title: string;
-        description: string;
-        href: string;
-      }> = [];
+  const recentActivityItems = (() => {
+    const items: Array<{
+      id: string;
+      title: string;
+      description: string;
+      href: string;
+    }> = [];
 
       if (data.lastActivityLabel || data.lastActivityAt) {
         items.push({
@@ -713,10 +712,8 @@ export function StudentDashboard() {
         });
       });
 
-      return items.slice(0, 3);
-    },
-    [data.lastActivityAt, data.lastActivityLabel, recentSolvedQuestions, primaryResumeItem?.href],
-  );
+    return items.slice(0, 3);
+  })();
 
   async function handleToggleTask(task: StudentPortalTask, nextValue: boolean) {
     try {

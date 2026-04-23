@@ -1,6 +1,7 @@
 import { ensureColumnIsUuid, getSqlClient } from "@/lib/db";
 import {
   getStudentChallengeData,
+  type StudentChallengeData,
   type StudentChallengeAchievement,
   type StudentChallengeMission,
 } from "@/lib/gamification";
@@ -944,6 +945,127 @@ function mapPortalData(
   } satisfies StudentPortalData;
 }
 
+function buildFallbackLevel(totalXp: number): StudentChallengeData["level"] {
+  const levels = [
+    { id: "beginner", label: "مبتدئ", minXp: 0, maxXp: 1000 },
+    { id: "intermediate", label: "متوسط", minXp: 1000, maxXp: 5000 },
+    { id: "advanced", label: "متقدم", minXp: 5000, maxXp: 10000 },
+    { id: "expert", label: "خبير", minXp: 10000, maxXp: null },
+  ];
+  const current = levels.find((level) => totalXp >= level.minXp && (level.maxXp == null || totalXp < level.maxXp)) ?? levels[0];
+  const next = levels[levels.findIndex((level) => level.id === current.id) + 1] ?? null;
+  const span = current.maxXp == null ? Math.max(totalXp, 1) : current.maxXp - current.minXp;
+  const progressPercent =
+    current.maxXp == null ? 100 : clamp(Math.round(((totalXp - current.minXp) / span) * 100), 0, 100);
+
+  return {
+    id: current.id,
+    label: current.label,
+    minXp: current.minXp,
+    maxXp: current.maxXp,
+    progressPercent,
+    nextLevelLabel: next?.label ?? null,
+    xpToNextLevel: next ? Math.max(0, next.minXp - totalXp) : 0,
+  };
+}
+
+function createFallbackLeaderboardBucket(
+  period: "daily" | "weekly" | "monthly",
+  totalXp: number,
+): StudentChallengeData["leaderboards"]["daily"] {
+  const labels = {
+    daily: "اليومي",
+    weekly: "الأسبوعي",
+    monthly: "الشهري",
+  };
+
+  return {
+    period,
+    label: labels[period],
+    participantsCount: 0,
+    currentUser: {
+      rank: null,
+      xp: totalXp,
+      nextRankGap: null,
+      defenseGap: null,
+    },
+    entries: [],
+  };
+}
+
+function getFallbackMonthMeta() {
+  const now = new Date();
+  const endsAt = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
+  const daysLeft = Math.max(0, Math.ceil((endsAt.getTime() - now.getTime()) / (24 * 60 * 60 * 1000)));
+
+  return {
+    endsAt: endsAt.toISOString(),
+    monthLabel: new Intl.DateTimeFormat("ar-SA", {
+      month: "long",
+      year: "numeric",
+    }).format(now),
+    countdownLabel: daysLeft > 0 ? `باقي ${daysLeft} يوم على نهاية التحدي` : "ينتهي التحدي اليوم",
+  };
+}
+
+function buildFallbackChallengeData(input: {
+  totalXp: number;
+  solvedQuestionsCount: number;
+  activeMistakesCount: number;
+  masteredMistakesCount: number;
+}): StudentChallengeData {
+  const totalXp = Math.max(0, Math.round(input.totalXp));
+  const level = buildFallbackLevel(totalXp);
+  const monthMeta = getFallbackMonthMeta();
+  const daily = createFallbackLeaderboardBucket("daily", totalXp);
+  const weekly = createFallbackLeaderboardBucket("weekly", totalXp);
+  const monthly = createFallbackLeaderboardBucket("monthly", totalXp);
+
+  return {
+    totalXp,
+    questionXp: totalXp,
+    bonusXp: 0,
+    currentTitle: level.label,
+    level,
+    monthLabel: monthMeta.monthLabel,
+    countdownLabel: monthMeta.countdownLabel,
+    endsAt: monthMeta.endsAt,
+    dailyXp: totalXp,
+    weeklyXp: totalXp,
+    monthlyXp: totalXp,
+    dailyRank: null,
+    weeklyRank: null,
+    monthlyRank: null,
+    nextMonthlyRankGap: null,
+    currentStreak: 0,
+    bestStreak: 0,
+    xpMultiplier: {
+      active: false,
+      multiplier: 1,
+      label: "XP x2",
+      description: "مضاعف النقاط غير مفعل الآن.",
+      endsAt: null,
+      nextStartsAt: null,
+      nextLabel: null,
+    },
+    rankProtection: {
+      active: false,
+      protectedRank: null,
+      label: "حماية المركز غير مفعلة",
+      description: "ستظهر حماية المركز تلقائيا عند تقدمك في لوحة التحدي.",
+      defenseGap: null,
+    },
+    duels: [],
+    missions: [],
+    achievements: [],
+    leaderboards: {
+      daily,
+      weekly,
+      monthly,
+    },
+  };
+}
+
 async function readPortalRow(userId: string) {
   const sql = getSql();
   const rows = (await sql.query(
@@ -1052,13 +1174,24 @@ export async function getStudentPortalData(userId: string) {
           latest_summary_page: null,
         };
 
-  const challengeData = await getStudentChallengeData(userId, {
-    includeLeaderboards: false,
-    solvedQuestionsCount: progress.solvedQuestionsCount,
-    questionXp: progress.totalXp,
-    activeMistakesCount: mistakes.active_mistakes,
-    masteredMistakesCount: mistakes.mastered_mistakes,
-  });
+  let challengeData: StudentChallengeData;
+  try {
+    challengeData = await getStudentChallengeData(userId, {
+      includeLeaderboards: false,
+      solvedQuestionsCount: progress.solvedQuestionsCount,
+      questionXp: progress.totalXp,
+      activeMistakesCount: mistakes.active_mistakes,
+      masteredMistakesCount: mistakes.mastered_mistakes,
+    });
+  } catch (error) {
+    console.error("Failed to load student challenge data for portal:", error);
+    challengeData = buildFallbackChallengeData({
+      totalXp: progress.totalXp,
+      solvedQuestionsCount: progress.solvedQuestionsCount,
+      activeMistakesCount: mistakes.active_mistakes,
+      masteredMistakesCount: mistakes.mastered_mistakes,
+    });
+  }
 
   let nextTasks: StudentPortalTask[] = [];
   if (portalRow.onboarding_completed) {
