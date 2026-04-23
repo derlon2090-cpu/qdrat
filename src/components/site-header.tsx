@@ -55,6 +55,7 @@ export function SiteHeader({
   const [open, setOpen] = useState(false);
   const [currentSearch, setCurrentSearch] = useState("");
   const isAuthenticated = status === "authenticated" && Boolean(user);
+  const brandHref = isAuthenticated ? "/dashboard" : "/";
 
   useEffect(() => {
     setCurrentSearch(window.location.search);
@@ -87,7 +88,7 @@ export function SiteHeader({
   return (
     <header className="relative sticky top-0 z-[9999] isolate pointer-events-auto border-b border-white/70 bg-white/95 backdrop-blur-2xl">
       <div className="mx-auto flex w-[min(calc(100%-2rem),1180px)] items-center justify-between gap-4 py-4">
-        <MiyaarLogo />
+        <MiyaarLogo href={brandHref} />
 
         <nav
           className={cn(
@@ -131,7 +132,7 @@ export function SiteHeader({
         <div className="fixed inset-0 z-[220] bg-black/30 backdrop-blur-sm lg:hidden">
           <div className="mr-auto h-full w-[330px] overflow-y-auto bg-white px-5 py-6 shadow-[0_20px_80px_rgba(0,0,0,0.18)]">
             <div className="mb-6 flex items-center justify-between">
-              <MiyaarLogo />
+              <MiyaarLogo href={brandHref} />
               <button
                 type="button"
                 onClick={() => setOpen(false)}
