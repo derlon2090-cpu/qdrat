@@ -50,7 +50,7 @@ type ClientPdfDocument = {
   }>;
   destroy: () => Promise<void>;
 };
-type PreviewMode = "client" | "native";
+export type SummaryPreviewMode = "interactive" | "native";
 type RenderClientPdfPageOptions = {
   allowFontRecovery?: boolean;
 };
@@ -189,6 +189,8 @@ type SummaryPageSurfaceProps = {
   activeTool: ActiveTool;
   strokeColor: string;
   strokeWidth: number;
+  previewMode: SummaryPreviewMode;
+  onPreviewModeChange: (mode: SummaryPreviewMode) => void;
   onChange: (nextState: SummaryPageState, meta?: ChangeMeta) => void;
 };
 
@@ -202,6 +204,8 @@ export function SummaryPageSurface({
   activeTool,
   strokeColor,
   strokeWidth,
+  previewMode,
+  onPreviewModeChange,
   onChange,
 }: SummaryPageSurfaceProps) {
   const surfaceRef = useRef<HTMLDivElement | null>(null);
@@ -218,7 +222,6 @@ export function SummaryPageSurface({
   const [resolvedPageDimension, setResolvedPageDimension] = useState(pageDimension);
   const [isPdfLoading, setIsPdfLoading] = useState(true);
   const [pdfError, setPdfError] = useState<string | null>(null);
-  const [previewMode, setPreviewMode] = useState<PreviewMode>("client");
   const [previewNotice, setPreviewNotice] = useState<string | null>(null);
   const [selectedSolutionId, setSelectedSolutionId] = useState<string | null>(null);
   const [selectedHideId, setSelectedHideId] = useState<string | null>(null);
@@ -235,7 +238,10 @@ export function SummaryPageSurface({
     setResolvedPageDimension(pageDimension);
   }, [pageDimension, pageNumber, summaryId]);
 
-  const directPageUrl = useMemo(() => `${fileUrl}#page=${pageNumber}&view=FitH`, [fileUrl, pageNumber]);
+  const directPageUrl = useMemo(
+    () => `${fileUrl}#page=${pageNumber}&view=FitH&toolbar=0&navpanes=0&scrollbar=0`,
+    [fileUrl, pageNumber],
+  );
   const surfaceAspectRatio = useMemo(() => {
     const width = Math.max(1, resolvedPageDimension.width || pageDimension.width || 1);
     const height = Math.max(1, resolvedPageDimension.height || pageDimension.height || 1);
@@ -307,7 +313,7 @@ export function SummaryPageSurface({
       targetPageNumber = pageNumberRef.current,
       options?: RenderClientPdfPageOptions,
     ) => {
-      if (previewMode !== "client") {
+      if (previewMode !== "interactive") {
         return;
       }
 
@@ -434,7 +440,6 @@ export function SummaryPageSurface({
           }
 
           setPreviewNotice(null);
-          setPreviewMode("client");
           setIsPdfLoading(false);
           setPdfError(null);
         } finally {
@@ -447,15 +452,15 @@ export function SummaryPageSurface({
         }
 
         console.error("Summary client PDF render failed.", error);
-        setPreviewMode("native");
+        onPreviewModeChange("native");
         setPreviewNotice(
-          "تعذر عرض الصفحة داخل المعاينة التفاعلية الآن. افتح الملف الأصلي في تبويب جديد، ثم عُد لإكمال الملاحظات والحفظ من نفس الصفحة.",
+          "جرى التحويل إلى العرض الأصلي للحفاظ على الصفحة العربية كما هي. يمكنك فتح العرض التفاعلي يدويًا إذا احتجت أدوات الرسم والإخفاء.",
         );
         setPdfError(formatPdfRenderError(error));
         setIsPdfLoading(false);
       }
     },
-    [fileUrl, previewMode, summaryId],
+    [fileUrl, onPreviewModeChange, previewMode, summaryId],
   );
 
   /*
@@ -675,7 +680,7 @@ export function SummaryPageSurface({
   useEffect(() => {
     const handleResize = () => {
       renderCanvas();
-      if (previewMode === "client") {
+      if (previewMode === "interactive") {
         void renderClientPdfPage(pageNumberRef.current);
       }
     };
@@ -685,7 +690,7 @@ export function SummaryPageSurface({
       typeof ResizeObserver !== "undefined" && surfaceRef.current
         ? new ResizeObserver(() => {
             renderCanvas();
-            if (previewMode === "client") {
+            if (previewMode === "interactive") {
               void renderClientPdfPage(pageNumberRef.current);
             }
           })
@@ -703,15 +708,19 @@ export function SummaryPageSurface({
 
   useEffect(() => {
     fontRecoveryKeyRef.current = null;
-    setPreviewMode("client");
-    setPreviewNotice(null);
-    setIsPdfLoading(true);
-    setPdfError(null);
+    if (previewMode === "interactive") {
+      setPreviewNotice(null);
+      setIsPdfLoading(true);
+      setPdfError(null);
+      void renderClientPdfPage(pageNumber, {
+        allowFontRecovery: true,
+      });
+      return;
+    }
 
-    void renderClientPdfPage(pageNumber, {
-      allowFontRecovery: true,
-    });
-  }, [pageNumber, renderClientPdfPage, summaryId]);
+    setIsPdfLoading(false);
+    setPdfError(null);
+  }, [pageNumber, previewMode, renderClientPdfPage, summaryId]);
 
   useEffect(() => {
     return () => {
@@ -1101,6 +1110,43 @@ export function SummaryPageSurface({
 
   return (
     <div className="relative isolate z-[1] space-y-4">
+      <div className="pointer-events-auto flex flex-wrap items-center justify-center gap-2">
+        <button
+          type="button"
+          onClick={() => {
+            setPreviewNotice(null);
+            setPdfError(null);
+            setIsPdfLoading(false);
+            onPreviewModeChange("native");
+          }}
+          className={cn(
+            "rounded-full border px-4 py-2 text-sm font-bold transition",
+            previewMode === "native"
+              ? "border-transparent bg-[#123B7A] text-white shadow-[0_16px_34px_rgba(18,59,122,0.18)]"
+              : "border-slate-200 bg-white text-slate-700 hover:border-[#123B7A]/20 hover:text-[#123B7A]",
+          )}
+        >
+          العرض الأصلي
+        </button>
+        <button
+          type="button"
+          onClick={() => {
+            setPreviewNotice(null);
+            setPdfError(null);
+            setIsPdfLoading(true);
+            onPreviewModeChange("interactive");
+          }}
+          className={cn(
+            "rounded-full border px-4 py-2 text-sm font-bold transition",
+            previewMode === "interactive"
+              ? "border-transparent bg-[#123B7A] text-white shadow-[0_16px_34px_rgba(18,59,122,0.18)]"
+              : "border-slate-200 bg-white text-slate-700 hover:border-[#123B7A]/20 hover:text-[#123B7A]",
+          )}
+        >
+          العرض التفاعلي
+        </button>
+      </div>
+
       {previewNotice ? (
         <div className="pointer-events-auto mx-auto w-full max-w-[900px] rounded-[1.8rem] border border-amber-200 bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(255,251,242,0.98))] p-4 text-center shadow-[0_18px_44px_rgba(180,124,38,0.1)] sm:p-5">
           <div className="mx-auto max-w-3xl rounded-[1.35rem] border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-semibold leading-8 text-amber-800 shadow-sm">
@@ -1111,13 +1157,10 @@ export function SummaryPageSurface({
             <button
               type="button"
               onClick={() => {
-                setPreviewMode("client");
                 setPreviewNotice(null);
                 setPdfError(null);
                 setIsPdfLoading(true);
-                void renderClientPdfPage(pageNumber, {
-                  allowFontRecovery: true,
-                });
+                onPreviewModeChange("interactive");
               }}
               className="rounded-full border border-amber-200 bg-white px-5 py-2.5 text-sm font-bold text-amber-800 transition hover:border-amber-300 hover:bg-amber-50"
             >
@@ -1145,50 +1188,31 @@ export function SummaryPageSurface({
         <div
           ref={surfaceRef}
           className="pointer-events-auto relative isolate z-0 overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-[0_20px_70px_rgba(15,23,42,0.08)]"
-          style={{ aspectRatio: surfaceAspectCss, minHeight: "520px", contain: "layout paint" }}
+          style={
+            previewMode === "interactive"
+              ? { aspectRatio: surfaceAspectCss, minHeight: "520px", contain: "layout paint" }
+              : { minHeight: "620px", height: "78vh", contain: "layout paint" }
+          }
         >
-          {previewMode === "client" ? (
+          {previewMode === "interactive" ? (
             <canvas
               ref={pdfCanvasRef}
               className="pointer-events-none absolute inset-0 h-full w-full select-none bg-white"
             />
           ) : (
-            <div className="absolute inset-0 flex items-center justify-center bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(248,250,252,0.98))] p-6 text-center">
-              <div className="max-w-xl space-y-4">
-                <div className="display-font text-2xl font-bold text-slate-950">المعاينة داخل الصفحة غير متاحة الآن</div>
-                <p className="text-sm leading-8 text-slate-600">
-                  افتح الملف الأصلي في تبويب جديد للقراءة، ثم ارجع هنا لإكمال الملاحظات والحفظ. لن نفقد عملك داخل هذه الصفحة.
-                </p>
-                <div className="flex flex-wrap justify-center gap-3">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setPreviewMode("client");
-                      setPreviewNotice(null);
-                      setPdfError(null);
-                      setIsPdfLoading(true);
-                      void renderClientPdfPage(pageNumber, {
-                        allowFontRecovery: true,
-                      });
-                    }}
-                    className="rounded-full border border-[#cfe0fb] bg-[#eef4ff] px-5 py-2.5 text-sm font-bold text-[#123B7A] transition hover:bg-[#e3efff]"
-                  >
-                    إعادة المحاولة
-                  </button>
-                  <a
-                    href={directPageUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="rounded-full border border-slate-200 bg-white px-5 py-2.5 text-sm font-bold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50"
-                  >
-                    عرض الملف الأصلي
-                  </a>
-                </div>
-              </div>
-            </div>
+            <iframe
+              key={directPageUrl}
+              src={directPageUrl}
+              title={`الملف الأصلي - صفحة ${pageNumber}`}
+              className="absolute inset-0 h-full w-full border-0 bg-white"
+              onLoad={() => {
+                setIsPdfLoading(false);
+                setPdfError(null);
+              }}
+            />
           )}
 
-          {previewMode === "client" ? (
+          {previewMode === "interactive" ? (
             <canvas
               ref={canvasRef}
               className={cn(
@@ -1209,7 +1233,7 @@ export function SummaryPageSurface({
             </div>
           ) : null}
 
-          {previewMode === "client"
+          {previewMode === "interactive"
             ? pageState.hideRegions.map((region) => (
             <div
               key={region.id}
@@ -1250,7 +1274,7 @@ export function SummaryPageSurface({
           ))
             : null}
 
-          {previewMode === "client"
+          {previewMode === "interactive"
             ? pageState.solutionBoxes.map((box) => (
             <div
               key={box.id}

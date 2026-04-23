@@ -23,7 +23,7 @@ import {
   SquarePen,
 } from "lucide-react";
 
-import { SummaryPageSurface } from "@/components/summary-page-surface";
+import { SummaryPageSurface, type SummaryPreviewMode } from "@/components/summary-page-surface";
 import { StudentAccessCard } from "@/components/student-access-card";
 import { useAuthSession } from "@/hooks/use-auth-session";
 import { normalizeExtractedArabicPdfText } from "@/lib/arabic-pdf-text";
@@ -172,6 +172,7 @@ export function SummaryWorkspace({ summaryId }: { summaryId: string }) {
   const [pageInput, setPageInput] = useState("1");
   const [hideAnswers, setHideAnswers] = useState(true);
   const [reviewMode, setReviewMode] = useState(false);
+  const [previewMode, setPreviewMode] = useState<SummaryPreviewMode>("native");
   const [hideNotesInReview, setHideNotesInReview] = useState(true);
   const [showOnlyPagesWithNotes, setShowOnlyPagesWithNotes] = useState(false);
   const [noteSearch, setNoteSearch] = useState("");
@@ -220,6 +221,15 @@ export function SummaryWorkspace({ summaryId }: { summaryId: string }) {
       aborted = true;
     };
   }, [status, summaryId]);
+
+  useEffect(() => {
+    if (previewMode !== "native") {
+      return;
+    }
+
+    setReviewMode(false);
+    setActiveTool("navigate");
+  }, [previewMode]);
 
   useEffect(() => {
     if (status !== "authenticated" || !user || !summary) {
@@ -599,6 +609,7 @@ export function SummaryWorkspace({ summaryId }: { summaryId: string }) {
   const pageDimension = summary.pageDimensions[currentPage - 1] ?? summary.pageDimensions[0];
   const effectiveHideAnswers = hideAnswers || reviewMode;
   const notesAreTemporarilyHidden = reviewMode && hideNotesInReview;
+  const usingNativePreview = previewMode === "native";
 
   return (
     <div className="relative space-y-6">
@@ -770,46 +781,54 @@ export function SummaryWorkspace({ summaryId }: { summaryId: string }) {
                 </div>
 
                 <div className="flex flex-wrap gap-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => setHideAnswers((current) => !current)}
-                    className="gap-2"
-                    disabled={reviewMode}
-                  >
-                    {effectiveHideAnswers ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                    {reviewMode
-                      ? "الإجابات مخفية بوضع المراجعة"
-                      : effectiveHideAnswers
-                        ? "إظهار الإجابات"
-                        : "إخفاء الإجابات"}
-                  </Button>
-                  <Button type="button" variant="outline" onClick={() => addHideRegion("bottom-right")} className="gap-2">
-                    <SquarePen className="h-4 w-4" />
-                    إضافة مربع إخفاء
-                  </Button>
-                  <Button type="button" variant="outline" onClick={() => addHideRegion("custom")} className="gap-2">
-                    <Square className="h-4 w-4" />
-                    مربع مخصص
-                  </Button>
-                  <Button type="button" variant="outline" onClick={addSolutionBox} className="gap-2">
-                    <NotebookPen className="h-4 w-4" />
-                    إضافة مساحة حل
-                  </Button>
                   <Button type="button" variant="outline" onClick={() => noteTextareaRef.current?.focus()} className="gap-2">
                     <NotebookPen className="h-4 w-4" />
                     إضافة ملاحظة
                   </Button>
-                  <Button
-                    type="button"
-                    variant={reviewMode ? "default" : "outline"}
-                    onClick={() => setReviewMode((current) => !current)}
-                    className="gap-2"
-                  >
-                    <EyeOff className="h-4 w-4" />
-                    مراجعة بدون إجابات
-                  </Button>
-                  {reviewMode ? (
+                  {usingNativePreview ? (
+                    <div className="rounded-[1.2rem] border border-[#cfe0fb] bg-[#eef4ff] px-4 py-2 text-sm font-semibold leading-7 text-[#123B7A]">
+                      العرض الأصلي مفعل الآن للحفاظ على النص العربي كما هو. إذا احتجت أدوات الرسم أو الإخفاء بدّل إلى العرض التفاعلي من داخل صفحة المعاينة.
+                    </div>
+                  ) : (
+                    <>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => setHideAnswers((current) => !current)}
+                        className="gap-2"
+                        disabled={reviewMode}
+                      >
+                        {effectiveHideAnswers ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                        {reviewMode
+                          ? "الإجابات مخفية بوضع المراجعة"
+                          : effectiveHideAnswers
+                            ? "إظهار الإجابات"
+                            : "إخفاء الإجابات"}
+                      </Button>
+                      <Button type="button" variant="outline" onClick={() => addHideRegion("bottom-right")} className="gap-2">
+                        <SquarePen className="h-4 w-4" />
+                        إضافة مربع إخفاء
+                      </Button>
+                      <Button type="button" variant="outline" onClick={() => addHideRegion("custom")} className="gap-2">
+                        <Square className="h-4 w-4" />
+                        مربع مخصص
+                      </Button>
+                      <Button type="button" variant="outline" onClick={addSolutionBox} className="gap-2">
+                        <NotebookPen className="h-4 w-4" />
+                        إضافة مساحة حل
+                      </Button>
+                      <Button
+                        type="button"
+                        variant={reviewMode ? "default" : "outline"}
+                        onClick={() => setReviewMode((current) => !current)}
+                        className="gap-2"
+                      >
+                        <EyeOff className="h-4 w-4" />
+                        مراجعة بدون إجابات
+                      </Button>
+                    </>
+                  )}
+                  {!usingNativePreview && reviewMode ? (
                     <Button
                       type="button"
                       variant="outline"
@@ -823,76 +842,80 @@ export function SummaryWorkspace({ summaryId }: { summaryId: string }) {
                 </div>
               </div>
 
-              <div className="flex flex-wrap items-center gap-2">
-                {([
-                  ["navigate", "تنقل", Search],
-                  ["pen", "قلم", Paintbrush],
-                  ["highlighter", "هايلايتر", Highlighter],
-                  ["eraser", "ممحاة", Eraser],
-                ] as const).map(([toolId, label, Icon]) => (
-                  <button
-                    key={toolId}
-                    type="button"
-                    onClick={() => setActiveTool(toolId)}
-                    className={cn(
-                      "inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold transition",
-                      activeTool === toolId
-                        ? "border-transparent bg-[#123B7A] text-white"
-                        : "border-slate-200 bg-white text-slate-700 hover:border-[#123B7A]/20 hover:text-[#123B7A]",
-                    )}
-                  >
-                    <Icon className="h-4 w-4" />
-                    {label}
-                  </button>
-                ))}
-              </div>
+              {!usingNativePreview ? (
+                <div className="flex flex-wrap items-center gap-2">
+                  {([
+                    ["navigate", "تنقل", Search],
+                    ["pen", "قلم", Paintbrush],
+                    ["highlighter", "هايلايتر", Highlighter],
+                    ["eraser", "ممحاة", Eraser],
+                  ] as const).map(([toolId, label, Icon]) => (
+                    <button
+                      key={toolId}
+                      type="button"
+                      onClick={() => setActiveTool(toolId)}
+                      className={cn(
+                        "inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold transition",
+                        activeTool === toolId
+                          ? "border-transparent bg-[#123B7A] text-white"
+                          : "border-slate-200 bg-white text-slate-700 hover:border-[#123B7A]/20 hover:text-[#123B7A]",
+                      )}
+                    >
+                      <Icon className="h-4 w-4" />
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              ) : null}
 
-              <div className="flex flex-wrap items-center gap-3">
-                <div className="text-xs font-semibold text-slate-500">ألوان القلم</div>
-                {["#0f172a", "#1d4ed8", "#dc2626", "#16a34a", "#ca8a04", "#7c3aed"].map((color) => (
+              {!usingNativePreview ? (
+                <div className="flex flex-wrap items-center gap-3">
+                  <div className="text-xs font-semibold text-slate-500">ألوان القلم</div>
+                  {["#0f172a", "#1d4ed8", "#dc2626", "#16a34a", "#ca8a04", "#7c3aed"].map((color) => (
+                    <button
+                      key={color}
+                      type="button"
+                      onClick={() => setStrokeColor(color)}
+                      className={cn(
+                        "h-8 w-8 rounded-full border-2 transition",
+                        strokeColor === color ? "scale-110 border-slate-900" : "border-white shadow",
+                      )}
+                      style={{ backgroundColor: color }}
+                      aria-label={`لون ${color}`}
+                    />
+                  ))}
+                  <div className="mr-2 text-xs font-semibold text-slate-500">السماكة</div>
+                  {[2, 4, 7].map((width) => (
+                    <button
+                      key={width}
+                      type="button"
+                      onClick={() => setStrokeWidth(width)}
+                      className={cn(
+                        "rounded-full border px-3 py-1 text-xs font-semibold transition",
+                        strokeWidth === width ? "border-transparent bg-[#123B7A] text-white" : "border-slate-200 bg-white text-slate-700",
+                      )}
+                    >
+                      {width === 2 ? "رفيع" : width === 4 ? "متوسط" : "عريض"}
+                    </button>
+                  ))}
                   <button
-                    key={color}
                     type="button"
-                    onClick={() => setStrokeColor(color)}
-                    className={cn(
-                      "h-8 w-8 rounded-full border-2 transition",
-                      strokeColor === color ? "scale-110 border-slate-900" : "border-white shadow",
-                    )}
-                    style={{ backgroundColor: color }}
-                    aria-label={`لون ${color}`}
-                  />
-                ))}
-                <div className="mr-2 text-xs font-semibold text-slate-500">السماكة</div>
-                {[2, 4, 7].map((width) => (
-                  <button
-                    key={width}
-                    type="button"
-                    onClick={() => setStrokeWidth(width)}
-                    className={cn(
-                      "rounded-full border px-3 py-1 text-xs font-semibold transition",
-                      strokeWidth === width ? "border-transparent bg-[#123B7A] text-white" : "border-slate-200 bg-white text-slate-700",
-                    )}
+                    onClick={handleUndo}
+                    className="rounded-full border border-slate-200 bg-white p-2 text-slate-700 transition hover:border-[#123B7A]/20 hover:text-[#123B7A]"
+                    aria-label="Undo"
                   >
-                    {width === 2 ? "رفيع" : width === 4 ? "متوسط" : "عريض"}
+                    <RotateCcw className="h-4 w-4" />
                   </button>
-                ))}
-                <button
-                  type="button"
-                  onClick={handleUndo}
-                  className="rounded-full border border-slate-200 bg-white p-2 text-slate-700 transition hover:border-[#123B7A]/20 hover:text-[#123B7A]"
-                  aria-label="Undo"
-                >
-                  <RotateCcw className="h-4 w-4" />
-                </button>
-                <button
-                  type="button"
-                  onClick={handleRedo}
-                  className="rounded-full border border-slate-200 bg-white p-2 text-slate-700 transition hover:border-[#123B7A]/20 hover:text-[#123B7A]"
-                  aria-label="Redo"
-                >
-                  <RotateCw className="h-4 w-4" />
-                </button>
-              </div>
+                  <button
+                    type="button"
+                    onClick={handleRedo}
+                    className="rounded-full border border-slate-200 bg-white p-2 text-slate-700 transition hover:border-[#123B7A]/20 hover:text-[#123B7A]"
+                    aria-label="Redo"
+                  >
+                    <RotateCw className="h-4 w-4" />
+                  </button>
+                </div>
+              ) : null}
 
               <div className="flex flex-wrap items-center gap-2">
                 <button
@@ -932,7 +955,7 @@ export function SummaryWorkspace({ summaryId }: { summaryId: string }) {
             </CardContent>
           </Card>
 
-          {reviewMode ? (
+          {!usingNativePreview && reviewMode ? (
             <div className="rounded-[1.4rem] border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-800">
               وضع المراجعة مفعل الآن. سيتم إخفاء الإجابات{hideNotesInReview ? " والملاحظات" : ""} حتى تراجع الصفحة من جديد.
             </div>
@@ -950,6 +973,8 @@ export function SummaryWorkspace({ summaryId }: { summaryId: string }) {
               activeTool={activeTool}
               strokeColor={strokeColor}
               strokeWidth={strokeWidth}
+              previewMode={previewMode}
+              onPreviewModeChange={setPreviewMode}
               onChange={(nextState, meta) => updatePageState(currentPage, nextState, meta)}
             />
           </div>
