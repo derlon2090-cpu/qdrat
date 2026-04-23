@@ -239,7 +239,7 @@ export function SummaryPageSurface({
   }, [pageDimension, pageNumber, summaryId]);
 
   const directPageUrl = useMemo(
-    () => `${fileUrl}#page=${pageNumber}&view=FitH&toolbar=0&navpanes=0&scrollbar=0`,
+    () => `${fileUrl}#page=${pageNumber}&view=Fit&zoom=page-fit&toolbar=0&navpanes=0&scrollbar=0`,
     [fileUrl, pageNumber],
   );
   const surfaceAspectRatio = useMemo(() => {
@@ -718,7 +718,7 @@ export function SummaryPageSurface({
       return;
     }
 
-    setIsPdfLoading(false);
+    setIsPdfLoading(true);
     setPdfError(null);
   }, [pageNumber, previewMode, renderClientPdfPage, summaryId]);
 
@@ -1182,17 +1182,29 @@ export function SummaryPageSurface({
             </a>
           </div>
         </div>
+      ) : pdfError ? (
+        <div className="pointer-events-auto mx-auto w-full max-w-[900px] rounded-[1.8rem] border border-rose-200 bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(255,245,247,0.98))] p-4 text-center shadow-[0_18px_44px_rgba(225,29,72,0.1)] sm:p-5">
+          <div className="mx-auto max-w-3xl rounded-[1.35rem] border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-semibold leading-8 text-rose-700 shadow-sm">
+            {pdfError}
+          </div>
+          <div className="mt-4 flex flex-wrap justify-center gap-3">
+            <a
+              href={directPageUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="rounded-full border border-slate-200 bg-white px-5 py-2.5 text-sm font-bold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50"
+            >
+              فتح الملف الأصلي
+            </a>
+          </div>
+        </div>
       ) : null}
 
       <div className="relative z-[1] mx-auto w-full max-w-[900px]">
         <div
           ref={surfaceRef}
           className="pointer-events-auto relative isolate z-0 overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-[0_20px_70px_rgba(15,23,42,0.08)]"
-          style={
-            previewMode === "interactive"
-              ? { aspectRatio: surfaceAspectCss, minHeight: "520px", contain: "layout paint" }
-              : { minHeight: "620px", height: "78vh", contain: "layout paint" }
-          }
+          style={{ aspectRatio: surfaceAspectCss, minHeight: "520px", contain: "layout paint" }}
         >
           {previewMode === "interactive" ? (
             <canvas
@@ -1204,7 +1216,7 @@ export function SummaryPageSurface({
               key={directPageUrl}
               src={directPageUrl}
               title={`الملف الأصلي - صفحة ${pageNumber}`}
-              className="absolute inset-0 h-full w-full border-0 bg-white"
+              className="pointer-events-none absolute inset-0 h-full w-full border-0 bg-white"
               onLoad={() => {
                 setIsPdfLoading(false);
                 setPdfError(null);
@@ -1212,17 +1224,15 @@ export function SummaryPageSurface({
             />
           )}
 
-          {previewMode === "interactive" ? (
-            <canvas
-              ref={canvasRef}
-              className={cn(
-                "absolute inset-0 z-20 h-full w-full",
-                activeTool === "navigate" ? "pointer-events-none" : "pointer-events-auto",
-              )}
-              style={{ touchAction: activeTool === "navigate" ? "manipulation" : "none" }}
-              onPointerDown={startDrawing}
-            />
-          ) : null}
+          <canvas
+            ref={canvasRef}
+            className={cn(
+              "absolute inset-0 z-20 h-full w-full",
+              activeTool === "navigate" ? "pointer-events-none" : "pointer-events-auto",
+            )}
+            style={{ touchAction: activeTool === "navigate" ? "manipulation" : "none" }}
+            onPointerDown={startDrawing}
+          />
 
           {isPdfLoading ? (
             <div className="pointer-events-none absolute inset-0 z-50 flex items-center justify-center bg-white/88 text-sm font-semibold text-slate-600 backdrop-blur-[1px]">
@@ -1233,8 +1243,7 @@ export function SummaryPageSurface({
             </div>
           ) : null}
 
-          {previewMode === "interactive"
-            ? pageState.hideRegions.map((region) => (
+          {pageState.hideRegions.map((region) => (
             <div
               key={region.id}
               className={cn(
@@ -1271,11 +1280,9 @@ export function SummaryPageSurface({
                 </button>
               </div>
             </div>
-          ))
-            : null}
+          ))}
 
-          {previewMode === "interactive"
-            ? pageState.solutionBoxes.map((box) => (
+          {pageState.solutionBoxes.map((box) => (
             <div
               key={box.id}
               className={cn(
@@ -1326,20 +1333,8 @@ export function SummaryPageSurface({
                 placeholder="اكتب حلك هنا..."
               />
             </div>
-          ))
-            : null}
+          ))}
         </div>
-      </div>
-
-      <div className="pointer-events-auto relative z-[5] flex justify-center">
-        <a
-          href={directPageUrl}
-          target="_blank"
-          rel="noreferrer"
-          className="rounded-full border border-slate-200 bg-white px-4 py-2 text-xs font-semibold text-slate-600 transition hover:border-[#123B7A]/20 hover:text-[#123B7A]"
-        >
-          تنزيل الملف الأصلي
-        </a>
       </div>
     </div>
   );
