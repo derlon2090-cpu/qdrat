@@ -261,7 +261,7 @@ export async function getUserQuestionProgressTotals(userId: string): Promise<Use
         coalesce(sum(xp_earned), 0)::int as total_xp,
         count(*) filter (where is_solved = true)::int as solved_questions_count
       from app_user_question_progress
-      where user_id = $1::uuid
+      where user_id::text = $1
     `,
     [userId],
   )) as Array<{
@@ -288,7 +288,7 @@ export async function listSolvedSections(userId: string, limit = 8): Promise<Use
         count(*)::int as solved_count,
         coalesce(sum(xp_earned), 0)::int as xp_earned
       from app_user_question_progress
-      where user_id = $1::uuid
+      where user_id::text = $1
         and is_solved = true
       group by
         section,
@@ -336,7 +336,7 @@ export async function listRecentSolvedQuestions(userId: string, limit = 10): Pro
         xp_earned,
         coalesce(first_solved_at, last_attempt_at, updated_at)::text as solved_at
       from app_user_question_progress
-      where user_id = $1::uuid
+      where user_id::text = $1
         and is_solved = true
       order by coalesce(first_solved_at, last_attempt_at, updated_at) desc, updated_at desc
       limit $2
@@ -405,7 +405,7 @@ export async function trackUserQuestionProgress(userId: string, payload: TrackQu
         created_at::text,
         updated_at::text
       from app_user_question_progress
-      where user_id = $1::uuid
+      where user_id::text = $1
         and question_key = $2
       limit 1
     `,
@@ -520,7 +520,7 @@ export async function trackUserQuestionProgress(userId: string, payload: TrackQu
           last_attempt_at
         )
         values (
-          $1::uuid,
+          $1,
           $2,
           $3,
           $4::app_bank_section,
@@ -598,7 +598,7 @@ export async function trackUserQuestionProgress(userId: string, payload: TrackQu
         last_opened_bank_label
       )
       values (
-        $1::uuid,
+        $1,
         false,
         now(),
         $2,
@@ -623,7 +623,11 @@ export async function trackUserQuestionProgress(userId: string, payload: TrackQu
   const totals = await getUserQuestionProgressTotals(userId);
 
   if (awardedXp > 0) {
-    await syncGamificationAfterQuestionSolve(userId);
+    try {
+      await syncGamificationAfterQuestionSolve(userId);
+    } catch (error) {
+      console.error("Failed to sync gamification after question solve:", error);
+    }
   }
 
   return {

@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import {
   useCallback,
   useEffect,
@@ -19,6 +18,7 @@ import type {
   SummaryPageState,
   SummarySolutionBox,
 } from "@/lib/summaries";
+import { normalizeExtractedArabicPdfText } from "@/lib/arabic-pdf-text";
 import { cn } from "@/lib/utils";
 
 function getCanvasPixelRatio() {
@@ -1044,19 +1044,19 @@ export function SummaryPageSurface({
 
   if (pdfError) {
     return (
-      <div className="relative isolate z-[5] space-y-4">
-        <div className="pointer-events-auto relative z-[10] mx-auto w-full max-w-[900px] rounded-[2rem] border border-rose-200 bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(255,247,247,0.98))] p-8 text-center shadow-[0_20px_55px_rgba(225,29,72,0.08)]">
-          <div className="mx-auto max-w-2xl rounded-[1.6rem] border border-rose-200 bg-rose-50 px-5 py-5 text-sm font-semibold leading-8 text-rose-700 shadow-sm">
-            {pdfError}
+      <div className="relative space-y-4">
+        <div className="pointer-events-auto mx-auto w-full max-w-[900px] rounded-[2rem] border border-amber-200 bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(255,251,242,0.98))] p-5 text-center shadow-[0_20px_55px_rgba(180,124,38,0.08)] sm:p-8">
+          <div className="mx-auto max-w-2xl rounded-[1.6rem] border border-amber-200 bg-amber-50 px-5 py-4 text-sm font-semibold leading-8 text-amber-800 shadow-sm">
+            تعذر تجهيز المعاينة التفاعلية لهذه الصفحة، لذلك عرضنا الملف الأصلي مؤقتًا. الأزرار والتنقل ما زالت تعمل.
+            <span className="mt-2 block text-xs text-amber-700/80">{pdfError}</span>
           </div>
           <div className="mt-5 flex flex-wrap justify-center gap-3">
-            <Link
+            <a
               href="/summaries"
-              prefetch={false}
-              className="rounded-full border border-rose-200 bg-white px-5 py-2.5 text-sm font-bold text-rose-700 transition hover:border-rose-300 hover:bg-rose-50"
+              className="rounded-full border border-amber-200 bg-white px-5 py-2.5 text-sm font-bold text-amber-800 transition hover:border-amber-300 hover:bg-amber-50"
             >
               العودة إلى مكتبة الملخصات
-            </Link>
+            </a>
             <a
               href={directPageUrl}
               target="_blank"
@@ -1066,6 +1066,12 @@ export function SummaryPageSurface({
               عرض الملف الأصلي
             </a>
           </div>
+
+          <iframe
+            title={`عرض الملف الأصلي - صفحة ${pageNumber}`}
+            src={directPageUrl}
+            className="mt-6 h-[70vh] w-full rounded-[1.5rem] border border-slate-200 bg-white"
+          />
         </div>
       </div>
     );
@@ -1199,12 +1205,14 @@ export function SummaryPageSurface({
                   updateSolutionBoxes((boxes) =>
                     boxes.map((item) =>
                       item.id === box.id
-                        ? { ...item, content: event.target.value }
+                        ? { ...item, content: normalizeExtractedArabicPdfText(event.target.value) }
                         : item,
                     ),
                   )
                 }
-                className="h-[calc(100%-42px)] w-full resize-none border-0 bg-[repeating-linear-gradient(180deg,transparent,transparent_30px,rgba(15,23,42,0.08)_30px,rgba(15,23,42,0.08)_31px)] px-4 py-3 text-sm leading-8 text-slate-800 outline-none"
+                dir="rtl"
+                lang="ar"
+                className="h-[calc(100%-42px)] w-full resize-none border-0 bg-[repeating-linear-gradient(180deg,transparent,transparent_30px,rgba(15,23,42,0.08)_30px,rgba(15,23,42,0.08)_31px)] px-4 py-3 text-right text-sm leading-8 text-slate-800 outline-none [unicode-bidi:plaintext]"
                 placeholder="اكتب حلك هنا..."
               />
             </div>

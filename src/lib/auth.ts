@@ -164,7 +164,7 @@ async function createSession(userId: string, request: NextRequest) {
         ip_address,
         expires_at
       )
-      values ($1::uuid, $2, $3, $4, $5::timestamptz)
+      values ($1, $2, $3, $4, $5::timestamptz)
     `,
     [
       userId,
@@ -254,7 +254,7 @@ async function getAuthenticatedSessionFromRequest(request: NextRequest): Promise
         u.role,
         sessions.expires_at
       from app_user_sessions sessions
-      inner join app_users u on u.id = sessions.user_id
+      inner join app_users u on u.id::text = sessions.user_id::text
       where sessions.session_token_hash = $1
         and sessions.expires_at > now()
         and u.is_active = true
@@ -431,7 +431,7 @@ export async function authenticateUser(input: { identifier: string; password: st
         set
           last_login_at = now(),
           password_hash = $2
-        where id = $1::uuid
+        where id::text = $1
       `,
       [row.id, hashPassword(normalizedPassword)],
     );
@@ -440,7 +440,7 @@ export async function authenticateUser(input: { identifier: string; password: st
       `
         update app_users
         set last_login_at = now()
-        where id = $1::uuid
+        where id::text = $1
       `,
       [row.id],
     );

@@ -129,6 +129,107 @@ export type StudentPortalData = {
   achievements: StudentChallengeAchievement[];
 };
 
+export function createFallbackStudentPortalData(input: {
+  userId: string;
+  fullName: string;
+}): StudentPortalData {
+  const challengeData = buildFallbackChallengeData({
+    totalXp: 0,
+    solvedQuestionsCount: 0,
+    activeMistakesCount: 0,
+    masteredMistakesCount: 0,
+  });
+
+  return {
+    userId: input.userId,
+    fullName: input.fullName,
+    onboardingCompleted: false,
+    examDate: null,
+    daysLeft: null,
+    dailyStudyHours: DEFAULT_DAILY_MINUTES / 60,
+    quantRemainingSections: DEFAULT_QUANT_SECTIONS,
+    verbalRemainingSections: DEFAULT_VERBAL_SECTIONS,
+    planType: "medium",
+    planPressure: "comfortable",
+    progressPercent: 0,
+    quantProgressPercent: 0,
+    verbalProgressPercent: 0,
+    xp: buildXpSummary(
+      0,
+      0,
+      0,
+      challengeData.level.label,
+      challengeData.level.nextLevelLabel,
+      challengeData.level.xpToNextLevel,
+    ),
+    challenge: {
+      currentTitle: challengeData.currentTitle,
+      monthlyRank: challengeData.monthlyRank,
+      monthlyXp: challengeData.monthlyXp,
+      weeklyXp: challengeData.weeklyXp,
+      dailyXp: challengeData.dailyXp,
+      nextMonthlyRankGap: challengeData.nextMonthlyRankGap,
+      currentStreak: challengeData.currentStreak,
+      bestStreak: challengeData.bestStreak,
+      monthLabel: challengeData.monthLabel,
+      countdownLabel: challengeData.countdownLabel,
+      xpMultiplier: {
+        active: challengeData.xpMultiplier.active,
+        label: challengeData.xpMultiplier.label,
+        description: challengeData.xpMultiplier.description,
+      },
+      rankProtection: {
+        active: challengeData.rankProtection.active,
+        label: challengeData.rankProtection.label,
+        description: challengeData.rankProtection.description,
+      },
+    },
+    solvedQuestionsCount: 0,
+    totalMistakes: 0,
+    activeMistakesCount: 0,
+    quantitativeMistakes: 0,
+    verbalMistakes: 0,
+    mistakesInTrainingCount: 0,
+    masteredMistakesCount: 0,
+    mistakeMasteryPercent: 0,
+    weakestMistakeLabel: null,
+    summariesCount: 0,
+    lastActivityAt: null,
+    lastActivityLabel: null,
+    solvedSections: [],
+    recentSolvedQuestions: [],
+    todayTasks: [],
+    upcomingTasks: [],
+    weeklyGoal: {
+      quantSections: 1,
+      verbalSections: 1,
+      targetQuestions: 15,
+      mistakesReview: 5,
+    },
+    resumeItems: [
+      {
+        id: "fallback-plan",
+        title: "الخطة اليومية",
+        subtitle: "ابدأ من الخطة اليومية أو بنك الأسئلة حتى تعود بيانات اللوحة كاملة.",
+        href: "/my-plan",
+        ctaLabel: "افتح الخطة",
+      },
+      {
+        id: "fallback-bank",
+        title: "بنك الأسئلة",
+        subtitle: "التدريب لا يتوقف حتى لو تعثرت مزامنة اللوحة.",
+        href: "/question-bank",
+        ctaLabel: "ابدأ التدريب",
+      },
+    ],
+    recommendations: [
+      "ابدأ من بنك الأسئلة أو الخطة اليومية الآن، وستظهر بيانات التقدم تلقائيًا بعد اكتمال المزامنة.",
+    ],
+    missions: [],
+    achievements: [],
+  };
+}
+
 type StudentPortalRow = {
   user_id: string;
   full_name: string;
@@ -575,13 +676,13 @@ async function getMistakeStats(userId: string) {
         (
           select question_type_label
           from app_user_mistakes worst
-          where worst.user_id = $1::uuid
+          where worst.user_id::text = $1
           group by question_type_label
           order by count(*) desc, max(updated_at) desc
           limit 1
         ) as weakest_type_label
       from app_user_mistakes
-      where user_id = $1::uuid
+      where user_id::text = $1
     `,
     [userId],
   )) as Array<{
@@ -614,29 +715,22 @@ async function getSummaryStats(userId: string) {
   const sql = getSql();
   const rows = (await sql.query(
     `
+      with user_summaries as (
+        select id, file_name, last_opened_page, last_used_at, updated_at
+        from app_user_summaries
+        where user_id::text = $1
+      ),
+      latest as (
+        select id::text, file_name, last_opened_page
+        from user_summaries
+        order by last_used_at desc, updated_at desc
+        limit 1
+      )
       select
-        count(*)::int as total_summaries,
-        (
-          select file_name
-          from app_user_summaries latest
-          where latest.user_id = $1::uuid
-          order by latest.last_used_at desc, latest.updated_at desc
-          limit 1
-        ) as latest_summary_name,
-        (
-          select id::text
-          from app_user_summaries latest
-          where latest.user_id = $1::uuid
-          order by latest.last_used_at desc, latest.updated_at desc
-          limit 1
-        ) as latest_summary_id,
-        (
-          select last_opened_page
-          from app_user_summaries latest
-          where latest.user_id = $1::uuid
-          order by latest.last_used_at desc, latest.updated_at desc
-          limit 1
-        ) as latest_summary_page
+        (select count(*)::int from user_summaries) as total_summaries,
+        (select file_name from latest) as latest_summary_name,
+        (select id from latest) as latest_summary_id,
+        (select last_opened_page from latest) as latest_summary_page
     `,
     [userId],
   )) as Array<{
@@ -662,7 +756,7 @@ async function getOrCreateActivePlan(userId: string, examDate: string | null) {
     `
       select id
       from app_study_plans
-      where user_id = $1::uuid
+      where user_id::text = $1
         and is_active = true
       order by updated_at desc, created_at desc
       limit 1
@@ -692,7 +786,7 @@ async function getOrCreateActivePlan(userId: string, examDate: string | null) {
         is_active,
         generated_from_diagnostic
       )
-      values ($1::uuid, 'الخطة الذكية', $2::date, 'mixed', true, true)
+      values ($1, 'الخطة الذكية', $2::date, 'mixed', true, true)
       returning id
     `,
     [userId, examDate],
@@ -770,7 +864,7 @@ async function listPlanTasks(userId: string) {
         tasks.is_completed
       from app_study_plan_tasks tasks
       inner join app_study_plans plans on plans.id = tasks.study_plan_id
-      where plans.user_id = $1::uuid
+      where plans.user_id::text = $1
         and plans.is_active = true
         and tasks.scheduled_for between current_date and current_date + interval '14 days'
       order by tasks.scheduled_for asc, tasks.sort_order asc, tasks.id asc
@@ -1091,8 +1185,8 @@ async function readPortalRow(userId: string) {
         sp.last_opened_bank_href,
         sp.last_opened_bank_label
       from app_users u
-      left join app_student_profiles sp on sp.user_id = u.id
-      where u.id = $1::uuid
+      left join app_student_profiles sp on sp.user_id::text = u.id::text
+      where u.id::text = $1
       limit 1
     `,
     [userId],
@@ -1248,7 +1342,7 @@ export async function saveStudentOnboarding(userId: string, input: OnboardingInp
         last_activity_label
       )
       values (
-        $1::uuid,
+        $1,
         $2::date,
         $3,
         $4,
@@ -1343,7 +1437,7 @@ export async function rebuildStudentPlan(userId: string) {
       update app_student_profiles
       set last_activity_at = now(),
           last_activity_label = 'أعيد ضبط الخطة'
-      where user_id = $1::uuid
+      where user_id::text = $1
     `,
     [userId],
   );
@@ -1361,7 +1455,7 @@ export async function postponeTodayTasks(userId: string) {
       set scheduled_for = current_date + interval '1 day'
       from app_study_plans plans
       where plans.id = tasks.study_plan_id
-        and plans.user_id = $1::uuid
+        and plans.user_id::text = $1
         and plans.is_active = true
         and tasks.scheduled_for = current_date
         and tasks.is_completed = false
@@ -1374,7 +1468,7 @@ export async function postponeTodayTasks(userId: string) {
       update app_student_profiles
       set last_activity_at = now(),
           last_activity_label = 'تم تأجيل مهام اليوم'
-      where user_id = $1::uuid
+      where user_id::text = $1
     `,
     [userId],
   );
@@ -1394,7 +1488,7 @@ export async function setStudentTaskCompletion(userId: string, taskId: number, c
         completed_at = case when $3::boolean then now() else null end
       from app_study_plans plans
       where plans.id = tasks.study_plan_id
-        and plans.user_id = $1::uuid
+        and plans.user_id::text = $1
         and plans.is_active = true
         and tasks.id = $2::bigint
       returning tasks.id
@@ -1411,7 +1505,7 @@ export async function setStudentTaskCompletion(userId: string, taskId: number, c
       update app_student_profiles
       set last_activity_at = now(),
           last_activity_label = $2
-      where user_id = $1::uuid
+      where user_id::text = $1
     `,
     [userId, completed ? "اكتملت مهمة من الخطة" : "أعيدت مهمة إلى غير منجزة"],
   );
@@ -1438,11 +1532,11 @@ export async function recordStudentActivity(userId: string, input: StudentActivi
         last_opened_path
       )
       values (
-        $1::uuid,
+        $1,
         false,
         now(),
         $2,
-        $3::uuid,
+        $3,
         $4,
         $5,
         $6,

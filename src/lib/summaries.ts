@@ -1,5 +1,6 @@
 import PDFParser from "pdf2json";
 
+import { debugArabicPdfTextSample, normalizeExtractedArabicPdfText } from "@/lib/arabic-pdf-text";
 import { ensureColumnIsUuid, getSqlClient } from "@/lib/db";
 
 const MAX_SUMMARY_FILE_SIZE_BYTES = 25 * 1024 * 1024;
@@ -230,8 +231,12 @@ function sanitizeSolutionBoxes(value: unknown): SummarySolutionBox[] {
     y: clampUnit(Number(item.y)),
     width: clampUnit(Number(item.width) || 0.28),
     height: clampUnit(Number(item.height) || 0.18),
-    content: typeof item.content === "string" ? item.content.slice(0, 8000) : "",
+    content: typeof item.content === "string" ? normalizeExtractedArabicPdfText(item.content).slice(0, 8000) : "",
   }));
+}
+
+function sanitizeArabicPdfTextInput(value: unknown) {
+  return typeof value === "string" ? normalizeExtractedArabicPdfText(value).slice(0, 8000) : "";
 }
 
 function sanitizeDrawings(value: unknown): SummaryDrawingStroke[] {
@@ -287,9 +292,9 @@ function sanitizePageState(
   return {
     pageNumber,
     noteText: typeof fromInput?.noteText === "string"
-      ? fromInput.noteText.slice(0, 8000)
+      ? sanitizeArabicPdfTextInput(fromInput.noteText)
       : typeof fromRow?.note_text === "string"
-        ? fromRow.note_text.slice(0, 8000)
+        ? sanitizeArabicPdfTextInput(fromRow.note_text)
         : "",
     reviewed:
       typeof fromInput?.reviewed === "boolean"
@@ -321,6 +326,35 @@ function sanitizePageState(
         ? fromRow.updated_at
         : null,
   };
+}
+
+function decodePdf2JsonText(value: unknown) {
+  if (typeof value !== "string") {
+    return "";
+  }
+
+  try {
+    return decodeURIComponent(value);
+  } catch {
+    return value;
+  }
+}
+
+function extractPdf2JsonPageText(page: Record<string, unknown>) {
+  const textItems = Array.isArray(page.Texts)
+    ? (page.Texts as Array<Record<string, unknown>>)
+    : [];
+
+  return textItems
+    .map((textItem) => {
+      const runs = Array.isArray(textItem.R)
+        ? (textItem.R as Array<Record<string, unknown>>)
+        : [];
+
+      return runs.map((run) => decodePdf2JsonText(run.T)).join("");
+    })
+    .filter(Boolean)
+    .join(" ");
 }
 
 function mapSummaryRow(row: SummaryListRow): SummaryListItem {
@@ -361,6 +395,11 @@ async function parsePdfMetadata(buffer: Buffer): Promise<{
     const pages = Array.isArray((pdfData as { Pages?: unknown[] }).Pages)
       ? ((pdfData as { Pages: Array<Record<string, unknown>> }).Pages ?? [])
       : [];
+
+    debugArabicPdfTextSample(
+      "summary-metadata",
+      pages.slice(0, 2).map(extractPdf2JsonPageText).join("\n"),
+    );
 
     const pageDimensions = pages.length
       ? pages.map((page) => ({
@@ -535,8 +574,8 @@ async function assertSummaryOwnership(userId: string, summaryId: string) {
         created_at::text,
         updated_at::text
       from app_user_summaries
-      where id = $1::uuid
-        and user_id = $2::uuid
+      where id::text = $1
+        and user_id::text = $2
       limit 1
     `,
     [summaryId, userId],
@@ -577,7 +616,7 @@ export async function listUserSummaries(userId: string) {
         from app_user_summary_page_states states
         where states.summary_id = summaries.id
       ) page_stats on true
-      where summaries.user_id = $1::uuid
+      where summaries.user_id::text = $1
       order by summaries.last_used_at desc, summaries.updated_at desc
     `,
     [userId],
@@ -622,7 +661,7 @@ async function createSummaryRecordFromBuffer(input: {
         last_used_at
       )
       values (
-        $1::uuid,
+        $1,
         $2,
         $3,
         $4,
@@ -715,7 +754,7 @@ export async function createSummaryUploadSession(input: {
         total_chunks,
         status
       )
-      values ($1::uuid, $2, $3, $4, $5, 'uploading')
+      values ($1, $2, $3, $4, $5, 'uploading')
       returning
         id::text,
         user_id::text,
@@ -760,8 +799,8 @@ async function getSummaryUploadSession(userId: string, sessionId: string) {
         total_chunks,
         status
       from app_user_summary_upload_sessions
-      where id = $1::uuid
-        and user_id = $2::uuid
+      where id::text = $1
+        and user_id::text = $2
       limit 1
     `,
     [sessionId, userId],
@@ -808,7 +847,7 @@ export async function saveSummaryUploadChunk(input: {
         chunk_index,
         chunk_data_base64
       )
-      values ($1::uuid, $2, $3)
+      values ($1, $2, $3)
       on conflict (session_id, chunk_index)
       do update set
         chunk_data_base64 = excluded.chunk_data_base64,
@@ -825,8 +864,8 @@ export async function saveSummaryUploadChunk(input: {
     `
       update app_user_summary_upload_sessions
       set updated_at = now()
-      where id = $1::uuid
-        and user_id = $2::uuid
+      where id::text = $1
+        and user_id::text = $2
     `,
     [input.sessionId, input.userId],
   );
@@ -835,7 +874,7 @@ export async function saveSummaryUploadChunk(input: {
     `
       select count(*)::integer as uploaded_chunks
       from app_user_summary_upload_chunks
-      where session_id = $1::uuid
+      where session_id::text = $1
     `,
     [input.sessionId],
   )) as Array<{ uploaded_chunks: number }>;
@@ -855,7 +894,7 @@ export async function finalizeSummaryUploadSession(userId: string, sessionId: st
         chunk_index,
         chunk_data_base64
       from app_user_summary_upload_chunks
-      where session_id = $1::uuid
+      where session_id::text = $1
       order by chunk_index asc
     `,
     [sessionId],
@@ -883,8 +922,8 @@ export async function finalizeSummaryUploadSession(userId: string, sessionId: st
     `
       update app_user_summary_upload_sessions
       set status = 'processing', updated_at = now()
-      where id = $1::uuid
-        and user_id = $2::uuid
+      where id::text = $1
+        and user_id::text = $2
     `,
     [sessionId, userId],
   );
@@ -899,8 +938,8 @@ export async function finalizeSummaryUploadSession(userId: string, sessionId: st
   await sql.query(
     `
       delete from app_user_summary_upload_sessions
-      where id = $1::uuid
-        and user_id = $2::uuid
+      where id::text = $1
+        and user_id::text = $2
     `,
     [sessionId, userId],
   );
@@ -928,8 +967,8 @@ export async function getSummaryDetail(userId: string, summaryId: string) {
         created_at::text,
         updated_at::text
       from app_user_summary_page_states
-      where summary_id = $1::uuid
-        and user_id = $2::uuid
+      where summary_id::text = $1
+        and user_id::text = $2
       order by page_number asc
     `,
     [summaryId, userId],
@@ -939,8 +978,8 @@ export async function getSummaryDetail(userId: string, summaryId: string) {
     `
       update app_user_summaries
       set last_used_at = now(), updated_at = now()
-      where id = $1::uuid
-        and user_id = $2::uuid
+      where id::text = $1
+        and user_id::text = $2
     `,
     [summaryId, userId],
   );
@@ -965,8 +1004,8 @@ export async function deleteUserSummary(userId: string, summaryId: string) {
   await sql.query(
     `
       delete from app_user_summaries
-      where id = $1::uuid
-        and user_id = $2::uuid
+      where id::text = $1
+        and user_id::text = $2
     `,
     [summaryId, userId],
   );
@@ -993,8 +1032,8 @@ export async function updateSummaryLastOpenedPage(
         last_opened_page = $3,
         last_used_at = now(),
         updated_at = now()
-      where id = $1::uuid
-        and user_id = $2::uuid
+      where id::text = $1
+        and user_id::text = $2
     `,
     [summaryId, userId, nextPage],
   );
@@ -1012,8 +1051,8 @@ export async function getSummaryFilePayload(userId: string, summaryId: string) {
         file_mime_type,
         file_data_base64
       from app_user_summaries
-      where id = $1::uuid
-        and user_id = $2::uuid
+      where id::text = $1
+        and user_id::text = $2
       limit 1
     `,
     [summaryId, userId],
@@ -1032,8 +1071,8 @@ export async function getSummaryFilePayload(userId: string, summaryId: string) {
     `
       update app_user_summaries
       set last_used_at = now(), updated_at = now()
-      where id = $1::uuid
-        and user_id = $2::uuid
+      where id::text = $1
+        and user_id::text = $2
     `,
     [summaryId, userId],
   );
@@ -1069,8 +1108,8 @@ export async function getSummaryPageState(
         created_at::text,
         updated_at::text
       from app_user_summary_page_states
-      where summary_id = $1::uuid
-        and user_id = $2::uuid
+      where summary_id::text = $1
+        and user_id::text = $2
         and page_number = $3
       limit 1
     `,
@@ -1105,8 +1144,8 @@ export async function upsertSummaryPageState(
         drawings
       )
       values (
-        $1::uuid,
-        $2::uuid,
+        $1,
+        $2,
         $3,
         $4,
         $5,
@@ -1158,8 +1197,8 @@ export async function upsertSummaryPageState(
         last_opened_page = $3,
         last_used_at = now(),
         updated_at = now()
-      where id = $1::uuid
-        and user_id = $2::uuid
+      where id::text = $1
+        and user_id::text = $2
     `,
     [summaryId, userId, normalizedPageNumber],
   );

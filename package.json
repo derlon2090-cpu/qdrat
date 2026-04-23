@@ -10,6 +10,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
+    "test:arabic-pdf-text": "tsc -p tests/tsconfig.json && node .tmp-tests/tests/arabic-pdf-text.test.js",
     "test:verbal-passages": "tsc -p tests/tsconfig.json && node .tmp-tests/tests/verbal-passages/core.test.js",
     "seed:verbal-passages": "node scripts/seed-verbal-passages-sample.mjs",
     "import:bank45-session": "node scripts/import-bank45-session.mjs",

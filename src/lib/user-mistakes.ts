@@ -177,7 +177,7 @@ async function fetchMistakeById(userId: string, mistakeId: number) {
         mastered_at::text
       from app_user_mistakes
       where id = $1
-        and user_id = $2::uuid
+        and user_id::text = $2
       limit 1
     `,
     [mistakeId, userId],
@@ -213,7 +213,7 @@ async function fetchMistakeByKey(userId: string, questionKey: string) {
         last_trained_at::text,
         mastered_at::text
       from app_user_mistakes
-      where user_id = $1::uuid
+      where user_id::text = $1
         and question_key = $2
       limit 1
     `,
@@ -325,7 +325,7 @@ export async function listUserMistakes(userId: string) {
         last_trained_at::text,
         mastered_at::text
       from app_user_mistakes
-      where user_id = $1::uuid
+      where user_id::text = $1
       order by
         case mastery_state
           when 'incorrect' then 0
@@ -348,7 +348,7 @@ export async function removeUserMistake(userId: string, mistakeId: number) {
     `
       delete from app_user_mistakes
       where id = $1
-        and user_id = $2::uuid
+        and user_id::text = $2
     `,
     [mistakeId, userId],
   );
@@ -385,7 +385,7 @@ export async function updateUserMistakeState(
         end,
         updated_at = now()
       where id = $1
-        and user_id = $2::uuid
+        and user_id::text = $2
       returning
         id,
         question_key,
@@ -459,7 +459,7 @@ export async function recordUserMistakeTrainingAttempt(
         end,
         updated_at = now()
       where id = $1
-        and user_id = $2::uuid
+        and user_id::text = $2
       returning
         id,
         question_key,
@@ -516,7 +516,7 @@ export async function trackUserMistake(userId: string, payload: TrackMistakePayl
           last_incorrect_at
         )
         values (
-          $1::uuid,
+          $1,
           $2,
           $3,
           $4::app_bank_section,
@@ -612,7 +612,7 @@ export async function trackUserMistake(userId: string, payload: TrackMistakePayl
         end,
         updated_at = now()
       where id = $1
-        and user_id = $2::uuid
+        and user_id::text = $2
       returning
         id,
         question_key,

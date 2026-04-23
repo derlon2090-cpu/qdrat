@@ -12,7 +12,9 @@
     "types": ["node"]
   },
   "include": [
+    "../src/lib/arabic-pdf-text.ts",
     "../src/lib/verbal-passages-core.ts",
+    "./arabic-pdf-text.test.ts",
     "./verbal-passages/**/*.ts"
   ]
 }

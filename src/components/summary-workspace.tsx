@@ -26,6 +26,7 @@ import {
 import { SummaryPageSurface } from "@/components/summary-page-surface";
 import { StudentAccessCard } from "@/components/student-access-card";
 import { useAuthSession } from "@/hooks/use-auth-session";
+import { normalizeExtractedArabicPdfText } from "@/lib/arabic-pdf-text";
 import type { SummaryDetail, SummaryPageState } from "@/lib/summaries";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -107,10 +108,9 @@ function BackToSummariesLink({
   const subTextClass = tone === "danger" ? "text-rose-600/80" : "text-slate-500";
 
   return (
-    <div className={cn("relative z-[140] pointer-events-auto", centered ? "flex justify-center" : "")}>
-      <Link
+    <div className={cn("relative pointer-events-auto", centered ? "flex justify-center" : "")}>
+      <a
         href="/summaries"
-        prefetch={false}
         className={cn(
           "pointer-events-auto group inline-flex min-h-[5.5rem] w-full max-w-[23rem] cursor-pointer items-center justify-between gap-4 rounded-[1.55rem] border px-5 py-4 text-right transition duration-200 hover:-translate-y-0.5",
           frameClass,
@@ -129,7 +129,7 @@ function BackToSummariesLink({
         >
           <ArrowRight className="h-5 w-5" />
         </span>
-      </Link>
+      </a>
     </div>
   );
 }
@@ -601,8 +601,8 @@ export function SummaryWorkspace({ summaryId }: { summaryId: string }) {
   const notesAreTemporarilyHidden = reviewMode && hideNotesInReview;
 
   return (
-    <div className="relative isolate z-[20] space-y-6">
-      <Card className="relative z-[120] border border-[#E8D8B3] bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(248,247,244,0.96))]">
+    <div className="relative space-y-6">
+      <Card className="relative border border-[#E8D8B3] bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(248,247,244,0.96))]">
         <CardContent className="flex flex-col gap-5 p-7 lg:flex-row lg:items-start lg:justify-between">
           <div>
             <BackToSummariesLink />
@@ -613,7 +613,7 @@ export function SummaryWorkspace({ summaryId }: { summaryId: string }) {
             </p>
           </div>
 
-          <div className="relative z-[140] flex flex-wrap gap-3 pointer-events-auto">
+          <div className="relative flex flex-wrap gap-3 pointer-events-auto">
             <Button type="button" variant="outline" onClick={exportNotes} className="gap-2 pointer-events-auto">
               <Download className="h-4 w-4" />
               تصدير الملاحظات
@@ -692,9 +692,11 @@ export function SummaryWorkspace({ summaryId }: { summaryId: string }) {
                 <Search className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
                 <Input
                   value={noteSearch}
-                  onChange={(event) => setNoteSearch(event.target.value)}
+                  onChange={(event) => setNoteSearch(normalizeExtractedArabicPdfText(event.target.value))}
                   placeholder="ابحث داخل الملاحظات..."
-                  className="h-11 pr-10 text-sm"
+                  dir="rtl"
+                  lang="ar"
+                  className="h-11 pr-10 text-right text-sm [unicode-bidi:plaintext]"
                 />
               </div>
 
@@ -971,10 +973,12 @@ export function SummaryWorkspace({ summaryId }: { summaryId: string }) {
                     onChange={(event) =>
                       updatePageState(currentPage, {
                         ...currentState,
-                        noteText: event.target.value,
+                        noteText: normalizeExtractedArabicPdfText(event.target.value),
                       })
                     }
-                    className="mt-4 h-44 w-full resize-none rounded-[1.5rem] border border-slate-200 bg-white px-4 py-4 text-sm leading-8 text-slate-800 outline-none transition focus:border-[#C99A43] focus:ring-4 focus:ring-[#f6ead0]"
+                    dir="rtl"
+                    lang="ar"
+                    className="mt-4 h-44 w-full resize-none rounded-[1.5rem] border border-slate-200 bg-white px-4 py-4 text-right text-sm leading-8 text-slate-800 outline-none transition [unicode-bidi:plaintext] focus:border-[#C99A43] focus:ring-4 focus:ring-[#f6ead0]"
                     placeholder="دوّن هنا ملاحظتك على هذه الصفحة..."
                   />
                 )}
