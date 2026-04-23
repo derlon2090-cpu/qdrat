@@ -1,4 +1,6 @@
 import { createRequire } from "node:module";
+import path from "node:path";
+import { pathToFileURL } from "node:url";
 
 type CanvasModule = typeof import("@napi-rs/canvas");
 type PdfJsNodeModule = typeof import("pdfjs-dist/legacy/build/pdf.mjs");
@@ -19,6 +21,10 @@ const nodeRequire = createRequire(import.meta.url);
 
 function clamp(value: number, min: number, max: number) {
   return Math.min(Math.max(value, min), max);
+}
+
+function getPdfJsAssetDirectoryUrl(...segments: string[]) {
+  return pathToFileURL(path.join(process.cwd(), "public", "pdfjs", ...segments) + path.sep).href;
 }
 
 async function loadCanvasModule() {
@@ -71,8 +77,12 @@ export async function renderPdfPagePreviewToPng(input: {
 
   const loadingTask = pdfjs.getDocument({
     data: new Uint8Array(input.fileBuffer),
-    disableFontFace: true,
-    useSystemFonts: false,
+    cMapUrl: getPdfJsAssetDirectoryUrl("cmaps"),
+    cMapPacked: true,
+    standardFontDataUrl: getPdfJsAssetDirectoryUrl("standard_fonts"),
+    wasmUrl: getPdfJsAssetDirectoryUrl("wasm"),
+    disableFontFace: false,
+    useSystemFonts: true,
     useWorkerFetch: false,
     useWasm: false,
     isOffscreenCanvasSupported: false,
