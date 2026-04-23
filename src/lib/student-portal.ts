@@ -987,13 +987,71 @@ export async function getStudentPortalData(userId: string) {
     throw new Error("تعذر العثور على ملف الطالب.");
   }
 
-  const [progress, solvedSections, recentSolvedQuestions, mistakes, summaries] = await Promise.all([
-    getUserQuestionProgressTotals(userId),
-    listSolvedSections(userId),
-    listRecentSolvedQuestions(userId),
-    getMistakeStats(userId),
-    getSummaryStats(userId),
-  ]);
+  const [progressResult, solvedSectionsResult, recentSolvedQuestionsResult, mistakesResult, summariesResult] =
+    await Promise.allSettled([
+      getUserQuestionProgressTotals(userId),
+      listSolvedSections(userId),
+      listRecentSolvedQuestions(userId),
+      getMistakeStats(userId),
+      getSummaryStats(userId),
+    ]);
+
+  if (progressResult.status === "rejected") {
+    console.error("Failed to load portal progress totals:", progressResult.reason);
+  }
+
+  if (solvedSectionsResult.status === "rejected") {
+    console.error("Failed to load solved sections:", solvedSectionsResult.reason);
+  }
+
+  if (recentSolvedQuestionsResult.status === "rejected") {
+    console.error("Failed to load recent solved questions:", recentSolvedQuestionsResult.reason);
+  }
+
+  if (mistakesResult.status === "rejected") {
+    console.error("Failed to load mistake stats:", mistakesResult.reason);
+  }
+
+  if (summariesResult.status === "rejected") {
+    console.error("Failed to load summary stats:", summariesResult.reason);
+  }
+
+  const progress =
+    progressResult.status === "fulfilled"
+      ? progressResult.value
+      : {
+          totalXp: 0,
+          solvedQuestionsCount: 0,
+        };
+  const solvedSections =
+    solvedSectionsResult.status === "fulfilled" ? solvedSectionsResult.value : [];
+  const recentSolvedQuestions =
+    recentSolvedQuestionsResult.status === "fulfilled"
+      ? recentSolvedQuestionsResult.value
+      : [];
+  const mistakes =
+    mistakesResult.status === "fulfilled"
+      ? mistakesResult.value
+      : {
+          total_mistakes: 0,
+          active_mistakes: 0,
+          quantitative_mistakes: 0,
+          verbal_mistakes: 0,
+          training_mistakes: 0,
+          mastered_mistakes: 0,
+          mastery_percent: 0,
+          weakest_type_label: null,
+        };
+  const summaries =
+    summariesResult.status === "fulfilled"
+      ? summariesResult.value
+      : {
+          total_summaries: 0,
+          latest_summary_name: null,
+          latest_summary_id: null,
+          latest_summary_page: null,
+        };
+
   const challengeData = await getStudentChallengeData(userId, {
     includeLeaderboards: false,
     solvedQuestionsCount: progress.solvedQuestionsCount,
@@ -1002,14 +1060,23 @@ export async function getStudentPortalData(userId: string) {
     masteredMistakesCount: mistakes.mastered_mistakes,
   });
 
+  let nextTasks: StudentPortalTask[] = [];
   if (portalRow.onboarding_completed) {
-    const tasks = await listPlanTasks(userId);
-    if (!tasks.length) {
-      await rebuildStudentPlan(userId);
+    try {
+      const existingTasks = await listPlanTasks(userId);
+
+      if (!existingTasks.length) {
+        await rebuildStudentPlan(userId);
+        nextTasks = await listPlanTasks(userId);
+      } else {
+        nextTasks = existingTasks;
+      }
+    } catch (error) {
+      console.error("Failed to load or rebuild study plan tasks:", error);
+      nextTasks = [];
     }
   }
 
-  const nextTasks = await listPlanTasks(userId);
   return mapPortalData(
     portalRow,
     nextTasks,

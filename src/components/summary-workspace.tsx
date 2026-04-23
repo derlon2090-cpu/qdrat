@@ -107,9 +107,10 @@ function BackToSummariesLink({
   const subTextClass = tone === "danger" ? "text-rose-600/80" : "text-slate-500";
 
   return (
-    <div className={cn("relative z-[90]", centered ? "flex justify-center" : "")}>
+    <div className={cn("relative z-[140] pointer-events-auto", centered ? "flex justify-center" : "")}>
       <Link
         href="/summaries"
+        prefetch={false}
         className={cn(
           "pointer-events-auto group inline-flex min-h-[5.5rem] w-full max-w-[23rem] cursor-pointer items-center justify-between gap-4 rounded-[1.55rem] border px-5 py-4 text-right transition duration-200 hover:-translate-y-0.5",
           frameClass,
@@ -600,8 +601,8 @@ export function SummaryWorkspace({ summaryId }: { summaryId: string }) {
   const notesAreTemporarilyHidden = reviewMode && hideNotesInReview;
 
   return (
-    <div className="relative isolate z-0 space-y-6">
-      <Card className="relative z-0 border border-[#E8D8B3] bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(248,247,244,0.96))]">
+    <div className="relative isolate z-[20] space-y-6">
+      <Card className="relative z-[120] border border-[#E8D8B3] bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(248,247,244,0.96))]">
         <CardContent className="flex flex-col gap-5 p-7 lg:flex-row lg:items-start lg:justify-between">
           <div>
             <BackToSummariesLink />
@@ -612,14 +613,14 @@ export function SummaryWorkspace({ summaryId }: { summaryId: string }) {
             </p>
           </div>
 
-          <div className="relative z-0 flex flex-wrap gap-3">
-            <Button type="button" variant="outline" onClick={exportNotes} className="gap-2">
+          <div className="relative z-[140] flex flex-wrap gap-3 pointer-events-auto">
+            <Button type="button" variant="outline" onClick={exportNotes} className="gap-2 pointer-events-auto">
               <Download className="h-4 w-4" />
               تصدير الملاحظات
             </Button>
             <a
               href={`/api/summaries/${summary.id}/export`}
-              className={cn(buttonVariants({ variant: "outline" }), "gap-2")}
+              className={cn(buttonVariants({ variant: "outline" }), "gap-2 pointer-events-auto")}
             >
               <Download className="h-4 w-4" />
               تنزيل PDF مشروح
@@ -628,7 +629,7 @@ export function SummaryWorkspace({ summaryId }: { summaryId: string }) {
               href={`/api/summaries/${summary.id}/file`}
               target="_blank"
               rel="noreferrer"
-              className={buttonVariants({ variant: "outline" })}
+              className={cn(buttonVariants({ variant: "outline" }), "pointer-events-auto")}
             >
               عرض الملف الأصلي
             </a>

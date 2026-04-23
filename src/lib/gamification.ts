@@ -335,6 +335,21 @@ function getRankBadge(rank: number) {
   return null;
 }
 
+function createEmptyLeaderboardBucket(period: LeaderboardPeriod): LeaderboardBucket {
+  return {
+    period,
+    label: getLeaderboardLabel(period),
+    participantsCount: 0,
+    currentUser: {
+      rank: null,
+      xp: 0,
+      nextRankGap: null,
+      defenseGap: null,
+    },
+    entries: [],
+  };
+}
+
 function describeRankProtection(
   monthlyRank: number | null,
   defenseGap: number | null,
@@ -954,21 +969,29 @@ async function getPeriodRankings(
   )) as Array<{
     user_id: string;
     full_name: string;
-    xp: number;
-    rank: number;
-    total_count: number;
+    xp: number | string;
+    rank: number | string;
+    total_count: number | string;
   }>;
 
-  const participantCount = rows[0]?.total_count ?? 0;
-  const currentRow = rows.find((row) => row.user_id === userId) ?? null;
+  const normalizedRows = rows.map((row) => ({
+    user_id: row.user_id,
+    full_name: row.full_name,
+    xp: Number(row.xp ?? 0),
+    rank: Number(row.rank ?? 0),
+    total_count: Number(row.total_count ?? 0),
+  }));
+
+  const participantCount = normalizedRows[0]?.total_count ?? 0;
+  const currentRow = normalizedRows.find((row) => row.user_id === userId) ?? null;
   const higherRow = currentRow
-    ? rows.find((row) => row.rank === currentRow.rank - 1) ?? null
+    ? normalizedRows.find((row) => row.rank === currentRow.rank - 1) ?? null
     : null;
   const lowerRow = currentRow
-    ? rows.find((row) => row.rank === currentRow.rank + 1) ?? null
+    ? normalizedRows.find((row) => row.rank === currentRow.rank + 1) ?? null
     : null;
 
-  const visibleEntries = rows
+  const visibleEntries = normalizedRows
     .filter((row) => row.rank <= limit)
     .map((row) => ({
       userId: row.user_id,
@@ -1716,30 +1739,100 @@ export async function getStudentChallengeData(
     masteredMistakesCount?: number;
   } = {},
 ) {
-  await ensureGamificationSchema();
-  await syncDailyGamificationBonuses(userId);
+  const fallbackQuestionProgress = {
+    totalXp: options.questionXp ?? 0,
+    solvedQuestionsCount: options.solvedQuestionsCount ?? 0,
+  };
 
-  const questionProgress =
-    options.questionXp != null || options.solvedQuestionsCount != null
-      ? {
-          totalXp: options.questionXp ?? 0,
-          solvedQuestionsCount: options.solvedQuestionsCount ?? 0,
-        }
-      : await getUserQuestionProgressTotals(userId);
+  try {
+    await ensureGamificationSchema();
+  } catch (error) {
+    console.error("Failed to ensure gamification schema:", error);
+  }
 
-  const bonusXp = await getBonusXpTotal(userId);
+  let syncedMissions: StudentChallengeMission[] | null = null;
+  try {
+    const syncResult = await syncDailyGamificationBonuses(userId);
+    syncedMissions = syncResult.missions;
+  } catch (error) {
+    console.error("Failed to sync daily gamification bonuses:", error);
+  }
+
+  let questionProgress = fallbackQuestionProgress;
+  if (options.questionXp == null && options.solvedQuestionsCount == null) {
+    try {
+      questionProgress = await getUserQuestionProgressTotals(userId);
+    } catch (error) {
+      console.error("Failed to load question progress totals for challenge data:", error);
+    }
+  }
+
+  let bonusXp = 0;
+  try {
+    bonusXp = await getBonusXpTotal(userId);
+  } catch (error) {
+    console.error("Failed to load bonus XP total:", error);
+  }
+
   const totalXp = questionProgress.totalXp + bonusXp;
   const level = describeLevel(totalXp);
-  const { currentStreak, bestStreak } = calculateStreaks(await listActivityDays(userId));
-  const missions = await getMissionProgress(userId);
+
+  let activityDays: string[] = [];
+  try {
+    activityDays = await listActivityDays(userId);
+  } catch (error) {
+    console.error("Failed to load activity days:", error);
+  }
+
+  const { currentStreak, bestStreak } = calculateStreaks(activityDays);
+
+  let missions = syncedMissions ?? [];
+  if (!syncedMissions) {
+    try {
+      missions = await getMissionProgress(userId);
+    } catch (error) {
+      console.error("Failed to load mission progress:", error);
+    }
+  }
+
   const xpMultiplier = getXpMultiplierStatus();
 
-  const [daily, weekly, monthly, duels] = await Promise.all([
+  const [dailyResult, weeklyResult, monthlyResult, duelsResult] = await Promise.allSettled([
     getPeriodRankings("daily", userId),
     getPeriodRankings("weekly", userId),
     getPeriodRankings("monthly", userId),
     listStudentChallengeDuels(userId),
   ]);
+
+  if (dailyResult.status === "rejected") {
+    console.error("Failed to load daily leaderboard:", dailyResult.reason);
+  }
+
+  if (weeklyResult.status === "rejected") {
+    console.error("Failed to load weekly leaderboard:", weeklyResult.reason);
+  }
+
+  if (monthlyResult.status === "rejected") {
+    console.error("Failed to load monthly leaderboard:", monthlyResult.reason);
+  }
+
+  if (duelsResult.status === "rejected") {
+    console.error("Failed to load student duels:", duelsResult.reason);
+  }
+
+  const daily =
+    dailyResult.status === "fulfilled"
+      ? dailyResult.value
+      : createEmptyLeaderboardBucket("daily");
+  const weekly =
+    weeklyResult.status === "fulfilled"
+      ? weeklyResult.value
+      : createEmptyLeaderboardBucket("weekly");
+  const monthly =
+    monthlyResult.status === "fulfilled"
+      ? monthlyResult.value
+      : createEmptyLeaderboardBucket("monthly");
+  const duels = duelsResult.status === "fulfilled" ? duelsResult.value : [];
 
   const { endsAt, countdownLabel } = getMonthCountdown();
   const activeMistakesCount = options.activeMistakesCount ?? 0;

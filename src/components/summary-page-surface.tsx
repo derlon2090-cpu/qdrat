@@ -1044,14 +1044,15 @@ export function SummaryPageSurface({
 
   if (pdfError) {
     return (
-      <div className="relative isolate z-0 space-y-4">
-        <div className="pointer-events-auto mx-auto w-full max-w-[900px] rounded-[2rem] border border-rose-200 bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(255,247,247,0.98))] p-8 text-center shadow-[0_20px_55px_rgba(225,29,72,0.08)]">
+      <div className="relative isolate z-[5] space-y-4">
+        <div className="pointer-events-auto relative z-[10] mx-auto w-full max-w-[900px] rounded-[2rem] border border-rose-200 bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(255,247,247,0.98))] p-8 text-center shadow-[0_20px_55px_rgba(225,29,72,0.08)]">
           <div className="mx-auto max-w-2xl rounded-[1.6rem] border border-rose-200 bg-rose-50 px-5 py-5 text-sm font-semibold leading-8 text-rose-700 shadow-sm">
             {pdfError}
           </div>
           <div className="mt-5 flex flex-wrap justify-center gap-3">
             <Link
               href="/summaries"
+              prefetch={false}
               className="rounded-full border border-rose-200 bg-white px-5 py-2.5 text-sm font-bold text-rose-700 transition hover:border-rose-300 hover:bg-rose-50"
             >
               العودة إلى مكتبة الملخصات
@@ -1071,11 +1072,11 @@ export function SummaryPageSurface({
   }
 
   return (
-    <div className="relative isolate z-0 space-y-4">
-      <div className="mx-auto w-full max-w-[900px]">
+    <div className="relative isolate z-[1] space-y-4">
+      <div className="relative z-[1] mx-auto w-full max-w-[900px]">
         <div
           ref={surfaceRef}
-          className="pointer-events-auto relative isolate overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-[0_20px_70px_rgba(15,23,42,0.08)]"
+          className="pointer-events-auto relative isolate z-0 overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-[0_20px_70px_rgba(15,23,42,0.08)]"
           style={{ aspectRatio: surfaceAspectCss, minHeight: "520px", contain: "layout paint" }}
         >
           {clientPreviewEnabled ? (
@@ -1211,7 +1212,7 @@ export function SummaryPageSurface({
         </div>
       </div>
 
-      <div className="pointer-events-auto flex justify-center">
+      <div className="pointer-events-auto relative z-[5] flex justify-center">
         <a
           href={directPageUrl}
           target="_blank"
