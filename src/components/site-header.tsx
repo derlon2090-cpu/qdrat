@@ -138,9 +138,9 @@ export function SiteHeader({
   }
 
   return (
-    <header className="sticky top-0 z-[9999] border-b border-[#edf1f7] bg-[#fbfdff]/98 backdrop-blur-2xl">
-      <div className="mx-auto w-[min(calc(100%-1.5rem),1500px)] sm:w-[min(calc(100%-2rem),1500px)]">
-        <div className="flex items-center justify-between gap-4 rounded-b-[1.5rem] border-x border-b border-[#e6edf9] bg-white px-4 py-3.5 shadow-[0_10px_26px_rgba(15,23,42,0.035)] lg:px-5">
+    <header className="sticky top-0 z-[9999] border-b border-[#e6edf9] bg-white/98 shadow-[0_10px_26px_rgba(15,23,42,0.035)] backdrop-blur-2xl">
+      <div className="w-full px-4 py-3.5 sm:px-5 lg:px-6 xl:px-8">
+        <div className="flex items-center justify-between gap-4">
           <div className="flex items-center gap-7">
             <MiyaarLogo href={brandHref} />
 
