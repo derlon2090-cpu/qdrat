@@ -75,6 +75,24 @@ export type UserSolvedQuestionSummary = {
   solvedAt: string | null;
 };
 
+export type UserSectionProgressItem = {
+  questionKey: string;
+  selectedAnswer: string | null;
+  isSolved: boolean;
+  questionHref: string | null;
+  lastAttemptAt: string | null;
+};
+
+export type UserSectionProgressSnapshot = {
+  section: QuestionProgressSection;
+  categoryId: string | null;
+  attemptedCount: number;
+  solvedCount: number;
+  lastQuestionKey: string | null;
+  lastQuestionHref: string | null;
+  items: UserSectionProgressItem[];
+};
+
 type UserQuestionProgressRow = {
   id: number;
   question_key: string;
@@ -369,6 +387,90 @@ export async function listRecentSolvedQuestions(userId: string, limit = 10): Pro
     xpEarned: row.xp_earned,
     solvedAt: row.solved_at,
   }));
+}
+
+export async function getUserSectionProgress(
+  userId: string,
+  section: QuestionProgressSection,
+  categoryId: string | null,
+): Promise<UserSectionProgressSnapshot> {
+  await ensureUserQuestionProgressSchema();
+  const sql = getSql();
+  const normalizedCategoryId = categoryId?.trim() || null;
+
+  const rows = (await sql.query(
+    `
+      select
+        question_key,
+        selected_answer,
+        is_solved,
+        question_href,
+        coalesce(last_attempt_at, updated_at)::text as last_attempt_at
+      from app_user_question_progress
+      where user_id::text = $1
+        and section = $2::app_bank_section
+        and (
+          ($3::text is null and category_id is null)
+          or category_id = $3
+        )
+      order by coalesce(last_attempt_at, updated_at) asc, id asc
+    `,
+    [userId, section, normalizedCategoryId],
+  )) as Array<{
+    question_key: string;
+    selected_answer: string | null;
+    is_solved: boolean;
+    question_href: string | null;
+    last_attempt_at: string | null;
+  }>;
+
+  const items = rows.map((row) => ({
+    questionKey: row.question_key,
+    selectedAnswer: row.selected_answer,
+    isSolved: row.is_solved,
+    questionHref: row.question_href,
+    lastAttemptAt: row.last_attempt_at,
+  }));
+
+  const lastItem = items.at(-1) ?? null;
+
+  return {
+    section,
+    categoryId: normalizedCategoryId,
+    attemptedCount: items.length,
+    solvedCount: items.filter((item) => item.isSolved).length,
+    lastQuestionKey: lastItem?.questionKey ?? null,
+    lastQuestionHref: lastItem?.questionHref ?? null,
+    items,
+  };
+}
+
+export async function resetUserSectionProgress(
+  userId: string,
+  section: QuestionProgressSection,
+  categoryId: string | null,
+) {
+  await ensureUserQuestionProgressSchema();
+  const sql = getSql();
+  const normalizedCategoryId = categoryId?.trim() || null;
+
+  const deletedRows = (await sql.query(
+    `
+      delete from app_user_question_progress
+      where user_id::text = $1
+        and section = $2::app_bank_section
+        and (
+          ($3::text is null and category_id is null)
+          or category_id = $3
+        )
+      returning id
+    `,
+    [userId, section, normalizedCategoryId],
+  )) as Array<{ id: number }>;
+
+  return {
+    deletedCount: deletedRows.length,
+  };
 }
 
 export async function trackUserQuestionProgress(userId: string, payload: TrackQuestionProgressPayload) {

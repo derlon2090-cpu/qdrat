@@ -7,6 +7,10 @@ import { RotateCcw, Sparkles } from "lucide-react";
 
 import { useAuthSession } from "@/hooks/use-auth-session";
 import {
+  loadSectionProgressFromClient,
+  resetSectionProgressFromClient,
+} from "@/lib/client-section-progress";
+import {
   trackQuestionProgressFromClient,
   type ClientQuestionProgressResult,
 } from "@/lib/client-question-progress";
@@ -70,6 +74,27 @@ function clearCategorySavedAnswers(categoryId: string) {
   return nextAnswers;
 }
 
+function replaceCategorySavedAnswers(
+  savedAnswers: SavedAnswerMap,
+  categoryId: string,
+  nextCategoryAnswers: SavedAnswerMap,
+) {
+  const preservedEntries = Object.entries(savedAnswers).filter(
+    ([key]) => !key.startsWith(`${categoryId}-`),
+  );
+
+  return {
+    ...Object.fromEntries(preservedEntries),
+    ...nextCategoryAnswers,
+  } as SavedAnswerMap;
+}
+
+function extractQuestionIdFromProgressKey(questionKey: string | null, categoryId: string) {
+  if (!questionKey) return null;
+  const prefix = `${categoryId}-`;
+  return questionKey.startsWith(prefix) ? questionKey.slice(prefix.length) : null;
+}
+
 function buildPracticeHref(pathname: string, currentParams: URLSearchParams, categoryId: string, questionId: string) {
   const nextParams = new URLSearchParams(currentParams.toString());
   nextParams.set("category", categoryId);
@@ -93,6 +118,8 @@ export function VerbalPracticeBank({
   const [submitted, setSubmitted] = useState(false);
   const [showAuthPrompt, setShowAuthPrompt] = useState(false);
   const [progressFeedback, setProgressFeedback] = useState<ProgressFeedback>(null);
+  const [isAccountProgressLoading, setIsAccountProgressLoading] = useState(false);
+  const [savedCompletionChoice, setSavedCompletionChoice] = useState(false);
 
   useEffect(() => {
     setSavedAnswers(readSavedAnswers());
@@ -101,6 +128,14 @@ export function VerbalPracticeBank({
   const currentQuestionIndex = questions.findIndex((question) => question.id === activeQuestionId);
 
   const currentQuestion = questions[currentQuestionIndex] ?? null;
+  const answeredCount = useMemo(
+    () =>
+      questions.filter(
+        (question) => Boolean(savedAnswers[`${currentCategory.id}-${question.id}`]),
+      ).length,
+    [currentCategory.id, questions, savedAnswers],
+  );
+  const isCategoryCompleted = questions.length > 0 && answeredCount === questions.length;
 
   const currentKey = currentQuestion ? `${currentCategory.id}-${currentQuestion.id}` : "";
   const questionHref = currentQuestion
@@ -128,20 +163,30 @@ export function VerbalPracticeBank({
   useEffect(() => {
     if (!currentQuestion || searchParams.get("reset") !== "1") return;
 
-    const nextAnswers = clearCategorySavedAnswers(currentCategory.id);
-    setSavedAnswers(nextAnswers);
-    setSelectedAnswer("");
-    setSubmitted(false);
-    setShowAuthPrompt(false);
-    setProgressFeedback(null);
+    void (async () => {
+      if (authStatus === "authenticated") {
+        await resetSectionProgressFromClient({
+          section: "verbal",
+          categoryId: currentCategory.id,
+        });
+      }
 
-    const nextParams = new URLSearchParams(searchParams.toString());
-    nextParams.delete("reset");
-    nextParams.set("category", currentCategory.id);
-    nextParams.set("question", questions[0]?.id ?? currentQuestion.id);
+      const nextAnswers = clearCategorySavedAnswers(currentCategory.id);
+      setSavedAnswers(nextAnswers);
+      setSelectedAnswer("");
+      setSubmitted(false);
+      setShowAuthPrompt(false);
+      setProgressFeedback(null);
+      setSavedCompletionChoice(false);
 
-    router.replace(`${pathname}?${nextParams.toString()}`, { scroll: false });
-  }, [currentCategory.id, currentQuestion, pathname, questions, router, searchParams]);
+      const nextParams = new URLSearchParams(searchParams.toString());
+      nextParams.delete("reset");
+      nextParams.set("category", currentCategory.id);
+      nextParams.set("question", questions[0]?.id ?? currentQuestion.id);
+
+      router.replace(`${pathname}?${nextParams.toString()}`, { scroll: false });
+    })();
+  }, [authStatus, currentCategory.id, currentQuestion, pathname, questions, router, searchParams]);
 
   const result = useMemo(() => {
     if (!submitted || !selectedAnswer || !currentQuestion) return null;
@@ -206,13 +251,93 @@ export function VerbalPracticeBank({
     openQuestion(categoryId, nextCategory.firstQuestionId);
   }
 
-  function handleResetCategory() {
+  useEffect(() => {
+    setSavedCompletionChoice(false);
+  }, [currentCategory.id]);
+
+  useEffect(() => {
+    if (authStatus !== "authenticated") {
+      setIsAccountProgressLoading(false);
+      return;
+    }
+
+    let isCancelled = false;
+    const requestedQuestionId = searchParams.get("question")?.trim() ?? "";
+    const canAutoResume =
+      !requestedQuestionId || requestedQuestionId === questions[0]?.id;
+
+    setIsAccountProgressLoading(true);
+
+    void loadSectionProgressFromClient({
+      section: "verbal",
+      categoryId: currentCategory.id,
+    })
+      .then((response) => {
+        if (isCancelled) return;
+
+        if (!response.ok || !response.snapshot) {
+          setIsAccountProgressLoading(false);
+          return;
+        }
+
+        const categoryAnswers = Object.fromEntries(
+          response.snapshot.items
+            .filter((item) => typeof item.selectedAnswer === "string" && item.selectedAnswer)
+            .map((item) => [item.questionKey, item.selectedAnswer as string]),
+        ) as SavedAnswerMap;
+
+        setSavedAnswers((previous) => {
+          const next = replaceCategorySavedAnswers(
+            previous,
+            currentCategory.id,
+            categoryAnswers,
+          );
+          persistSavedAnswers(next);
+          return next;
+        });
+
+        const resumeQuestionId = extractQuestionIdFromProgressKey(
+          response.snapshot.lastQuestionKey,
+          currentCategory.id,
+        );
+
+        if (
+          canAutoResume &&
+          resumeQuestionId &&
+          resumeQuestionId !== requestedQuestionId &&
+          questions.some((question) => question.id === resumeQuestionId)
+        ) {
+          openQuestion(currentCategory.id, resumeQuestionId);
+        }
+
+        setIsAccountProgressLoading(false);
+      })
+      .catch(() => {
+        if (!isCancelled) {
+          setIsAccountProgressLoading(false);
+        }
+      });
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [authStatus, currentCategory.id, questions]);
+
+  async function handleResetCategory() {
+    if (authStatus === "authenticated") {
+      await resetSectionProgressFromClient({
+        section: "verbal",
+        categoryId: currentCategory.id,
+      });
+    }
+
     const nextAnswers = clearCategorySavedAnswers(currentCategory.id);
     setSavedAnswers(nextAnswers);
     setSelectedAnswer("");
     setSubmitted(false);
     setShowAuthPrompt(false);
     setProgressFeedback(null);
+    setSavedCompletionChoice(false);
 
     const firstQuestion = questions[0];
     if (firstQuestion) {
@@ -401,6 +526,7 @@ export function VerbalPracticeBank({
                     setSelectedAnswer(option);
                     setSubmitted(false);
                     setShowAuthPrompt(false);
+                    setSavedCompletionChoice(false);
                   }}
                   className={`rounded-[1.4rem] border px-5 py-5 text-right transition ${classes}`}
                 >
@@ -418,7 +544,7 @@ export function VerbalPracticeBank({
               تأكيد الإجابة
             </Button>
 
-            <Button variant="outline" size="lg" onClick={handleResetCategory} className="gap-2">
+            <Button variant="outline" size="lg" onClick={() => void handleResetCategory()} className="gap-2">
               <RotateCcw className="h-4 w-4" />
               إعادة أسئلة هذا القسم
             </Button>
@@ -440,6 +566,14 @@ export function VerbalPracticeBank({
             >
               السؤال التالي
             </Button>
+          </div>
+
+          <div className="mt-4 rounded-[1.2rem] border border-slate-200 bg-slate-50/80 px-4 py-3 text-sm leading-7 text-slate-600">
+            {authStatus === "authenticated"
+              ? isAccountProgressLoading
+                ? "جارِ استعادة تقدم هذا القسم من حسابك..."
+                : "تقدم هذا القسم محفوظ داخل حسابك، وعند العودة ستكمل من آخر سؤال قمت بحله."
+              : "الحفظ الدائم لتقدم الأقسام يحتاج تسجيل الدخول، أما الآن فالحفظ مؤقت داخل هذه الجلسة فقط."}
           </div>
 
           {submitted && result ? (
@@ -478,6 +612,36 @@ export function VerbalPracticeBank({
                       وصلت للفل المحترف وأنت جاهز تقريبًا للاختبار.
                     </div>
                   ) : null}
+                </div>
+              ) : null}
+            </div>
+          ) : null}
+
+          {isCategoryCompleted ? (
+            <div className="mt-6 rounded-[1.4rem] border border-[#E8D8B3] bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(248,247,244,0.96))] px-5 py-5">
+              <div className="text-xl font-bold text-slate-950">
+                أنهيت جميع أسئلة هذا القسم
+              </div>
+              <p className="mt-3 text-sm leading-8 text-slate-600">
+                {authStatus === "authenticated"
+                  ? "تقدمك محفوظ داخل حسابك الآن، ويمكنك إبقاء القسم كما هو أو إعادة أسئلته من البداية في أي وقت."
+                  : "أنهيت القسم كاملًا. إذا سجّلت دخولك سيبقى هذا التقدم محفوظًا عند رجوعك لاحقًا."}
+              </p>
+              <div className="mt-4 flex flex-wrap gap-3">
+                <Button
+                  variant="outline"
+                  size="lg"
+                  onClick={() => setSavedCompletionChoice(true)}
+                >
+                  الاحتفاظ بالتقدم المحفوظ
+                </Button>
+                <Button size="lg" onClick={() => void handleResetCategory()}>
+                  إعادة أسئلة القسم
+                </Button>
+              </div>
+              {savedCompletionChoice ? (
+                <div className="mt-4 rounded-[1.1rem] border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-800">
+                  ممتاز، سيبقى هذا القسم محفوظًا لك كما هو ويمكنك الرجوع إليه من نفس المكان لاحقًا.
                 </div>
               ) : null}
             </div>

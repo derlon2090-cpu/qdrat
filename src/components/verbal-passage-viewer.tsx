@@ -8,6 +8,10 @@ import { RotateCcw, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuthSession } from "@/hooks/use-auth-session";
 import {
+  loadSectionProgressFromClient,
+  resetSectionProgressFromClient,
+} from "@/lib/client-section-progress";
+import {
   trackQuestionProgressFromClient,
   type ClientQuestionProgressResult,
 } from "@/lib/client-question-progress";
@@ -157,6 +161,62 @@ function clearPassageSubmissions(passageSlug: string) {
   return nextSubmissions;
 }
 
+function replacePassageAnswers(
+  savedAnswers: SavedAnswerMap,
+  passageSlug: string,
+  nextPassageAnswers: SavedAnswerMap,
+) {
+  const preservedEntries = Object.entries(savedAnswers).filter(
+    ([key]) => !key.startsWith(`${passageSlug}:`),
+  );
+
+  return {
+    ...Object.fromEntries(preservedEntries),
+    ...nextPassageAnswers,
+  } as SavedAnswerMap;
+}
+
+function replacePassageSubmissions(
+  savedSubmissions: SavedSubmissionMap,
+  passageSlug: string,
+  nextPassageSubmissions: SavedSubmissionMap,
+) {
+  const preservedEntries = Object.entries(savedSubmissions).filter(
+    ([key]) => !key.startsWith(`${passageSlug}:`),
+  );
+
+  return {
+    ...Object.fromEntries(preservedEntries),
+    ...nextPassageSubmissions,
+  } as SavedSubmissionMap;
+}
+
+function extractPassageQuestionId(questionKey: string | null, passageSlug: string) {
+  if (!questionKey) return null;
+  const prefix = `${passageSlug}:`;
+  return questionKey.startsWith(prefix) ? questionKey.slice(prefix.length) : null;
+}
+
+function resolveStoredPassageAnswerKey(
+  passage: VerbalPassageRecord,
+  questionKey: string,
+  selectedAnswer: string | null,
+) {
+  if (!selectedAnswer) return null;
+  if (selectedAnswer === "A" || selectedAnswer === "B" || selectedAnswer === "C" || selectedAnswer === "D") {
+    return selectedAnswer;
+  }
+
+  const questionId = extractPassageQuestionId(questionKey, passage.slug);
+  const question = passage.questions.find((item) => item.id === questionId);
+  if (!question) return null;
+
+  return (
+    getQuestionOptions(question).find((option) => option.text === selectedAnswer)?.key ??
+    null
+  );
+}
+
 function getCorrectExplanation(question: VerbalPassageRecord["questions"][number]) {
   return (
     question.explanation?.trim() ||
@@ -217,6 +277,8 @@ export function VerbalPassageViewer({
   const [submittedAnswers, setSubmittedAnswers] = useState<SavedSubmissionMap>({});
   const [authPromptQuestionId, setAuthPromptQuestionId] = useState<string | null>(null);
   const [progressFeedback, setProgressFeedback] = useState<ProgressFeedback>(null);
+  const [isAccountProgressLoading, setIsAccountProgressLoading] = useState(false);
+  const [savedCompletionChoice, setSavedCompletionChoice] = useState(false);
   const { status: authStatus } = useAuthSession();
 
   useEffect(() => {
@@ -229,6 +291,7 @@ export function VerbalPassageViewer({
     setQuestionIndex(matchedQuestionIndex >= 0 ? matchedQuestionIndex : 0);
     setAuthPromptQuestionId(null);
     setProgressFeedback(null);
+    setSavedCompletionChoice(false);
   }, [initialQuestionId, passage]);
 
   const currentQuestion =
@@ -256,7 +319,102 @@ export function VerbalPassageViewer({
     passage.questions.length > 0 &&
     submittedCount === passage.questions.length;
 
-  function resetPassageSession() {
+  useEffect(() => {
+    if (mode !== "student" || authStatus !== "authenticated") {
+      setIsAccountProgressLoading(false);
+      return;
+    }
+
+    let isCancelled = false;
+    const requestedQuestionId = initialQuestionId?.trim() ?? "";
+    const canAutoResume =
+      !requestedQuestionId || requestedQuestionId === passage.questions[0]?.id;
+
+    setIsAccountProgressLoading(true);
+
+    void loadSectionProgressFromClient({
+      section: "verbal",
+      categoryId: `reading:${passage.slug}`,
+    })
+      .then((response) => {
+        if (isCancelled) return;
+
+        if (!response.ok || !response.snapshot) {
+          setIsAccountProgressLoading(false);
+          return;
+        }
+
+        const passageAnswers = Object.fromEntries(
+          response.snapshot.items
+            .map((item) => {
+              const answerKey = resolveStoredPassageAnswerKey(
+                passage,
+                item.questionKey,
+                item.selectedAnswer,
+              );
+
+              return answerKey ? [item.questionKey, answerKey] : null;
+            })
+            .filter(Boolean) as Array<[string, "A" | "B" | "C" | "D"]>,
+        ) as SavedAnswerMap;
+
+        const passageSubmissions = Object.fromEntries(
+          response.snapshot.items
+            .filter((item) => Boolean(item.selectedAnswer))
+            .map((item) => [item.questionKey, true]),
+        ) as SavedSubmissionMap;
+
+        setSelectedAnswers((previous) => {
+          const next = replacePassageAnswers(previous, passage.slug, passageAnswers);
+          persistSavedAnswers(next);
+          return next;
+        });
+
+        setSubmittedAnswers((previous) => {
+          const next = replacePassageSubmissions(
+            previous,
+            passage.slug,
+            passageSubmissions,
+          );
+          persistSavedSubmissions(next);
+          return next;
+        });
+
+        const resumeQuestionId = extractPassageQuestionId(
+          response.snapshot.lastQuestionKey,
+          passage.slug,
+        );
+        const resumeQuestionIndex = findQuestionIndexById(passage, resumeQuestionId);
+
+        if (
+          canAutoResume &&
+          resumeQuestionIndex >= 0 &&
+          resumeQuestionId !== requestedQuestionId
+        ) {
+          setQuestionIndex(resumeQuestionIndex);
+        }
+
+        setIsAccountProgressLoading(false);
+      })
+      .catch(() => {
+        if (!isCancelled) {
+          setIsAccountProgressLoading(false);
+        }
+      });
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [authStatus, initialQuestionId, mode, passage]);
+
+  async function resetPassageSession() {
+    if (authStatus === "authenticated") {
+      await resetSectionProgressFromClient({
+        section: "verbal",
+        categoryId: `reading:${passage.slug}`,
+      });
+    }
+
     const nextAnswers = clearPassageAnswers(passage.slug);
     const nextSubmissions = clearPassageSubmissions(passage.slug);
     setSelectedAnswers(nextAnswers);
@@ -264,6 +422,7 @@ export function VerbalPassageViewer({
     setQuestionIndex(0);
     setAuthPromptQuestionId(null);
     setProgressFeedback(null);
+    setSavedCompletionChoice(false);
   }
 
   useEffect(() => {
@@ -276,12 +435,14 @@ export function VerbalPassageViewer({
       return;
     }
 
-    resetPassageSession();
+    void (async () => {
+      await resetPassageSession();
 
-    const nextParams = new URLSearchParams(searchParams.toString());
-    nextParams.delete("reset");
-    nextParams.set("passage", passage.slug);
-    router.replace(`${pathname}?${nextParams.toString()}`, { scroll: false });
+      const nextParams = new URLSearchParams(searchParams.toString());
+      nextParams.delete("reset");
+      nextParams.set("passage", passage.slug);
+      router.replace(`${pathname}?${nextParams.toString()}`, { scroll: false });
+    })();
   }, [mode, passage.slug, pathname, router, searchParams]);
 
   useEffect(() => {
@@ -428,6 +589,7 @@ export function VerbalPassageViewer({
     });
     setProgressFeedback(null);
     setAuthPromptQuestionId((current) => (current === currentQuestion.id ? null : current));
+    setSavedCompletionChoice(false);
   }
 
   function goToQuestion(index: number) {
@@ -571,7 +733,8 @@ export function VerbalPassageViewer({
           </div>
 
           {mode === "student" ? (
-            <div className="mt-8 flex flex-wrap items-center gap-3">
+            <>
+              <div className="mt-8 flex flex-wrap items-center gap-3">
               <Button
                 size="lg"
                 onClick={() => void confirmCurrentAnswer()}
@@ -580,7 +743,7 @@ export function VerbalPassageViewer({
                 تأكيد الإجابة
               </Button>
 
-              <Button variant="outline" size="lg" onClick={resetPassageSession} className="gap-2">
+              <Button variant="outline" size="lg" onClick={() => void resetPassageSession()} className="gap-2">
                 <RotateCcw className="h-4 w-4" />
                 إعادة أسئلة هذه القطعة
               </Button>
@@ -608,6 +771,15 @@ export function VerbalPassageViewer({
                   : "السؤال التالي"}
               </Button>
             </div>
+
+            <div className="mt-4 rounded-[1.2rem] border border-slate-200 bg-slate-50/80 px-4 py-3 text-sm leading-7 text-slate-600">
+              {authStatus === "authenticated"
+                ? isAccountProgressLoading
+                  ? "جارِ استعادة تقدم هذه القطعة من حسابك..."
+                  : "تقدم هذه القطعة محفوظ داخل حسابك، وعند الرجوع ستعود إلى آخر سؤال قمت بحله."
+                : "الحفظ الدائم لتقدم القطع يحتاج تسجيل الدخول، أما الآن فالحفظ مؤقت داخل هذه الجلسة فقط."}
+              </div>
+            </>
           ) : null}
 
           {mode === "student" && submitted && selectedKey ? (
@@ -762,6 +934,24 @@ export function VerbalPassageViewer({
                 البحث لاختيار قطعة أخرى بالعنوان أو بالكلمة المفتاحية.
               </p>
               <div className="mt-4 flex flex-wrap gap-3">
+                <Button
+                  variant="outline"
+                  size="default"
+                  onClick={() => setSavedCompletionChoice(true)}
+                  disabled={isNavigating}
+                >
+                  الاحتفاظ بالتقدم المحفوظ
+                </Button>
+
+                <Button
+                  variant="outline"
+                  size="default"
+                  onClick={() => void resetPassageSession()}
+                  disabled={isNavigating}
+                >
+                  إعادة أسئلة هذه القطعة
+                </Button>
+
                 {onOpenNextPassage ? (
                   <Button size="default" onClick={onOpenNextPassage} disabled={isNavigating}>
                     {nextPassageTitle
@@ -781,6 +971,11 @@ export function VerbalPassageViewer({
                   </Button>
                 ) : null}
               </div>
+              {savedCompletionChoice ? (
+                <div className="mt-4 rounded-[1.1rem] border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-800">
+                  رائع، ستبقى هذه القطعة محفوظة داخل حسابك ويمكنك استكمالها أو مراجعتها لاحقًا من نفس المكان.
+                </div>
+              ) : null}
             </div>
           ) : null}
         </section>
