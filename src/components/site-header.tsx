@@ -18,6 +18,23 @@ type BasicNavLink = {
   icon?: LucideIcon;
 };
 
+const STUDENT_ROUTE_PREFIXES = [
+  "/dashboard",
+  "/my-plan",
+  "/question-bank",
+  "/challenge",
+  "/paper-models",
+  "/statistics",
+  "/account",
+  "/summaries",
+  "/verbal/practice",
+  "/verbal-passages",
+];
+
+function isStudentAreaPath(pathname: string) {
+  return STUDENT_ROUTE_PREFIXES.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`));
+}
+
 function isNavItemActive(pathname: string, currentSearch: string, href: string) {
   const [hrefWithoutHash] = href.split("#");
 
@@ -90,23 +107,24 @@ export function SiteHeader({
   const [open, setOpen] = useState(false);
   const [currentSearch, setCurrentSearch] = useState("");
   const isAuthenticated = status === "authenticated" && Boolean(user);
-  const brandHref = isAuthenticated ? "/dashboard" : "/";
+  const isStudentArea = useMemo(() => isAuthenticated || isStudentAreaPath(pathname), [isAuthenticated, pathname]);
+  const brandHref = isStudentArea ? "/dashboard" : "/";
 
   useEffect(() => {
     setCurrentSearch(window.location.search);
   }, []);
 
   const desktopLinks = useMemo(
-    () => links ?? (isAuthenticated ? studentTopNavItems : publicTopNavItems),
-    [isAuthenticated, links],
+    () => links ?? (isStudentArea ? studentTopNavItems : publicTopNavItems),
+    [isStudentArea, links],
   );
 
   const mobileItems = useMemo(
     () =>
-      (isAuthenticated ? [...studentTopNavItems, ...studentSidebarItems] : publicTopNavItems).filter(
+      (isStudentArea ? [...studentTopNavItems, ...studentSidebarItems] : publicTopNavItems).filter(
         (item, index, array) => array.findIndex((candidate) => candidate.href === item.href) === index,
       ),
-    [isAuthenticated],
+    [isStudentArea],
   );
 
   async function handleLogout() {
