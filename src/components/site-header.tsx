@@ -120,9 +120,9 @@ export function SiteHeader({
   }
 
   return (
-    <header className="sticky top-0 z-[9999] border-b border-[#edf1f7] bg-[#fbfdff]/95 backdrop-blur-2xl">
-      <div className="mx-auto w-[min(calc(100%-1rem),1500px)] py-4 sm:w-[min(calc(100%-2rem),1500px)]">
-        <div className="flex items-center justify-between gap-5 rounded-[1.7rem] border border-[#e6edf9] bg-white px-5 py-4 shadow-[0_16px_40px_rgba(15,23,42,0.05)]">
+    <header className="sticky top-0 z-[9999] border-b border-[#edf1f7] bg-[#fbfdff]/98 backdrop-blur-2xl">
+      <div className="mx-auto w-[min(calc(100%-1rem),1500px)] sm:w-[min(calc(100%-2rem),1500px)]">
+        <div className="flex items-center justify-between gap-5 rounded-b-[1.7rem] border-x border-b border-[#e6edf9] bg-white px-5 py-4 shadow-[0_12px_30px_rgba(15,23,42,0.04)]">
           <div className="flex items-center gap-10">
             <MiyaarLogo href={brandHref} />
 
@@ -144,7 +144,7 @@ export function SiteHeader({
                   >
                     {Icon ? <Icon className={cn("h-5 w-5", active && "text-[#2563eb]")} /> : null}
                     <span className="leading-none">{item.label}</span>
-                    {active ? <span className="absolute inset-x-4 -bottom-[15px] h-[4px] rounded-full bg-[#2563eb]" /> : null}
+                    {active ? <span className="absolute inset-x-4 bottom-0 h-[4px] rounded-full bg-[#2563eb]" /> : null}
                   </Link>
                 );
               })}
