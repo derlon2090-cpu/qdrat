@@ -33,8 +33,8 @@ export function HeaderAuthControls({
 
   if (status === "loading") {
     return (
-      <div className="hidden items-center gap-3 xl:flex" dir="ltr">
-        <div className="flex h-[56px] w-[56px] items-center justify-center rounded-[1.2rem] border border-[#e6edf9] bg-white shadow-[0_12px_26px_rgba(15,23,42,0.05)]">
+      <div className="hidden items-center gap-2.5 xl:flex" dir="ltr">
+        <div className="flex h-[52px] w-[52px] items-center justify-center rounded-[1.05rem] border border-[#e6edf9] bg-white shadow-[0_10px_22px_rgba(15,23,42,0.045)]">
           <Loader2 className="h-4 w-4 animate-spin text-[#123B7A]" />
         </div>
       </div>
@@ -43,23 +43,23 @@ export function HeaderAuthControls({
 
   if (status === "authenticated" && user) {
     return (
-      <div className="hidden items-center gap-4 xl:flex" dir="ltr">
+      <div className="hidden items-center gap-2.5 xl:flex" dir="ltr">
         <button
           type="button"
           onClick={handleLogout}
-          className="inline-flex h-[56px] items-center gap-3 rounded-[1.2rem] border border-[#e6edf9] bg-white px-6 text-[0.95rem] font-bold text-slate-700 shadow-[0_12px_26px_rgba(15,23,42,0.05)] transition hover:border-rose-200 hover:text-rose-600"
+          className="inline-flex h-[52px] items-center gap-2.5 rounded-[1.05rem] border border-[#e6edf9] bg-white px-5 text-[0.92rem] font-bold text-slate-700 shadow-[0_10px_22px_rgba(15,23,42,0.045)] transition hover:border-rose-200 hover:text-rose-600"
         >
           <LogOut className="h-4 w-4" />
           {LOGOUT_LABEL}
         </button>
 
-        <div className="flex h-[56px] items-center gap-4 rounded-[1.2rem] border border-[#e6edf9] bg-white px-5 shadow-[0_12px_26px_rgba(15,23,42,0.05)]">
+        <div className="flex h-[52px] items-center gap-3 rounded-[1.05rem] border border-[#e6edf9] bg-white px-4 shadow-[0_10px_22px_rgba(15,23,42,0.045)]">
           <ChevronDown className="h-4 w-4 text-slate-400" />
           <div className="text-right leading-tight" dir="rtl">
-            <div className="text-[1.05rem] font-extrabold text-slate-900">{user.fullName}</div>
+            <div className="text-[1rem] font-extrabold text-slate-900">{user.fullName}</div>
             <div className="mt-1 text-sm font-medium text-slate-400">مستوى متقدم</div>
           </div>
-          <div className="flex h-11 w-11 items-center justify-center rounded-full bg-[#eef4ff] text-[#2563eb]">
+          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#eef4ff] text-[#2563eb]">
             <UserRound className="h-5 w-5" />
           </div>
         </div>

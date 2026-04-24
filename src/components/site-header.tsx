@@ -62,7 +62,7 @@ function HeaderUtilityButton({
       onClick={onClick}
       aria-label={label}
       className={cn(
-        "relative flex h-[56px] w-[56px] items-center justify-center rounded-[1.2rem] border border-[#e6edf9] bg-white text-[#123B7A] shadow-[0_12px_26px_rgba(15,23,42,0.05)] transition hover:border-[#cdddff] hover:bg-[#f8fbff]",
+        "relative flex h-[52px] w-[52px] items-center justify-center rounded-[1.05rem] border border-[#e6edf9] bg-white text-[#123B7A] shadow-[0_10px_22px_rgba(15,23,42,0.045)] transition hover:border-[#cdddff] hover:bg-[#f8fbff]",
         className,
       )}
     >
@@ -121,9 +121,9 @@ export function SiteHeader({
 
   return (
     <header className="sticky top-0 z-[9999] border-b border-[#edf1f7] bg-[#fbfdff]/98 backdrop-blur-2xl">
-      <div className="mx-auto w-[min(calc(100%-1rem),1500px)] sm:w-[min(calc(100%-2rem),1500px)]">
-        <div className="flex items-center justify-between gap-5 rounded-b-[1.7rem] border-x border-b border-[#e6edf9] bg-white px-5 py-4 shadow-[0_12px_30px_rgba(15,23,42,0.04)]">
-          <div className="flex items-center gap-10">
+      <div className="mx-auto w-[min(calc(100%-1.5rem),1500px)] sm:w-[min(calc(100%-2rem),1500px)]">
+        <div className="flex items-center justify-between gap-4 rounded-b-[1.5rem] border-x border-b border-[#e6edf9] bg-white px-4 py-3.5 shadow-[0_10px_26px_rgba(15,23,42,0.035)] lg:px-5">
+          <div className="flex items-center gap-7">
             <MiyaarLogo href={brandHref} />
 
             <nav className={cn("hidden items-center gap-1 text-sm font-bold text-slate-600", isAuthenticated ? "xl:flex" : "lg:flex")}>
@@ -136,22 +136,22 @@ export function SiteHeader({
                     key={item.href}
                     href={item.href}
                     className={cn(
-                      "relative flex min-w-[110px] flex-col items-center justify-center gap-2 rounded-[1rem] px-4 py-2.5 text-center transition",
+                      "relative flex min-w-[94px] flex-col items-center justify-center gap-1.5 rounded-[0.95rem] px-3 py-2 text-center transition",
                       active
                         ? "text-[#2563eb]"
                         : "text-slate-600 hover:bg-[#f8fbff] hover:text-slate-900",
                     )}
                   >
                     {Icon ? <Icon className={cn("h-5 w-5", active && "text-[#2563eb]")} /> : null}
-                    <span className="leading-none">{item.label}</span>
-                    {active ? <span className="absolute inset-x-4 bottom-0 h-[4px] rounded-full bg-[#2563eb]" /> : null}
+                    <span className="text-[0.95rem] leading-[1.15]">{item.label}</span>
+                    {active ? <span className="absolute inset-x-3 bottom-0 h-[4px] rounded-full bg-[#2563eb]" /> : null}
                   </Link>
                 );
               })}
             </nav>
           </div>
 
-          <div className="flex items-center gap-3" dir="ltr">
+          <div className="flex items-center gap-2.5" dir="ltr">
             {isAuthenticated ? (
               <>
                 <HeaderUtilityButton href="/dashboard#notifications" icon={Bell} badge={3} label="الإشعارات" className="hidden xl:flex" />
@@ -162,7 +162,7 @@ export function SiteHeader({
             <button
               type="button"
               onClick={() => setOpen(true)}
-              className="flex h-[56px] w-[56px] items-center justify-center rounded-[1.2rem] border border-[#e6edf9] bg-white text-[#123B7A] shadow-[0_12px_26px_rgba(15,23,42,0.05)] xl:hidden"
+              className="flex h-[52px] w-[52px] items-center justify-center rounded-[1.05rem] border border-[#e6edf9] bg-white text-[#123B7A] shadow-[0_10px_22px_rgba(15,23,42,0.045)] xl:hidden"
               aria-label="افتح القائمة"
             >
               <Menu className="h-5 w-5" />

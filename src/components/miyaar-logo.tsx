@@ -10,8 +10,8 @@ export function MiyaarLogo({
   href?: string;
 }) {
   return (
-    <Link href={href} className={cn("inline-flex items-center gap-3", className)}>
-      <span className="inline-flex h-14 w-14 items-center justify-center">
+    <Link href={href} className={cn("inline-flex items-center gap-2.5", className)}>
+      <span className="inline-flex h-12 w-12 items-center justify-center">
         <svg viewBox="0 0 64 64" className="h-full w-full">
           <path
             d="M32 4 60 32 32 60 4 32 32 4Z"
@@ -56,7 +56,7 @@ export function MiyaarLogo({
           />
         </svg>
       </span>
-      <strong className="display-font text-[1.9rem] font-black tracking-tight text-[#123B7A]">
+      <strong className="display-font text-[1.72rem] font-black tracking-tight text-[#123B7A]">
         معيار
       </strong>
     </Link>
