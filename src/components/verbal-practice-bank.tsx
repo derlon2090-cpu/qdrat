@@ -3,9 +3,26 @@
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
-import { RotateCcw, Sparkles } from "lucide-react";
+import {
+  ArrowLeft,
+  ArrowRight,
+  Pin,
+  RotateCcw,
+  ScrollText,
+  Sparkles,
+} from "lucide-react";
 
+import {
+  PracticeSessionShell,
+  PracticeSessionTopBar,
+} from "@/components/practice-session-shell";
+import type { VerbalPracticeQuestion, VerbalQuestionCategoryId } from "@/data/verbal-mixed-bank";
 import { useAuthSession } from "@/hooks/use-auth-session";
+import {
+  persistClientQuestionFlags,
+  readClientQuestionFlags,
+  toggleClientQuestionFlag,
+} from "@/lib/client-question-flags";
 import {
   loadSectionProgressFromClient,
   resetSectionProgressFromClient,
@@ -15,12 +32,11 @@ import {
   type ClientQuestionProgressResult,
 } from "@/lib/client-question-progress";
 import { trackMistakeFromClient } from "@/lib/client-mistakes";
-import type { VerbalPracticeQuestion, VerbalQuestionCategoryId } from "@/data/verbal-mixed-bank";
-import { Button } from "@/components/ui/button";
 
 type SavedAnswerMap = Record<string, string>;
 type QuestionProgressState = "current" | "correct" | "incorrect" | "unanswered";
 type ProgressFeedback = ClientQuestionProgressResult | null;
+
 type PracticeCategorySummary = {
   id: VerbalQuestionCategoryId;
   title: string;
@@ -28,11 +44,13 @@ type PracticeCategorySummary = {
   count: number;
   firstQuestionId: string | null;
 };
+
 type ActiveCategory = {
   id: VerbalQuestionCategoryId;
   title: string;
   description: string;
 };
+
 type VerbalPracticeBankProps = {
   categories: PracticeCategorySummary[];
   currentCategory: ActiveCategory;
@@ -44,6 +62,16 @@ const SAVED_ANSWERS_KEY = "miyaar-verbal-practice-answers";
 
 function getChoiceLetter(index: number) {
   return ["أ", "ب", "ج", "د"][index] ?? String(index + 1);
+}
+
+function formatElapsedLabel(totalSeconds: number) {
+  const minutes = Math.floor(totalSeconds / 60)
+    .toString()
+    .padStart(2, "0");
+  const seconds = Math.floor(totalSeconds % 60)
+    .toString()
+    .padStart(2, "0");
+  return `${minutes}:${seconds}`;
 }
 
 function readSavedAnswers() {
@@ -95,7 +123,12 @@ function extractQuestionIdFromProgressKey(questionKey: string | null, categoryId
   return questionKey.startsWith(prefix) ? questionKey.slice(prefix.length) : null;
 }
 
-function buildPracticeHref(pathname: string, currentParams: URLSearchParams, categoryId: string, questionId: string) {
+function buildPracticeHref(
+  pathname: string,
+  currentParams: URLSearchParams,
+  categoryId: string,
+  questionId: string,
+) {
   const nextParams = new URLSearchParams(currentParams.toString());
   nextParams.set("category", categoryId);
   nextParams.set("question", questionId);
@@ -120,27 +153,32 @@ export function VerbalPracticeBank({
   const [progressFeedback, setProgressFeedback] = useState<ProgressFeedback>(null);
   const [isAccountProgressLoading, setIsAccountProgressLoading] = useState(false);
   const [savedCompletionChoice, setSavedCompletionChoice] = useState(false);
+  const [questionFlags, setQuestionFlags] = useState(readClientQuestionFlags);
+  const [showAllQuestionPills, setShowAllQuestionPills] = useState(false);
+  const [questionElapsedSeconds, setQuestionElapsedSeconds] = useState(45);
 
   useEffect(() => {
     setSavedAnswers(readSavedAnswers());
+    setQuestionFlags(readClientQuestionFlags());
   }, []);
 
   const currentQuestionIndex = questions.findIndex((question) => question.id === activeQuestionId);
-
   const currentQuestion = questions[currentQuestionIndex] ?? null;
   const answeredCount = useMemo(
     () =>
-      questions.filter(
-        (question) => Boolean(savedAnswers[`${currentCategory.id}-${question.id}`]),
-      ).length,
+      questions.filter((question) => Boolean(savedAnswers[`${currentCategory.id}-${question.id}`]))
+        .length,
     [currentCategory.id, questions, savedAnswers],
   );
   const isCategoryCompleted = questions.length > 0 && answeredCount === questions.length;
 
   const currentKey = currentQuestion ? `${currentCategory.id}-${currentQuestion.id}` : "";
   const questionHref = currentQuestion
-    ? `/verbal/practice?category=${encodeURIComponent(currentCategory.id)}&question=${encodeURIComponent(currentQuestion.id)}`
+    ? `/verbal/practice?category=${encodeURIComponent(currentCategory.id)}&question=${encodeURIComponent(
+        currentQuestion.id,
+      )}`
     : "/verbal/practice";
+  const currentFlags = questionFlags[currentKey] ?? {};
 
   useEffect(() => {
     if (!currentQuestion) return;
@@ -153,10 +191,30 @@ export function VerbalPracticeBank({
 
   useEffect(() => {
     if (!currentQuestion) return;
+
+    setQuestionElapsedSeconds(45);
+    const startedAt = Date.now();
+    const intervalId = window.setInterval(() => {
+      setQuestionElapsedSeconds(45 + Math.floor((Date.now() - startedAt) / 1000));
+    }, 1000);
+
+    return () => window.clearInterval(intervalId);
+  }, [currentKey, currentQuestion]);
+
+  useEffect(() => {
+    if (!currentQuestion) return;
     if (!searchParams.get("question") || !searchParams.get("category")) {
-      router.replace(buildPracticeHref(pathname, new URLSearchParams(searchParams.toString()), currentCategory.id, currentQuestion.id), {
-        scroll: false,
-      });
+      router.replace(
+        buildPracticeHref(
+          pathname,
+          new URLSearchParams(searchParams.toString()),
+          currentCategory.id,
+          currentQuestion.id,
+        ),
+        {
+          scroll: false,
+        },
+      );
     }
   }, [currentCategory.id, currentQuestion, pathname, router, searchParams]);
 
@@ -212,32 +270,18 @@ export function VerbalPracticeBank({
     return index === currentQuestionIndex ? "current" : "unanswered";
   }
 
-  function getQuestionProgressClasses(status: QuestionProgressState, active: boolean) {
-    if (status === "correct") {
-      return active
-        ? "border-emerald-600 bg-emerald-600 text-white ring-4 ring-emerald-100"
-        : "border-emerald-200 bg-emerald-50 text-emerald-800";
-    }
-
-    if (status === "incorrect") {
-      return active
-        ? "border-rose-600 bg-rose-600 text-white ring-4 ring-rose-100"
-        : "border-rose-200 bg-rose-50 text-rose-800";
-    }
-
-    if (status === "current") {
-      return "border-slate-900 bg-slate-900 text-white";
-    }
-
-    return active
-      ? "border-[#123B7A] bg-[#eef4ff] text-[#123B7A]"
-      : "border-slate-200 bg-white text-slate-700";
-  }
-
   function openQuestion(categoryId: string, questionId: string) {
-    router.replace(buildPracticeHref(pathname, new URLSearchParams(searchParams.toString()), categoryId, questionId), {
-      scroll: false,
-    });
+    router.replace(
+      buildPracticeHref(
+        pathname,
+        new URLSearchParams(searchParams.toString()),
+        categoryId,
+        questionId,
+      ),
+      {
+        scroll: false,
+      },
+    );
   }
 
   function openCategory(categoryId: string) {
@@ -263,8 +307,7 @@ export function VerbalPracticeBank({
 
     let isCancelled = false;
     const requestedQuestionId = searchParams.get("question")?.trim() ?? "";
-    const canAutoResume =
-      !requestedQuestionId || requestedQuestionId === questions[0]?.id;
+    const canAutoResume = !requestedQuestionId || requestedQuestionId === questions[0]?.id;
 
     setIsAccountProgressLoading(true);
 
@@ -287,11 +330,7 @@ export function VerbalPracticeBank({
         ) as SavedAnswerMap;
 
         setSavedAnswers((previous) => {
-          const next = replaceCategorySavedAnswers(
-            previous,
-            currentCategory.id,
-            categoryAnswers,
-          );
+          const next = replaceCategorySavedAnswers(previous, currentCategory.id, categoryAnswers);
           persistSavedAnswers(next);
           return next;
         });
@@ -321,7 +360,7 @@ export function VerbalPracticeBank({
     return () => {
       isCancelled = true;
     };
-  }, [authStatus, currentCategory.id, questions]);
+  }, [authStatus, currentCategory.id, questions, searchParams]);
 
   async function handleResetCategory() {
     if (authStatus === "authenticated") {
@@ -419,6 +458,30 @@ export function VerbalPracticeBank({
     }
   }
 
+  function resetCurrentQuestionAttempt() {
+    if (!currentQuestion) return;
+
+    const nextAnswers = { ...savedAnswers };
+    delete nextAnswers[currentKey];
+    persistSavedAnswers(nextAnswers);
+    setSavedAnswers(nextAnswers);
+    setSelectedAnswer("");
+    setSubmitted(false);
+    setShowAuthPrompt(false);
+    setProgressFeedback(null);
+    setSavedCompletionChoice(false);
+  }
+
+  function toggleQuestionFlag(flag: "saved" | "pinned") {
+    if (!currentKey) return;
+
+    setQuestionFlags((previous) => {
+      const next = toggleClientQuestionFlag(previous, currentKey, flag);
+      persistClientQuestionFlags(next);
+      return next;
+    });
+  }
+
   if (!currentQuestion) {
     return (
       <div className="rounded-[1.8rem] border border-dashed border-slate-300 bg-white p-8 text-center text-sm text-slate-500 shadow-sm">
@@ -429,286 +492,299 @@ export function VerbalPracticeBank({
 
   const previousQuestion = questions[currentQuestionIndex - 1] ?? null;
   const nextQuestion = questions[currentQuestionIndex + 1] ?? null;
+  const currentQuestionLabel = `${currentQuestionIndex + 1} من ${questions.length}`;
+  const currentPositionProgress = questions.length
+    ? ((currentQuestionIndex + 1) / questions.length) * 100
+    : 0;
+  const completionProgress = questions.length ? (answeredCount / questions.length) * 100 : 0;
+  const explanationId = `${currentKey}-explanation`;
+  const averageSecondsLabel = `${Math.max(
+    35,
+    Math.round(questionElapsedSeconds / Math.max(1, currentQuestionIndex + 1)),
+  )} ثانية`;
+  const progressNotice =
+    authStatus === "authenticated"
+      ? isAccountProgressLoading
+        ? "جار استعادة تقدم هذا القسم من حسابك..."
+        : "تقدم هذا القسم محفوظ داخل حسابك، وعند العودة ستكمل من آخر سؤال وصلت إليه."
+      : "التقدم محفوظ داخل هذه الجلسة فقط. سجّل دخولك إذا أردت مزامنة القسم بين أجهزتك.";
+  const navigatorQuestions = showAllQuestionPills ? questions : questions.slice(0, 15);
+  const navigatorItems = navigatorQuestions.map((question) => {
+    const actualIndex = questions.findIndex((item) => item.id === question.id);
+    return {
+      id: `navigator-${question.id}`,
+      label: String(actualIndex + 1),
+      active: actualIndex === currentQuestionIndex,
+      status: getQuestionProgressState(question, actualIndex),
+      onClick: () => openQuestion(currentCategory.id, question.id),
+    };
+  });
 
-  return (
-    <div dir="rtl" className="space-y-6">
-      <div className="rounded-[1.9rem] border border-[#E8D8B3] bg-white/95 p-6 shadow-soft">
-        <div className="display-font text-2xl font-bold text-slate-950">اختر القسم اللفظي الذي تريد التدريب عليه</div>
-        <p className="mt-2 max-w-3xl text-sm leading-8 text-slate-600">
-          الأقسام الرسمية الظاهرة الآن هي فقط: إكمال الجمل، الاستيعاب المقروء، المفردة الشاذة، الخطأ السياقي،
-          والتناظر اللفظي. أي سؤال من معنى كلمة أو دلالة أو نوع نص داخل فقرة تم ضمه تحت الاستيعاب المقروء بدل
-          إظهاره كقسم مستقل.
-        </p>
-
-        <div className="mt-5 rounded-[1.6rem] border border-[#E8D8B3] bg-[#fffaf1] p-5">
-          <div className="text-sm font-bold text-[#123B7A]">كيف تعرف نوع السؤال قبل الحل؟</div>
-          <div className="mt-3 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-            {[
-              { label: "إكمال الجمل", hint: "أكمل / فراغ / يتم المعنى بـ" },
-              {
-                label: "الاستيعاب المقروء",
-                hint: "يفهم من النص / نستنتج / عنوان مناسب / معنى كلمة داخل النص / ما تفيده عبارة",
-              },
-              { label: "المفردة الشاذة", hint: "الكلمة المختلفة / الشاذة / ما لا ينتمي" },
-              { label: "الخطأ السياقي", hint: "الكلمة الخاطئة / غير المنسجمة / الخطأ في الجملة" },
-              { label: "تناظر لفظي", hint: "كلمة : كلمة = كلمة : ؟" },
-              { label: "ابدأ بالمطلوب", hint: "حدّد الكلمة المفتاحية في السؤال أولًا ثم اختر القسم المناسب" },
-            ].map((item) => (
-              <div key={item.label} className="rounded-[1.2rem] border border-white bg-white px-4 py-3 shadow-sm">
-                <div className="text-sm font-bold text-slate-900">{item.label}</div>
-                <div className="mt-1 text-xs leading-6 text-slate-500">{item.hint}</div>
-              </div>
-            ))}
+  const feedbackContent =
+    submitted && result ? (
+      <div
+        id={explanationId}
+        className={`rounded-[1.35rem] border px-5 py-4 text-sm leading-8 ${
+          result.isCorrect
+            ? "border-emerald-200 bg-emerald-50 text-emerald-900"
+            : "border-rose-200 bg-rose-50 text-rose-900"
+        }`}
+      >
+        <div className="text-base font-black">
+          {result.isCorrect ? "هذا هو الصحيح" : "هذه المحاولة تحتاج مراجعة"}
+        </div>
+        {!result.isCorrect ? (
+          <div className="mt-2">
+            <span className="font-bold">الإجابة الصحيحة:</span> {result.correctAnswer}
           </div>
+        ) : null}
+        <div className="mt-2">
+          <span className="font-bold">الشرح:</span> {result.explanation}
         </div>
 
-        <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-          {categories.map((category) => {
-            const active = category.id === currentCategory.id;
-            return (
-              <button
-                key={category.id}
-                type="button"
-                onClick={() => openCategory(category.id)}
-                className={`rounded-[1.5rem] border p-5 text-right transition ${
-                  active
-                    ? "border-transparent bg-[linear-gradient(135deg,#102955,#123B7A_55%,#2f5fa7)] text-white shadow-[0_18px_38px_rgba(18,59,122,0.22)]"
-                    : "border-slate-200 bg-slate-50/80 text-slate-900 hover:border-[#C99A43] hover:bg-white"
-                }`}
-              >
-                <div className="display-font text-xl font-bold">{category.title}</div>
-                <div className={`mt-2 text-sm leading-7 ${active ? "text-white/80" : "text-slate-500"}`}>{category.description}</div>
-                <div className={`mt-4 text-xs font-semibold ${active ? "text-white/75" : "text-[#123B7A]"}`}>
-                  {category.count} سؤال
-                </div>
-              </button>
-            );
-          })}
-        </div>
+        {progressFeedback ? (
+          <div className="mt-3 rounded-[1rem] border border-white/70 bg-white/70 px-4 py-3 text-xs leading-7 text-slate-700">
+            <div className="flex flex-wrap items-center gap-2 font-bold text-slate-900">
+              <Sparkles className="h-4 w-4" />
+              {progressFeedback.awardedXp > 0
+                ? `أضفنا ${progressFeedback.awardedXp} XP إلى ملفك.`
+                : progressFeedback.alreadySolved
+                  ? "هذا السؤال محسوب سابقًا داخل تقدمك."
+                  : "تم حفظ المحاولة داخل ملف الطالب."}
+            </div>
+            <div className="mt-1">
+              مجموعك الحالي: {progressFeedback.totalXp.toLocaleString("en-US")} XP - الأسئلة
+              المحلولة: {progressFeedback.solvedQuestionsCount.toLocaleString("en-US")}
+            </div>
+          </div>
+        ) : null}
+      </div>
+    ) : null;
+
+  const noticesContent = (
+    <>
+      <div className="rounded-[1.2rem] border border-slate-200 bg-slate-50 px-4 py-3 text-sm leading-7 text-slate-600">
+        {progressNotice}
       </div>
 
-      <div>
-        <section className="rounded-[1.9rem] border border-slate-200 bg-white p-6 shadow-sm md:p-8">
-          <div className="flex flex-wrap items-start justify-between gap-4 border-b border-slate-200 pb-5">
-            <div>
-              <div className="text-sm font-semibold text-[#123B7A]">
-                {currentCategory.title} / سؤال {currentQuestionIndex + 1} من {questions.length}
-              </div>
-              <h2 className="display-font mt-3 text-3xl font-bold text-slate-950">{currentQuestion.prompt}</h2>
-            </div>
-
-            <div className="rounded-2xl bg-slate-50 px-4 py-3 text-sm text-slate-500 ring-1 ring-slate-200">
-              المصدر: {currentQuestion.source}
-            </div>
-          </div>
-
-          <div className="mt-8 grid gap-4 md:grid-cols-2">
-            {currentQuestion.options.map((option, index) => {
-              const isSelected = selectedAnswer === option;
-              const isCorrect = submitted && option === currentQuestion.correctAnswer;
-              const isWrongSelected = submitted && isSelected && option !== currentQuestion.correctAnswer;
-
-              let classes = "border-slate-200 bg-white text-slate-800 hover:border-[#C99A43] hover:bg-[#fffaf1]";
-
-              if (isCorrect) {
-                classes = "border-emerald-300 bg-emerald-50 text-emerald-900";
-              } else if (isWrongSelected) {
-                classes = "border-rose-300 bg-rose-50 text-rose-900";
-              } else if (isSelected) {
-                classes = "border-[#123B7A] bg-[#eef4ff] text-[#123B7A]";
-              }
-
-              return (
-                <button
-                  key={`${currentQuestion.id}-${index + 1}`}
-                  type="button"
-                  onClick={() => {
-                    setSelectedAnswer(option);
-                    setSubmitted(false);
-                    setShowAuthPrompt(false);
-                    setSavedCompletionChoice(false);
-                  }}
-                  className={`rounded-[1.4rem] border px-5 py-5 text-right transition ${classes}`}
-                >
-                  <div className="flex items-start justify-between gap-4">
-                    <span className="flex-1 text-lg leading-8">{option}</span>
-                    <span className="text-sm font-bold">{getChoiceLetter(index)}</span>
-                  </div>
-                </button>
-              );
-            })}
-          </div>
-
-          <div className="mt-8 flex flex-wrap items-center gap-3">
-            <Button size="lg" onClick={() => void confirmAnswer()} disabled={!selectedAnswer}>
-              تأكيد الإجابة
-            </Button>
-
-            <Button variant="outline" size="lg" onClick={() => void handleResetCategory()} className="gap-2">
-              <RotateCcw className="h-4 w-4" />
-              إعادة أسئلة هذا القسم
-            </Button>
-
-            <Button
-              variant="outline"
-              size="lg"
-              onClick={() => previousQuestion && openQuestion(currentCategory.id, previousQuestion.id)}
-              disabled={!previousQuestion}
+      {showAuthPrompt ? (
+        <div className="rounded-[1.2rem] border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-8 text-amber-800">
+          {result?.isCorrect
+            ? "سجّل دخولك حتى يتم حفظ هذا السؤال كسؤال محلول وإضافة XP إلى حسابك."
+            : "سجّل دخولك حتى يتم حفظ هذا السؤال داخل قائمة الأخطاء الخاصة بك."}
+          <div className="mt-2 flex flex-wrap gap-3">
+            <Link
+              href={`/login?next=${encodeURIComponent(questionHref)}`}
+              className="font-semibold text-[#123B7A]"
             >
-              السؤال السابق
-            </Button>
-
-            <Button
-              variant="outline"
-              size="lg"
-              onClick={() => nextQuestion && openQuestion(currentCategory.id, nextQuestion.id)}
-              disabled={!nextQuestion}
+              تسجيل الدخول
+            </Link>
+            <Link
+              href={`/register?next=${encodeURIComponent(questionHref)}`}
+              className="font-semibold text-[#123B7A]"
             >
-              السؤال التالي
-            </Button>
+              إنشاء حساب
+            </Link>
           </div>
+        </div>
+      ) : null}
+    </>
+  );
 
-          <div className="mt-4 rounded-[1.2rem] border border-slate-200 bg-slate-50/80 px-4 py-3 text-sm leading-7 text-slate-600">
-            {authStatus === "authenticated"
-              ? isAccountProgressLoading
-                ? "جارِ استعادة تقدم هذا القسم من حسابك..."
-                : "تقدم هذا القسم محفوظ داخل حسابك، وعند العودة ستكمل من آخر سؤال قمت بحله."
-              : "الحفظ الدائم لتقدم الأقسام يحتاج تسجيل الدخول، أما الآن فالحفظ مؤقت داخل هذه الجلسة فقط."}
+  const completionContent = isCategoryCompleted ? (
+    <div className="rounded-[1.35rem] border border-[#E8D8B3] bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(248,247,244,0.96))] px-5 py-5">
+      <div className="text-lg font-black text-slate-950">أنهيت جميع أسئلة هذا القسم</div>
+      <p className="mt-2 text-sm leading-8 text-slate-600">
+        {authStatus === "authenticated"
+          ? "تقدمك محفوظ داخل حسابك الآن، ويمكنك الاحتفاظ به أو إعادة أسئلة القسم من البداية."
+          : "أنهيت القسم كاملًا. سجّل دخولك حتى يبقى هذا الإنجاز محفوظًا عند رجوعك لاحقًا."}
+      </p>
+      <div className="mt-4 flex flex-wrap gap-3">
+        <button
+          type="button"
+          onClick={() => setSavedCompletionChoice(true)}
+          className="inline-flex h-11 items-center justify-center rounded-[1rem] border border-slate-200 bg-white px-4 text-sm font-bold text-slate-700 transition hover:bg-slate-50"
+        >
+          الاحتفاظ بالتقدم المحفوظ
+        </button>
+        <button
+          type="button"
+          onClick={() => void handleResetCategory()}
+          className="inline-flex h-11 items-center justify-center rounded-[1rem] border border-[#1f4b94] bg-[#1f4b94] px-4 text-sm font-bold text-white transition hover:bg-[#163b77]"
+        >
+          إعادة أسئلة القسم
+        </button>
+      </div>
+      {savedCompletionChoice ? (
+        <div className="mt-3 rounded-[1rem] border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-800">
+          ممتاز، سيبقى هذا القسم محفوظًا لك كما هو ويمكنك الرجوع إليه من نفس النقطة لاحقًا.
+        </div>
+      ) : null}
+    </div>
+  ) : null;
+
+  return (
+    <div dir="rtl" className="space-y-5">
+      <PracticeSessionTopBar
+        reportHref={`/contact?question=${encodeURIComponent(currentKey)}&next=${encodeURIComponent(
+          questionHref,
+        )}`}
+        saved={Boolean(currentFlags.saved)}
+        pinned={Boolean(currentFlags.pinned)}
+        onToggleSaved={() => toggleQuestionFlag("saved")}
+        onTogglePinned={() => toggleQuestionFlag("pinned")}
+        showPinButton={false}
+        rightMeta={
+          <>
+            <span>{currentCategory.title}</span>
+            <span className="text-slate-300">/</span>
+            <span>{currentQuestion.source}</span>
+            <span className="text-slate-300">/</span>
+            <span>{currentQuestionLabel}</span>
+          </>
+        }
+      />
+
+      <PracticeSessionShell
+        sectionLabel={`اللفظي / ${currentCategory.title}`}
+        progressLabel={currentQuestionLabel}
+        progressValue={currentPositionProgress}
+        timerLabel={formatElapsedLabel(questionElapsedSeconds)}
+        prompt={currentQuestion.prompt}
+        metaBadge={
+          <div className="rounded-full border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-500">
+            المصدر: {currentQuestion.source}
           </div>
+        }
+        options={currentQuestion.options.map((option, index) => {
+          const isSelected = selectedAnswer === option;
+          const isCorrect = submitted && option === currentQuestion.correctAnswer;
+          const isWrongSelected =
+            submitted && isSelected && option !== currentQuestion.correctAnswer;
 
-          {submitted && result ? (
-            <div
-              className={`mt-6 rounded-[1.4rem] border px-5 py-5 text-base leading-8 ${
-                result.isCorrect ? "border-emerald-200 bg-emerald-50 text-emerald-900" : "border-rose-200 bg-rose-50 text-rose-900"
-              }`}
+          const classes = isCorrect
+            ? "border-emerald-300 bg-emerald-50 text-emerald-900"
+            : isWrongSelected
+              ? "border-rose-300 bg-rose-50 text-rose-900"
+              : isSelected
+                ? "border-[#2563eb] bg-[#eef4ff] text-[#1f4b94] shadow-[0_10px_22px_rgba(37,99,235,0.08)]"
+                : "border-slate-200 bg-white text-slate-800 hover:border-[#cfd8ea] hover:bg-slate-50";
+
+          return (
+            <button
+              key={`${currentQuestion.id}-${index + 1}`}
+              type="button"
+              onClick={() => {
+                setSelectedAnswer(option);
+                setSubmitted(false);
+                setShowAuthPrompt(false);
+                setSavedCompletionChoice(false);
+              }}
+              className={`rounded-[1.25rem] border px-5 py-4 text-right transition ${classes}`}
             >
-              <div className="text-xl font-bold">{result.isCorrect ? "إجابة صحيحة" : "إجابة خاطئة"}</div>
-              {!result.isCorrect ? (
-                <div className="mt-3">
-                  <span className="font-bold">الإجابة الصحيحة:</span> {result.correctAnswer}
-                </div>
-              ) : null}
-              <div className="mt-3">
-                <span className="font-bold">الشرح:</span> {result.explanation}
+              <div className="flex items-start justify-between gap-4">
+                <span className="flex-1 text-lg leading-8">{option}</span>
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-slate-100 text-sm font-black text-slate-700">
+                  {getChoiceLetter(index)}
+                </span>
               </div>
-
-              {progressFeedback ? (
-                <div className="mt-4 rounded-[1.1rem] border border-white/60 bg-white/60 px-4 py-3 text-sm leading-7">
-                  <div className="flex flex-wrap items-center gap-2 font-bold">
-                    <Sparkles className="h-4 w-4" />
-                    {progressFeedback.awardedXp > 0
-                      ? `تمت إضافة ${progressFeedback.awardedXp} XP إلى ملفك.`
-                      : progressFeedback.alreadySolved
-                        ? "هذا السؤال محسوب سابقًا داخل إنجازاتك."
-                        : "تم حفظ المحاولة داخل ملف الطالب."}
-                  </div>
-                  <div className="mt-2">
-                    مجموعك الحالي: {progressFeedback.totalXp.toLocaleString("en-US")} XP
-                    {` `} - الأسئلة المحلولة:{" "}
-                    {progressFeedback.solvedQuestionsCount.toLocaleString("en-US")}
-                  </div>
-                  {progressFeedback.reachedProfessionalLevel ? (
-                    <div className="mt-2 font-bold">
-                      وصلت للفل المحترف وأنت جاهز تقريبًا للاختبار.
-                    </div>
-                  ) : null}
-                </div>
-              ) : null}
-            </div>
-          ) : null}
-
-          {isCategoryCompleted ? (
-            <div className="mt-6 rounded-[1.4rem] border border-[#E8D8B3] bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(248,247,244,0.96))] px-5 py-5">
-              <div className="text-xl font-bold text-slate-950">
-                أنهيت جميع أسئلة هذا القسم
-              </div>
-              <p className="mt-3 text-sm leading-8 text-slate-600">
-                {authStatus === "authenticated"
-                  ? "تقدمك محفوظ داخل حسابك الآن، ويمكنك إبقاء القسم كما هو أو إعادة أسئلته من البداية في أي وقت."
-                  : "أنهيت القسم كاملًا. إذا سجّلت دخولك سيبقى هذا التقدم محفوظًا عند رجوعك لاحقًا."}
-              </p>
-              <div className="mt-4 flex flex-wrap gap-3">
-                <Button
-                  variant="outline"
-                  size="lg"
-                  onClick={() => setSavedCompletionChoice(true)}
-                >
-                  الاحتفاظ بالتقدم المحفوظ
-                </Button>
-                <Button size="lg" onClick={() => void handleResetCategory()}>
-                  إعادة أسئلة القسم
-                </Button>
-              </div>
-              {savedCompletionChoice ? (
-                <div className="mt-4 rounded-[1.1rem] border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-800">
-                  ممتاز، سيبقى هذا القسم محفوظًا لك كما هو ويمكنك الرجوع إليه من نفس المكان لاحقًا.
-                </div>
-              ) : null}
-            </div>
-          ) : null}
-
-          {showAuthPrompt ? (
-            <div className="mt-6 rounded-[1.4rem] border border-amber-200 bg-amber-50 px-5 py-5 text-sm leading-8 text-amber-800">
-              {result?.isCorrect
-                ? "سجّل دخولك حتى يتم حفظ هذا السؤال كسؤال محلول وإضافة XP إلى ملف الطالب."
-                : "سجّل دخولك حتى يتم حفظ هذا السؤال داخل ملف الطالب وقائمة الأخطاء الخاصة بحسابك."}
-              <div className="mt-3 flex flex-wrap gap-3">
-                <Link
-                  href={`/login?next=${encodeURIComponent(questionHref)}`}
-                  className="font-semibold text-[#123B7A]"
-                >
-                  تسجيل الدخول
-                </Link>
-                <Link
-                  href={`/register?next=${encodeURIComponent(questionHref)}`}
-                  className="font-semibold text-[#123B7A]"
-                >
-                  إنشاء حساب
-                </Link>
-              </div>
-            </div>
-          ) : null}
-
-          <div className="mt-8 grid gap-4 lg:grid-cols-[minmax(0,1.5fr)_minmax(320px,1fr)]">
-            <div className="rounded-[1.4rem] border border-slate-200 bg-slate-50/70 p-5">
-              <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
-                <div className="text-lg font-bold text-slate-900">أسئلة القسم</div>
-                <div className="text-xs font-semibold text-slate-500">
-                  الأخضر صحيح، الأحمر خطأ
-                </div>
-              </div>
-              <div className="flex flex-wrap gap-3">
-                {questions.map((question, index) => {
-                  const status = getQuestionProgressState(question, index);
-                  const active = index === currentQuestionIndex;
-
-                  return (
-                    <button
-                      key={`jump-${question.id}`}
-                      type="button"
-                      onClick={() => openQuestion(currentCategory.id, question.id)}
-                      className={`min-w-[108px] rounded-[999px] border px-5 py-4 text-base font-bold transition ${getQuestionProgressClasses(
-                        status,
-                        active,
-                      )}`}
-                    >
-                      سؤال {index + 1}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            <div className="rounded-[1.4rem] border border-slate-200 bg-slate-50/70 p-5">
-              <div className="mb-3 text-lg font-bold text-slate-900">الانتقال إلى قسم لفظي آخر</div>
-              <div className="flex flex-wrap gap-2">
+            </button>
+          );
+        })}
+        feedback={feedbackContent}
+        notices={noticesContent}
+        completion={completionContent}
+        footerActions={[
+          {
+            key: "next",
+            label: "السؤال التالي",
+            icon: ArrowLeft,
+            onClick: () =>
+              nextQuestion && openQuestion(currentCategory.id, nextQuestion.id),
+            disabled: !nextQuestion,
+            variant: "primary",
+          },
+          {
+            key: "previous",
+            label: "السؤال السابق",
+            icon: ArrowRight,
+            onClick: () =>
+              previousQuestion && openQuestion(currentCategory.id, previousQuestion.id),
+            disabled: !previousQuestion,
+          },
+          {
+            key: "retry",
+            label: "إعادة السؤال",
+            icon: RotateCcw,
+            onClick: resetCurrentQuestionAttempt,
+          },
+          {
+            key: "explanation",
+            label: "حل الشرح",
+            icon: ScrollText,
+            onClick: () =>
+              document
+                .getElementById(explanationId)
+                ?.scrollIntoView({ behavior: "smooth", block: "center" }),
+            disabled: !submitted,
+          },
+          {
+            key: "pin",
+            label: currentFlags.pinned ? "إلغاء تثبيت السؤال" : "تثبيت السؤال",
+            icon: Pin,
+            onClick: () => toggleQuestionFlag("pinned"),
+          },
+          {
+            key: "confirm",
+            label: "تأكيد الإجابة",
+            icon: Sparkles,
+            onClick: () => void confirmAnswer(),
+            disabled: !selectedAnswer,
+            variant: "primary",
+          },
+        ]}
+        tip={`اقرأ الجملة كاملة أولًا، ثم حدّد الكلمة المفتاحية التي تكشف نوع العلاقة داخل ${currentCategory.title}.`}
+        navigatorItems={navigatorItems}
+        navigatorToggleLabel={
+          questions.length > 15
+            ? showAllQuestionPills
+              ? "عرض عدد أقل"
+              : "عرض المزيد"
+            : null
+        }
+        onToggleNavigator={
+          questions.length > 15 ? () => setShowAllQuestionPills((current) => !current) : null
+        }
+        summaryProgressValue={completionProgress}
+        summaryMetrics={[
+          { label: "تم حلها", value: answeredCount.toString(), dotClassName: "bg-emerald-500" },
+          {
+            label: "لم تُحل بعد",
+            value: Math.max(questions.length - answeredCount, 0).toString(),
+            dotClassName: "bg-amber-400",
+          },
+          { label: "الإجمالي", value: questions.length.toString(), dotClassName: "bg-slate-400" },
+        ]}
+        infoItems={[
+          { label: "نوع القسم", value: currentCategory.title },
+          { label: "عدد الأسئلة", value: `${questions.length} سؤال` },
+          { label: "متوسط الوقت", value: averageSecondsLabel },
+          { label: "آخر مصدر", value: currentQuestion.source },
+        ]}
+        sidebarFooter={
+          <div className="space-y-4">
+            <div className="rounded-[1.6rem] border border-slate-200 bg-white p-4 shadow-[0_16px_32px_rgba(15,23,42,0.04)]">
+              <div className="text-lg font-black text-slate-950">أقسام اللفظي</div>
+              <div className="mt-4 flex flex-wrap gap-2">
                 {categories.map((category) => (
                   <button
-                    key={`category-${category.id}`}
+                    key={`category-switch-${category.id}`}
                     type="button"
                     onClick={() => openCategory(category.id)}
-                    className={`rounded-xl px-4 py-3 text-sm font-bold ${
-                      category.id === currentCategory.id ? "bg-[#123B7A] text-white" : "bg-white text-slate-700 ring-1 ring-slate-200"
+                    className={`rounded-[0.95rem] px-4 py-3 text-sm font-bold transition ${
+                      category.id === currentCategory.id
+                        ? "bg-[#1f4b94] text-white shadow-[0_12px_24px_rgba(31,75,148,0.18)]"
+                        : "border border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100"
                     }`}
                   >
                     {category.title}
@@ -716,9 +792,17 @@ export function VerbalPracticeBank({
                 ))}
               </div>
             </div>
+
+            <div className="rounded-[1.6rem] border border-[#d7e5ff] bg-[#f7fbff] p-4 shadow-[0_16px_32px_rgba(15,23,42,0.04)]">
+              <div className="text-base font-black text-slate-950">نقطة سريعة</div>
+              <p className="mt-2 text-sm leading-7 text-slate-600">
+                المطلوب هنا هو فهم العلاقة أولًا، ثم اختيار البديل المطابق؛ لا تبدأ بالمقارنة
+                بين الخيارات قبل تحديد نوع السؤال.
+              </p>
+            </div>
           </div>
-        </section>
-      </div>
+        }
+      />
     </div>
   );
 }

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LogOut, Menu, X } from "lucide-react";
+import { Bell, LogOut, Menu, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
 import { MiyaarLogo } from "@/components/miyaar-logo";
@@ -41,6 +41,36 @@ function isNavItemActive(pathname: string, currentSearch: string, href: string) 
   return true;
 }
 
+function HeaderNotificationButton({
+  href,
+  showBadge = false,
+  onClick,
+  className,
+}: {
+  href: string;
+  showBadge?: boolean;
+  onClick?: () => void;
+  className?: string;
+}) {
+  return (
+    <Link
+      href={href}
+      onClick={onClick}
+      className={cn("search-btn-header", className)}
+      aria-label="الإشعارات والنشاط"
+    >
+      <div className="relative">
+        <Bell className="h-5 w-5 text-[#123B7A]" />
+        {showBadge ? (
+          <span className="absolute -right-1.5 -top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#f97316] px-1 text-[10px] font-bold text-white">
+            !
+          </span>
+        ) : null}
+      </div>
+    </Link>
+  );
+}
+
 export function SiteHeader({
   ctaHref = "/diagnostic",
   ctaLabel = "ابدأ الآن",
@@ -67,9 +97,10 @@ export function SiteHeader({
   );
 
   const mobileItems = useMemo(
-    () => (isAuthenticated ? [...studentTopNavItems, ...studentSidebarItems] : publicTopNavItems).filter(
-      (item, index, array) => array.findIndex((candidate) => candidate.href === item.href) === index,
-    ),
+    () =>
+      (isAuthenticated ? [...studentTopNavItems, ...studentSidebarItems] : publicTopNavItems).filter(
+        (item, index, array) => array.findIndex((candidate) => candidate.href === item.href) === index,
+      ),
     [isAuthenticated],
   );
 
@@ -87,7 +118,7 @@ export function SiteHeader({
 
   return (
     <header className="relative sticky top-0 z-[9999] isolate pointer-events-auto border-b border-white/70 bg-white/95 backdrop-blur-2xl">
-      <div className="mx-auto flex w-[min(calc(100%-2rem),1180px)] items-center justify-between gap-4 py-4">
+      <div className="mx-auto flex w-[min(calc(100%-1rem),1320px)] items-center justify-between gap-3 py-3 sm:w-[min(calc(100%-2rem),1320px)] sm:gap-4 sm:py-4">
         <MiyaarLogo href={brandHref} />
 
         <nav
@@ -112,13 +143,19 @@ export function SiteHeader({
           ))}
         </nav>
 
-        <div className="flex items-center gap-2">
-          <SearchTrigger />
+        <div className="flex items-center gap-2 sm:gap-3">
+          {isAuthenticated ? (
+            <HeaderNotificationButton href="/dashboard#recent-activity" showBadge className="hidden md:flex" />
+          ) : null}
+
+          <div className="hidden md:block">
+            <SearchTrigger />
+          </div>
 
           <button
             type="button"
             onClick={() => setOpen(true)}
-            className="search-btn-header lg:hidden"
+            className="search-btn-header xl:hidden"
             aria-label="افتح القائمة"
           >
             <Menu className="h-5 w-5 text-[#123B7A]" />
@@ -129,18 +166,27 @@ export function SiteHeader({
       </div>
 
       {open ? (
-        <div className="fixed inset-0 z-[220] bg-black/30 backdrop-blur-sm lg:hidden">
-          <div className="mr-auto h-full w-[330px] overflow-y-auto bg-white px-5 py-6 shadow-[0_20px_80px_rgba(0,0,0,0.18)]">
+        <div className="fixed inset-0 z-[220] bg-black/30 backdrop-blur-sm xl:hidden">
+          <div className="mr-auto h-full w-[min(92vw,340px)] overflow-y-auto bg-white px-5 py-6 shadow-[0_20px_80px_rgba(0,0,0,0.18)]">
             <div className="mb-6 flex items-center justify-between">
               <MiyaarLogo href={brandHref} />
-              <button
-                type="button"
-                onClick={() => setOpen(false)}
-                className="search-btn-header"
-                aria-label="إغلاق القائمة"
-              >
-                <X className="h-5 w-5 text-[#123B7A]" />
-              </button>
+              <div className="flex items-center gap-2">
+                {isAuthenticated ? (
+                  <HeaderNotificationButton
+                    href="/dashboard#recent-activity"
+                    showBadge
+                    onClick={() => setOpen(false)}
+                  />
+                ) : null}
+                <button
+                  type="button"
+                  onClick={() => setOpen(false)}
+                  className="search-btn-header"
+                  aria-label="إغلاق القائمة"
+                >
+                  <X className="h-5 w-5 text-[#123B7A]" />
+                </button>
+              </div>
             </div>
 
             <div className="space-y-2">

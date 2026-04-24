@@ -13,8 +13,8 @@ export function DashboardShell() {
         <SiteHeader ctaHref="/question-bank" ctaLabel="ابدأ تدريب الآن" />
       </DashboardRuntimeGuard>
 
-      <main className="section-shell pt-8 pb-8 md:pt-10 md:pb-12">
-        <div className="mx-auto flex w-[min(calc(100%-2rem),1280px)] gap-8">
+      <main className="section-shell pb-8 pt-6 md:pb-12 md:pt-8">
+        <div className="mx-auto flex w-[min(calc(100%-1rem),1360px)] flex-col gap-6 sm:w-[min(calc(100%-2rem),1360px)] xl:flex-row xl:items-start xl:gap-8">
           <DashboardRuntimeGuard resetKey="dashboard-sidebar">
             <AppSidebar />
           </DashboardRuntimeGuard>

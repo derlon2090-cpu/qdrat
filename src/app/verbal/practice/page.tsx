@@ -1,8 +1,10 @@
 import { Suspense } from "react";
 import { redirect } from "next/navigation";
-import { BookOpenText } from "lucide-react";
 
-import { PageShell } from "@/components/page-shell";
+import { AppSidebar } from "@/components/app-sidebar";
+import { DashboardRuntimeGuard } from "@/components/dashboard-runtime-guard";
+import { SiteFooter } from "@/components/site-footer";
+import { SiteHeader } from "@/components/site-header";
 import { VerbalPracticeBank } from "@/components/verbal-practice-bank";
 import {
   getVerbalQuestionCategory,
@@ -19,6 +21,7 @@ type VerbalPracticePageProps = {
 
 export default async function VerbalPracticePage({ searchParams }: VerbalPracticePageProps) {
   const resolvedSearchParams = await searchParams;
+
   if (
     resolvedSearchParams.category === "short_reading" ||
     resolvedSearchParams.category === "reading_comprehension"
@@ -29,12 +32,15 @@ export default async function VerbalPracticePage({ searchParams }: VerbalPractic
     }
     redirect(`/verbal/reading${nextParams.toString() ? `?${nextParams.toString()}` : ""}`);
   }
+
   const activeCategory = getVerbalQuestionCategory(
     resolvedSearchParams.category ?? "sentence_completion",
   );
   const questions = getVerbalQuestionsByCategory(activeCategory.id);
   const activeQuestionId =
-    questions.find((question) => question.id === resolvedSearchParams.question)?.id ?? questions[0]?.id ?? null;
+    questions.find((question) => question.id === resolvedSearchParams.question)?.id ??
+    questions[0]?.id ??
+    null;
 
   const categories = verbalQuestionCategories.map((category) => {
     const categoryQuestions = getVerbalQuestionsByCategory(category.id);
@@ -48,35 +54,66 @@ export default async function VerbalPracticePage({ searchParams }: VerbalPractic
   });
 
   return (
-    <PageShell
-      eyebrow="اللفظي المصنف"
-      title="رتبنا أسئلة اللفظي المتنوعة داخل أقسام واضحة وجاهزة للتدريب"
-      description="الأقسام الرسمية الظاهرة الآن هي: إكمال الجمل، الاستيعاب المقروء، المفردة الشاذة، الخطأ السياقي، والتناظر اللفظي. أي سؤال من معنى كلمة أو دلالة أو نوع نص داخل فقرة تم ضمه تحت الاستيعاب المقروء."
-      icon={BookOpenText}
-      iconWrap="bg-[#eef4ff]"
-      iconColor="text-[#123B7A]"
-      accentClass="shadow-[0_20px_45px_rgba(18,59,122,0.16)]"
-      ctaLabel="افتح بنك الأسئلة"
-      ctaHref="/question-bank"
-    >
-      <Suspense
-        fallback={
-          <div className="rounded-[1.7rem] border border-dashed border-slate-300 bg-white/70 p-8 text-center text-sm text-slate-500">
-            جاري تجهيز أقسام اللفظي...
+    <div className="min-h-screen bg-[#f8fafc] text-slate-950">
+      <DashboardRuntimeGuard resetKey="verbal-practice-header">
+        <SiteHeader ctaHref="/question-bank?track=verbal" ctaLabel="ارجع إلى بنك الأسئلة" />
+      </DashboardRuntimeGuard>
+
+      <main className="mx-auto w-full max-w-[1600px] px-4 pb-16 pt-6 sm:px-6 xl:px-8">
+        <div className="grid gap-6 xl:grid-cols-[300px_minmax(0,1fr)]">
+          <div className="hidden xl:block">
+            <DashboardRuntimeGuard resetKey="verbal-practice-sidebar">
+              <AppSidebar />
+            </DashboardRuntimeGuard>
           </div>
-        }
-      >
-        <VerbalPracticeBank
-          categories={categories}
-          currentCategory={{
-            id: activeCategory.id,
-            title: activeCategory.title,
-            description: activeCategory.description,
-          }}
-          questions={questions}
-          activeQuestionId={activeQuestionId}
-        />
-      </Suspense>
-    </PageShell>
+
+          <section className="space-y-5">
+            <DashboardRuntimeGuard resetKey="verbal-practice-main">
+              <div className="rounded-[1.8rem] border border-slate-200 bg-white px-5 py-5 shadow-[0_18px_38px_rgba(15,23,42,0.05)] sm:px-6">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div>
+                    <div className="text-sm font-semibold text-[#1d4ed8]">اللفظي / داخل القسم</div>
+                    <h1 className="mt-2 text-3xl font-black tracking-tight text-slate-950">
+                      حل أسئلة اللفظي بواجهة منظمة وواضحة
+                    </h1>
+                    <p className="mt-2 max-w-3xl text-sm leading-8 text-slate-600">
+                      نفس منطق الحفظ والتقدم موجود، لكن العرض هنا مرتب كسير عملي: سؤال، تقدم،
+                      تنقل جانبي، وشرح تحت السؤال.
+                    </p>
+                  </div>
+
+                  <div className="rounded-full bg-[#eef4ff] px-4 py-2 text-sm font-semibold text-[#1d4ed8]">
+                    {questions.length} سؤال في هذا القسم
+                  </div>
+                </div>
+              </div>
+
+              <Suspense
+                fallback={
+                  <div className="rounded-[1.7rem] border border-dashed border-slate-300 bg-white/80 p-8 text-center text-sm text-slate-500">
+                    جاري تجهيز واجهة التدريب اللفظي...
+                  </div>
+                }
+              >
+                <VerbalPracticeBank
+                  categories={categories}
+                  currentCategory={{
+                    id: activeCategory.id,
+                    title: activeCategory.title,
+                    description: activeCategory.description,
+                  }}
+                  questions={questions}
+                  activeQuestionId={activeQuestionId}
+                />
+              </Suspense>
+            </DashboardRuntimeGuard>
+          </section>
+        </div>
+      </main>
+
+      <DashboardRuntimeGuard resetKey="verbal-practice-footer">
+        <SiteFooter />
+      </DashboardRuntimeGuard>
+    </div>
   );
 }

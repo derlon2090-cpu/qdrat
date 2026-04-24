@@ -1,22 +1,33 @@
-import { NotebookPen } from "lucide-react";
-
-import { PageShell } from "@/components/page-shell";
+import { AppSidebar } from "@/components/app-sidebar";
+import { DashboardRuntimeGuard } from "@/components/dashboard-runtime-guard";
+import { SiteFooter } from "@/components/site-footer";
+import { SiteHeader } from "@/components/site-header";
 import { StudentPlan } from "@/components/student-plan";
 
 export default function MyPlanPage() {
   return (
-    <PageShell
-      eyebrow="خطتي"
-      title="خطة ذكية تتوزع تلقائيًا حسب وقتك والأيام المتبقية"
-      description="راجع مهام اليوم والأيام القادمة، وأعد ضبط الخطة أو أجّل مهام اليوم إذا تغيّر وقتك، مع إبقاء التقدم الكلي تحت عينك."
-      icon={NotebookPen}
-      iconWrap="bg-[#edfdf3]"
-      iconColor="text-[#2f855a]"
-      accentClass="shadow-[0_20px_45px_rgba(47,133,90,0.16)]"
-      ctaLabel="تعديل إعدادات الخطة"
-      ctaHref="/onboarding"
-    >
-      <StudentPlan />
-    </PageShell>
+    <div className="min-h-screen">
+      <DashboardRuntimeGuard resetKey="plan-header">
+        <SiteHeader ctaHref="/onboarding" ctaLabel="تعديل إعدادات الخطة" />
+      </DashboardRuntimeGuard>
+
+      <main className="section-shell pb-8 pt-6 md:pb-12 md:pt-8">
+        <div className="mx-auto flex w-[min(calc(100%-1rem),1360px)] flex-col gap-6 sm:w-[min(calc(100%-2rem),1360px)] xl:flex-row xl:items-start xl:gap-8">
+          <DashboardRuntimeGuard resetKey="plan-sidebar">
+            <AppSidebar />
+          </DashboardRuntimeGuard>
+
+          <div className="min-w-0 flex-1">
+            <DashboardRuntimeGuard resetKey="plan-main">
+              <StudentPlan />
+            </DashboardRuntimeGuard>
+          </div>
+        </div>
+      </main>
+
+      <DashboardRuntimeGuard resetKey="plan-footer">
+        <SiteFooter />
+      </DashboardRuntimeGuard>
+    </div>
   );
 }
