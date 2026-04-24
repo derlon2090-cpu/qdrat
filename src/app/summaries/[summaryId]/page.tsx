@@ -14,7 +14,7 @@ export default async function SummaryDetailPage({
   return (
     <div className="min-h-screen">
       <div className="relative z-[9999]">
-        <SiteHeader />
+        <SiteHeader variant="student" />
       </div>
       <main className="relative z-[1] section-shell pt-8 md:pt-10">
         <div className="mx-auto w-[min(calc(100%-2rem),1180px)] space-y-6">

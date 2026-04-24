@@ -15,6 +15,7 @@ export default function ChallengePage() {
       accentClass="shadow-[0_20px_45px_rgba(183,121,31,0.18)]"
       ctaLabel="العودة إلى لوحة الطالب"
       ctaHref="/dashboard"
+      headerVariant="student"
     >
       <StudentChallengeBoard />
     </PageShell>

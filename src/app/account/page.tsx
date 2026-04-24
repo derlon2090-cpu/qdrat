@@ -15,6 +15,7 @@ export default function AccountPage() {
       accentClass="shadow-[0_20px_45px_rgba(18,59,122,0.14)]"
       ctaLabel="تعديل الإعدادات"
       ctaHref="/onboarding"
+      headerVariant="student"
     >
       <StudentAccount />
     </PageShell>

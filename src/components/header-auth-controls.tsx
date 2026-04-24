@@ -11,13 +11,17 @@ const LOGIN_LABEL = "تسجيل الدخول";
 const REGISTER_LABEL = "إنشاء حساب";
 const LOGOUT_LABEL = "تسجيل الخروج";
 
+type HeaderAuthControlsProps = {
+  ctaHref?: string;
+  ctaLabel?: string;
+  variant?: "public" | "student";
+};
+
 export function HeaderAuthControls({
   ctaHref,
   ctaLabel,
-}: {
-  ctaHref?: string;
-  ctaLabel?: string;
-}) {
+  variant = "public",
+}: HeaderAuthControlsProps) {
   const router = useRouter();
   const { status, user, refreshSession } = useAuthSession();
 
@@ -31,9 +35,11 @@ export function HeaderAuthControls({
     }
   }
 
+  const containerClass = variant === "student" ? "hidden items-center gap-2.5 xl:flex" : "hidden items-center gap-2 lg:flex";
+
   if (status === "loading") {
     return (
-      <div className="hidden items-center gap-2.5 xl:flex" dir="ltr">
+      <div className={containerClass} dir="ltr">
         <div className="flex h-[52px] w-[52px] items-center justify-center rounded-[1.05rem] border border-[#e6edf9] bg-white shadow-[0_10px_22px_rgba(15,23,42,0.045)]">
           <Loader2 className="h-4 w-4 animate-spin text-[#123B7A]" />
         </div>
@@ -42,8 +48,25 @@ export function HeaderAuthControls({
   }
 
   if (status === "authenticated" && user) {
+    if (variant === "public") {
+      return (
+        <div className={containerClass} dir="ltr">
+          <button
+            type="button"
+            onClick={handleLogout}
+            className="rounded-[1.15rem] border border-[#e6edf9] bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:border-rose-200 hover:text-rose-600"
+          >
+            {LOGOUT_LABEL}
+          </button>
+          <Link href="/dashboard">
+            <Button>لوحة الطالب</Button>
+          </Link>
+        </div>
+      );
+    }
+
     return (
-      <div className="hidden items-center gap-2.5 xl:flex" dir="ltr">
+      <div className={containerClass} dir="ltr">
         <button
           type="button"
           onClick={handleLogout}

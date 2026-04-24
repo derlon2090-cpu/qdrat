@@ -18,17 +18,14 @@ type BasicNavLink = {
   icon?: LucideIcon;
 };
 
+type SiteHeaderVariant = "auto" | "public" | "student";
+
 const STUDENT_ROUTE_PREFIXES = [
   "/dashboard",
   "/my-plan",
-  "/question-bank",
   "/challenge",
-  "/paper-models",
   "/statistics",
   "/account",
-  "/summaries",
-  "/verbal/practice",
-  "/verbal-passages",
 ];
 
 function isStudentAreaPath(pathname: string) {
@@ -97,17 +94,31 @@ export function SiteHeader({
   ctaHref = "/diagnostic",
   ctaLabel = "ابدأ الآن",
   links,
+  variant = "public",
 }: {
   ctaHref?: string;
   ctaLabel?: string;
   links?: BasicNavLink[];
+  variant?: SiteHeaderVariant;
 }) {
   const pathname = usePathname();
   const { status, user, refreshSession } = useAuthSession();
   const [open, setOpen] = useState(false);
   const [currentSearch, setCurrentSearch] = useState("");
   const isAuthenticated = status === "authenticated" && Boolean(user);
-  const isStudentArea = useMemo(() => isAuthenticated || isStudentAreaPath(pathname), [isAuthenticated, pathname]);
+
+  const isStudentArea = useMemo(() => {
+    if (variant === "student") {
+      return true;
+    }
+
+    if (variant === "public") {
+      return false;
+    }
+
+    return isAuthenticated || isStudentAreaPath(pathname);
+  }, [isAuthenticated, pathname, variant]);
+
   const brandHref = isStudentArea ? "/dashboard" : "/";
 
   useEffect(() => {
@@ -119,13 +130,11 @@ export function SiteHeader({
     [isStudentArea, links],
   );
 
-  const mobileItems = useMemo(
-    () =>
-      (isStudentArea ? [...studentTopNavItems, ...studentSidebarItems] : publicTopNavItems).filter(
-        (item, index, array) => array.findIndex((candidate) => candidate.href === item.href) === index,
-      ),
-    [isStudentArea],
-  );
+  const mobileItems = useMemo(() => {
+    const source = isStudentArea ? [...studentTopNavItems, ...studentSidebarItems] : publicTopNavItems;
+
+    return source.filter((item, index, array) => array.findIndex((candidate) => candidate.href === item.href) === index);
+  }, [isStudentArea]);
 
   async function handleLogout() {
     const response = await fetch("/api/auth/logout", { method: "POST" });
@@ -144,7 +153,7 @@ export function SiteHeader({
           <div className="flex items-center gap-7">
             <MiyaarLogo href={brandHref} />
 
-            <nav className={cn("hidden items-center gap-1 text-sm font-bold text-slate-600", isAuthenticated ? "xl:flex" : "lg:flex")}>
+            <nav className={cn("hidden items-center gap-1 text-sm font-bold text-slate-600", isStudentArea ? "xl:flex" : "lg:flex")}>
               {desktopLinks.map((item) => {
                 const active = isNavItemActive(pathname, currentSearch, item.href);
                 const Icon = item.icon;
@@ -155,9 +164,7 @@ export function SiteHeader({
                     href={item.href}
                     className={cn(
                       "relative flex min-w-[94px] flex-col items-center justify-center gap-1.5 rounded-[0.95rem] px-3 py-2 text-center transition",
-                      active
-                        ? "text-[#2563eb]"
-                        : "text-slate-600 hover:bg-[#f8fbff] hover:text-slate-900",
+                      active ? "text-[#2563eb]" : "text-slate-600 hover:bg-[#f8fbff] hover:text-slate-900",
                     )}
                   >
                     {Icon ? <Icon className={cn("h-5 w-5", active && "text-[#2563eb]")} /> : null}
@@ -170,7 +177,7 @@ export function SiteHeader({
           </div>
 
           <div className="flex items-center gap-2.5" dir="ltr">
-            {isAuthenticated ? (
+            {isStudentArea && isAuthenticated ? (
               <>
                 <HeaderUtilityButton href="/dashboard#notifications" icon={Bell} badge={3} label="الإشعارات" className="hidden xl:flex" />
                 <HeaderUtilityButton href="/account" icon={Cog} label="الإعدادات" className="hidden xl:flex" />
@@ -186,7 +193,11 @@ export function SiteHeader({
               <Menu className="h-5 w-5" />
             </button>
 
-            <HeaderAuthControls ctaHref={isAuthenticated ? undefined : ctaHref} ctaLabel={isAuthenticated ? undefined : ctaLabel} />
+            <HeaderAuthControls
+              variant={isStudentArea ? "student" : "public"}
+              ctaHref={isAuthenticated ? undefined : ctaHref}
+              ctaLabel={isAuthenticated ? undefined : ctaLabel}
+            />
           </div>
         </div>
       </div>
@@ -197,7 +208,7 @@ export function SiteHeader({
             <div className="mb-6 flex items-center justify-between">
               <MiyaarLogo href={brandHref} />
               <div className="flex items-center gap-2" dir="ltr">
-                {isAuthenticated ? (
+                {isStudentArea && isAuthenticated ? (
                   <>
                     <HeaderUtilityButton href="/dashboard#notifications" icon={Bell} badge={3} label="الإشعارات" onClick={() => setOpen(false)} />
                     <HeaderUtilityButton href="/account" icon={Cog} label="الإعدادات" onClick={() => setOpen(false)} />
@@ -240,13 +251,20 @@ export function SiteHeader({
 
             <div className="mt-6 space-y-3">
               {isAuthenticated ? (
-                <button
-                  type="button"
-                  onClick={handleLogout}
-                  className="inline-flex h-11 w-full items-center justify-center rounded-[1.25rem] border border-rose-200 bg-white text-sm font-bold text-rose-600 transition hover:bg-rose-50"
-                >
-                  تسجيل الخروج
-                </button>
+                <>
+                  {!isStudentArea ? (
+                    <Link href="/dashboard" onClick={() => setOpen(false)}>
+                      <Button className="w-full">لوحة الطالب</Button>
+                    </Link>
+                  ) : null}
+                  <button
+                    type="button"
+                    onClick={handleLogout}
+                    className="inline-flex h-11 w-full items-center justify-center rounded-[1.25rem] border border-rose-200 bg-white text-sm font-bold text-rose-600 transition hover:bg-rose-50"
+                  >
+                    تسجيل الخروج
+                  </button>
+                </>
               ) : (
                 <>
                   <Link href="/login" onClick={() => setOpen(false)}>

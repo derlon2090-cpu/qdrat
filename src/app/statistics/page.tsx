@@ -13,8 +13,9 @@ export default function StatisticsPage() {
       iconWrap="bg-[#f5f3ff]"
       iconColor="text-[#7c3aed]"
       accentClass="shadow-[0_20px_45px_rgba(124,58,237,0.14)]"
-      ctaLabel="العودة للوحة الطالب"
+      ctaLabel="العودة إلى لوحة الطالب"
       ctaHref="/dashboard"
+      headerVariant="student"
     >
       <StudentStatistics />
     </PageShell>

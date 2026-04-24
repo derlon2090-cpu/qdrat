@@ -28,7 +28,7 @@ export function DashboardShell() {
   return (
     <div className="min-h-screen bg-[#fbfdff]">
       <DashboardRuntimeGuard resetKey="dashboard-header">
-        <SiteHeader links={dashboardLinks} />
+        <SiteHeader variant="student" links={dashboardLinks} />
       </DashboardRuntimeGuard>
 
       <main className="pb-8 pt-5 md:pb-12 md:pt-7">

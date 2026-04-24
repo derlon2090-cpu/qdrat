@@ -7,7 +7,7 @@ export default function MyPlanPage() {
   return (
     <div className="min-h-screen">
       <DashboardRuntimeGuard resetKey="plan-header">
-        <SiteHeader ctaHref="/onboarding" ctaLabel="تعديل إعدادات الخطة" />
+        <SiteHeader variant="student" ctaHref="/onboarding" ctaLabel="تعديل إعدادات الخطة" />
       </DashboardRuntimeGuard>
 
       <main className="section-shell pb-8 pt-6 md:pb-12 md:pt-8">

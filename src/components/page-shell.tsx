@@ -17,6 +17,7 @@ export function PageShell({
   accentClass,
   ctaLabel,
   ctaHref,
+  headerVariant = "public",
   children,
 }: {
   eyebrow: string;
@@ -28,11 +29,12 @@ export function PageShell({
   accentClass?: string;
   ctaLabel?: string;
   ctaHref?: string;
+  headerVariant?: "public" | "student";
   children: React.ReactNode;
 }) {
   return (
     <div className="min-h-screen">
-      <SiteHeader ctaHref={ctaHref} ctaLabel={ctaLabel} />
+      <SiteHeader variant={headerVariant} ctaHref={ctaHref} ctaLabel={ctaLabel} />
       <main className="section-shell pt-10 md:pt-14">
         <div className="mx-auto w-[min(calc(100%-1rem),1480px)] space-y-10 sm:w-[min(calc(100%-2rem),1480px)]">
           <Reveal>

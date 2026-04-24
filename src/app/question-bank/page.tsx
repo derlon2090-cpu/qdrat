@@ -9,7 +9,7 @@ export default function QuestionBankPage() {
   return (
     <div className="min-h-screen">
       <DashboardRuntimeGuard resetKey="question-bank-header">
-        <SiteHeader ctaHref="/exam" ctaLabel="ابدأ اختبارًا الآن" />
+        <SiteHeader variant="public" ctaHref="/exam" ctaLabel="ابدأ اختبارًا الآن" />
       </DashboardRuntimeGuard>
 
       <main className="section-shell pb-8 pt-6 md:pb-12 md:pt-8">
