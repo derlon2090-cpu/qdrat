@@ -21,7 +21,7 @@ import {
 } from "lucide-react";
 
 import { StudentAccessCard } from "@/components/student-access-card";
-import { StudentPlanSetupNotice, formatDaysLeft } from "@/components/student-portal-shared";
+import { formatDaysLeft } from "@/components/student-portal-shared";
 import { useAuthSession } from "@/hooks/use-auth-session";
 import { useStudentPortal } from "@/hooks/use-student-portal";
 import type { StudentPortalTask } from "@/lib/student-portal";
@@ -29,7 +29,7 @@ import { cn } from "@/lib/utils";
 
 function HeroArtwork() {
   return (
-    <div className="relative h-[280px] overflow-hidden rounded-[2rem] bg-[radial-gradient(circle_at_30%_35%,rgba(255,255,255,0.95),transparent_46%),linear-gradient(180deg,#eef5ff_0%,#f7fbff_100%)]">
+    <div className="relative h-[220px] overflow-hidden rounded-[1rem] bg-[radial-gradient(circle_at_30%_35%,rgba(255,255,255,0.92),transparent_46%),linear-gradient(180deg,#edf4ff_0%,#f7fbff_100%)] sm:h-[245px] lg:h-[255px]">
       <div className="absolute inset-0 opacity-80">
         <div className="absolute left-6 top-14 h-5 w-5 rounded-full bg-[#dbe8ff]" />
         <div className="absolute left-20 bottom-10 h-20 w-20 rounded-full bg-[#edf4ff]" />
@@ -442,36 +442,30 @@ export function StudentDashboard() {
 
   return (
     <div className="space-y-6 pb-10">
-      {!data.onboardingCompleted ? (
-        <div className="rounded-[1.6rem] border border-[#e6edf9] bg-white p-4 shadow-[0_14px_32px_rgba(15,23,42,0.04)]">
-          <StudentPlanSetupNotice onboardingCompleted={data.onboardingCompleted} />
-        </div>
-      ) : null}
-
-      <section className="rounded-[2rem] border border-[#dfe8f7] bg-[linear-gradient(180deg,#f4f8ff_0%,#f8fbff_100%)] p-5 shadow-[0_18px_42px_rgba(15,23,42,0.05)] sm:p-6 lg:p-7">
-        <div className="flex flex-col gap-6 lg:flex-row-reverse lg:items-center lg:gap-10">
+      <section className="overflow-hidden rounded-[1rem] border border-[#e3ebf8] bg-[linear-gradient(180deg,#f4f8ff_0%,#f8fbff_100%)] p-4 shadow-[0_16px_34px_rgba(15,23,42,0.045)] sm:p-5 lg:p-6">
+        <div className="flex flex-col gap-5 lg:flex-row-reverse lg:items-center lg:gap-8">
           <div className="flex-1">
-            <div className="text-[1.7rem] font-bold text-slate-950 sm:text-[2rem]">
+            <div className="text-[1.45rem] font-bold text-slate-950 sm:text-[1.7rem]">
               مرحبًا بك! <span className="mr-1">👋</span>
             </div>
-            <h2 className="mt-5 display-font text-[clamp(2.3rem,4.2vw,4rem)] font-extrabold leading-[1.15] text-slate-950">
+            <h2 className="mt-4 display-font text-[clamp(2rem,3.7vw,3.55rem)] font-extrabold leading-[1.12] text-slate-950">
               استمر في رحلتك نحو التميز
             </h2>
-            <p className="mt-4 max-w-2xl text-base leading-8 text-slate-500">
+            <p className="mt-3 max-w-2xl text-[0.98rem] leading-8 text-slate-500">
               خطة مخصصة لك لتحقيق أفضل النتائج في اختبار القدرات.
             </p>
 
-            <div className="mt-8 flex flex-wrap gap-4">
+            <div className="mt-7 flex flex-wrap gap-3">
               <Link
                 href="/my-plan"
-                className="inline-flex h-[72px] min-w-[240px] items-center justify-center gap-3 rounded-[1.15rem] bg-[#2563eb] px-8 text-[1.05rem] font-bold text-white shadow-[0_14px_26px_rgba(37,99,235,0.25)] transition hover:bg-[#1d4ed8]"
+                className="inline-flex h-[60px] min-w-[208px] items-center justify-center gap-3 rounded-[0.95rem] bg-[#2563eb] px-7 text-[1rem] font-bold text-white shadow-[0_14px_26px_rgba(37,99,235,0.22)] transition hover:bg-[#1d4ed8]"
               >
                 <CalendarDays className="h-5 w-5" />
                 متابعة الخطة
               </Link>
               <Link
                 href="/question-bank"
-                className="inline-flex h-[72px] min-w-[240px] items-center justify-center gap-3 rounded-[1.15rem] border border-[#bfd3ff] bg-white px-8 text-[1.05rem] font-bold text-[#2563eb] transition hover:bg-[#f8fbff]"
+                className="inline-flex h-[60px] min-w-[208px] items-center justify-center gap-3 rounded-[0.95rem] border border-[#bfd3ff] bg-white px-7 text-[1rem] font-bold text-[#2563eb] transition hover:bg-[#f8fbff]"
               >
                 <BookOpen className="h-5 w-5" />
                 بنك الأسئلة
@@ -479,7 +473,7 @@ export function StudentDashboard() {
             </div>
           </div>
 
-          <div className="lg:w-[48%]">
+          <div className="lg:w-[46%]">
             <HeroArtwork />
           </div>
         </div>
