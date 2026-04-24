@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Bell, Menu, X } from "lucide-react";
+import { Bell, Cog, Menu, X, type LucideIcon } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
 import { HeaderAuthControls } from "@/components/header-auth-controls";
@@ -15,6 +15,7 @@ import { cn } from "@/lib/utils";
 type BasicNavLink = {
   href: string;
   label: string;
+  icon?: LucideIcon;
 };
 
 function isNavItemActive(pathname: string, currentSearch: string, href: string) {
@@ -40,23 +41,37 @@ function isNavItemActive(pathname: string, currentSearch: string, href: string) 
   return true;
 }
 
-function HeaderNotificationButton({
+function HeaderUtilityButton({
   href,
+  badge,
+  icon: Icon,
   onClick,
   className,
+  label,
 }: {
   href: string;
+  badge?: number;
+  icon: LucideIcon;
   onClick?: () => void;
   className?: string;
+  label: string;
 }) {
   return (
-    <Link href={href} onClick={onClick} className={cn("search-btn-header", className)} aria-label="الإشعارات والنشاط">
-      <div className="relative">
-        <Bell className="h-5 w-5 text-[#123B7A]" />
-        <span className="absolute -right-1.5 -top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#ef4444] px-1 text-[10px] font-bold text-white">
-          3
+    <Link
+      href={href}
+      onClick={onClick}
+      aria-label={label}
+      className={cn(
+        "relative flex h-12 w-12 items-center justify-center rounded-[1.15rem] border border-[#e6edf9] bg-white text-[#123B7A] shadow-[0_10px_24px_rgba(15,23,42,0.05)] transition hover:border-[#cdddff] hover:bg-[#f8fbff]",
+        className,
+      )}
+    >
+      <Icon className="h-5 w-5" />
+      {badge ? (
+        <span className="absolute -right-1.5 -top-1.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-[#f97316] px-1 text-[10px] font-extrabold text-white">
+          {badge}
         </span>
-      </div>
+      ) : null}
     </Link>
   );
 }
@@ -105,52 +120,78 @@ export function SiteHeader({
   }
 
   return (
-    <header className="relative sticky top-0 z-[9999] isolate border-b border-white/70 bg-white/95 backdrop-blur-2xl">
-      <div className="mx-auto flex w-[min(calc(100%-1rem),1400px)] items-center justify-between gap-3 py-3 sm:w-[min(calc(100%-2rem),1400px)] sm:gap-4 sm:py-4">
-        <MiyaarLogo href={brandHref} />
+    <header className="sticky top-0 z-[9999] border-b border-[#edf1f7] bg-[#fbfdff]/95 backdrop-blur-2xl">
+      <div className="mx-auto w-[min(calc(100%-1rem),1480px)] py-4 sm:w-[min(calc(100%-2rem),1480px)]">
+        <div className="flex items-center justify-between gap-4 rounded-[1.6rem] border border-[#e6edf9] bg-white px-4 py-3 shadow-[0_16px_40px_rgba(15,23,42,0.05)] sm:px-5">
+          <div className="flex items-center gap-8">
+            <MiyaarLogo href={brandHref} />
 
-        <nav className={cn("hidden items-center justify-center gap-2 text-sm font-semibold text-slate-600", isAuthenticated ? "xl:flex" : "lg:flex")}>
-          {desktopLinks.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={cn(
-                "rounded-full px-4 py-2 transition",
-                isNavItemActive(pathname, currentSearch, item.href)
-                  ? "bg-white text-[#123B7A] shadow-[inset_0_-3px_0_0_#2563eb]"
-                  : "hover:bg-slate-50 hover:text-slate-950",
-              )}
+            <nav className={cn("hidden items-center gap-2 text-sm font-bold text-slate-600", isAuthenticated ? "xl:flex" : "lg:flex")}>
+              {desktopLinks.map((item) => {
+                const active = isNavItemActive(pathname, currentSearch, item.href);
+                const Icon = item.icon;
+
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className={cn(
+                      "relative inline-flex items-center gap-2 rounded-[1rem] px-4 py-2.5 transition",
+                      active
+                        ? "bg-[#f8fbff] text-[#123B7A]"
+                        : "text-slate-600 hover:bg-[#f8fbff] hover:text-slate-900",
+                    )}
+                  >
+                    {Icon ? <Icon className="h-4 w-4" /> : null}
+                    <span>{item.label}</span>
+                    {active ? <span className="absolute inset-x-4 -bottom-[14px] h-[3px] rounded-full bg-[#2563eb]" /> : null}
+                  </Link>
+                );
+              })}
+            </nav>
+          </div>
+
+          <div className="flex items-center gap-2 sm:gap-3" dir="ltr">
+            {isAuthenticated ? (
+              <>
+                <HeaderUtilityButton href="/dashboard#notifications" icon={Bell} badge={3} label="الإشعارات" className="hidden xl:flex" />
+                <HeaderUtilityButton href="/account" icon={Cog} label="الإعدادات" className="hidden xl:flex" />
+              </>
+            ) : null}
+
+            <button
+              type="button"
+              onClick={() => setOpen(true)}
+              className="flex h-12 w-12 items-center justify-center rounded-[1.15rem] border border-[#e6edf9] bg-white text-[#123B7A] shadow-[0_10px_24px_rgba(15,23,42,0.05)] xl:hidden"
+              aria-label="افتح القائمة"
             >
-              {item.label}
-            </Link>
-          ))}
-        </nav>
+              <Menu className="h-5 w-5" />
+            </button>
 
-        <div className="flex items-center gap-2 sm:gap-3">
-          {isAuthenticated ? <HeaderNotificationButton href="/dashboard" className="hidden xl:flex" /> : null}
-
-          <button
-            type="button"
-            onClick={() => setOpen(true)}
-            className="search-btn-header xl:hidden"
-            aria-label="افتح القائمة"
-          >
-            <Menu className="h-5 w-5 text-[#123B7A]" />
-          </button>
-
-          <HeaderAuthControls ctaHref={isAuthenticated ? undefined : ctaHref} ctaLabel={isAuthenticated ? undefined : ctaLabel} />
+            <HeaderAuthControls ctaHref={isAuthenticated ? undefined : ctaHref} ctaLabel={isAuthenticated ? undefined : ctaLabel} />
+          </div>
         </div>
       </div>
 
       {open ? (
         <div className="fixed inset-0 z-[220] bg-black/30 backdrop-blur-sm xl:hidden">
-          <div className="mr-auto h-full w-[min(92vw,340px)] overflow-y-auto bg-white px-5 py-6 shadow-[0_20px_80px_rgba(0,0,0,0.18)]">
+          <div className="mr-auto flex h-full w-[min(92vw,360px)] flex-col overflow-y-auto bg-white px-5 py-6 shadow-[0_20px_80px_rgba(0,0,0,0.18)]">
             <div className="mb-6 flex items-center justify-between">
               <MiyaarLogo href={brandHref} />
-              <div className="flex items-center gap-2">
-                {isAuthenticated ? <HeaderNotificationButton href="/dashboard" onClick={() => setOpen(false)} /> : null}
-                <button type="button" onClick={() => setOpen(false)} className="search-btn-header" aria-label="إغلاق القائمة">
-                  <X className="h-5 w-5 text-[#123B7A]" />
+              <div className="flex items-center gap-2" dir="ltr">
+                {isAuthenticated ? (
+                  <>
+                    <HeaderUtilityButton href="/dashboard#notifications" icon={Bell} badge={3} label="الإشعارات" onClick={() => setOpen(false)} />
+                    <HeaderUtilityButton href="/account" icon={Cog} label="الإعدادات" onClick={() => setOpen(false)} />
+                  </>
+                ) : null}
+                <button
+                  type="button"
+                  onClick={() => setOpen(false)}
+                  className="flex h-12 w-12 items-center justify-center rounded-[1.15rem] border border-[#e6edf9] bg-white text-[#123B7A] shadow-[0_10px_24px_rgba(15,23,42,0.05)]"
+                  aria-label="إغلاق القائمة"
+                >
+                  <X className="h-5 w-5" />
                 </button>
               </div>
             </div>

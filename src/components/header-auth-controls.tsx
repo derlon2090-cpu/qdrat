@@ -33,8 +33,8 @@ export function HeaderAuthControls({
 
   if (status === "loading") {
     return (
-      <div className="hidden items-center gap-2 xl:flex">
-        <div className="search-btn-header">
+      <div className="hidden items-center gap-3 xl:flex" dir="ltr">
+        <div className="flex h-12 w-12 items-center justify-center rounded-[1.15rem] border border-[#e6edf9] bg-white shadow-[0_10px_24px_rgba(15,23,42,0.05)]">
           <Loader2 className="h-4 w-4 animate-spin text-[#123B7A]" />
         </div>
       </div>
@@ -43,26 +43,26 @@ export function HeaderAuthControls({
 
   if (status === "authenticated" && user) {
     return (
-      <div className="hidden items-center gap-3 xl:flex">
-        <div className="flex items-center gap-3 rounded-[1.15rem] border border-slate-200 bg-white px-4 py-2.5 shadow-[0_10px_24px_rgba(15,23,42,0.05)]">
-          <div className="flex h-11 w-11 items-center justify-center rounded-full bg-[#eef4ff] text-[#2563eb]">
-            <UserRound className="h-5 w-5" />
-          </div>
-          <div className="leading-tight">
-            <div className="text-sm font-bold text-slate-900">{user.fullName}</div>
-            <div className="mt-1 text-xs font-medium text-slate-400">مستوى متقدم</div>
-          </div>
-          <ChevronDown className="h-4 w-4 text-slate-400" />
-        </div>
-
+      <div className="hidden items-center gap-3 xl:flex" dir="ltr">
         <button
           type="button"
           onClick={handleLogout}
-          className="inline-flex items-center gap-2 rounded-[1.15rem] border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 shadow-[0_8px_20px_rgba(15,23,42,0.04)] transition hover:border-rose-200 hover:text-rose-600"
+          className="inline-flex h-12 items-center gap-2 rounded-[1.15rem] border border-[#e6edf9] bg-white px-5 text-sm font-bold text-slate-700 shadow-[0_10px_24px_rgba(15,23,42,0.05)] transition hover:border-rose-200 hover:text-rose-600"
         >
           <LogOut className="h-4 w-4" />
           {LOGOUT_LABEL}
         </button>
+
+        <div className="flex h-12 items-center gap-4 rounded-[1.15rem] border border-[#e6edf9] bg-white px-4 shadow-[0_10px_24px_rgba(15,23,42,0.05)]">
+          <ChevronDown className="h-4 w-4 text-slate-400" />
+          <div className="text-right leading-tight" dir="rtl">
+            <div className="text-sm font-extrabold text-slate-900">{user.fullName}</div>
+            <div className="mt-1 text-xs font-medium text-slate-400">مستوى متقدم</div>
+          </div>
+          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#eef4ff] text-[#2563eb]">
+            <UserRound className="h-5 w-5" />
+          </div>
+        </div>
       </div>
     );
   }
@@ -71,13 +71,13 @@ export function HeaderAuthControls({
     <div className="hidden items-center gap-2 lg:flex">
       <Link
         href="/login"
-        className="rounded-[1.15rem] border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:border-[#123B7A]/20 hover:text-[#123B7A]"
+        className="rounded-[1.15rem] border border-[#e6edf9] bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:border-[#123B7A]/20 hover:text-[#123B7A]"
       >
         {LOGIN_LABEL}
       </Link>
       <Link
         href="/register"
-        className="rounded-[1.15rem] border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:border-[#123B7A]/20 hover:text-[#123B7A]"
+        className="rounded-[1.15rem] border border-[#e6edf9] bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:border-[#123B7A]/20 hover:text-[#123B7A]"
       >
         {REGISTER_LABEL}
       </Link>
