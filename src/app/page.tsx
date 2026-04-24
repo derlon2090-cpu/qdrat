@@ -32,10 +32,10 @@ import { SiteHeader } from "@/components/site-header";
 const navLinks = [
   { href: "/", label: "الرئيسية", active: true },
   { href: "/question-bank", label: "بنك الأسئلة" },
-  { href: "/my-plan", label: "الخطط" },
-  { href: "/summaries", label: "الملخصات" },
+  { href: "/plans", label: "الخطط" },
+  { href: "/summary-center", label: "الملخصات" },
   { href: "/pricing", label: "الأسعار" },
-  { href: "/challenge", label: "المسابقات" },
+  { href: "/competitions", label: "المسابقات" },
   { href: "/wall-of-love", label: "تجارب الطلاب" },
 ];
 
@@ -51,7 +51,7 @@ const features = [
     title: "خطط دراسية ذكية",
     text: "خطة مخصصة حسب مستواك ووقتك لتصل إلى هدفك.",
     cta: "عرض الخطط",
-    href: "/my-plan",
+    href: "/plans",
     icon: CalendarCheck2,
     tone: "text-[#22c55e] bg-[#ebfbf0]",
   },
@@ -67,7 +67,7 @@ const features = [
     title: "مسابقات وتحديات",
     text: "شارك في المسابقات الأسبوعية واختر مستواك بين الطلاب.",
     cta: "استكشف المسابقات",
-    href: "/challenge",
+    href: "/competitions",
     icon: Trophy,
     tone: "text-[#8b5cf6] bg-[#f4ebff]",
   },
@@ -91,7 +91,7 @@ const features = [
     title: "ملخصات مركزة",
     text: "ملخصات شاملة ومبسطة لجميع الموضوعات المهمة.",
     cta: "استعرض الملخصات",
-    href: "/summaries",
+    href: "/summary-center",
     icon: BookOpen,
     tone: "text-[#f59e0b] bg-[#fff4df]",
   },
@@ -400,8 +400,8 @@ export default function HomePage() {
                 <ul className="mt-5 space-y-3 text-[0.98rem] text-slate-500">
                   <li><Link href="/" className="hover:text-[#2563eb]">الرئيسية</Link></li>
                   <li><Link href="/question-bank" className="hover:text-[#2563eb]">بنك الأسئلة</Link></li>
-                  <li><Link href="/my-plan" className="hover:text-[#2563eb]">الخطط الدراسية</Link></li>
-                  <li><Link href="/summaries" className="hover:text-[#2563eb]">الملخصات</Link></li>
+                  <li><Link href="/plans" className="hover:text-[#2563eb]">الخطط الدراسية</Link></li>
+                  <li><Link href="/summary-center" className="hover:text-[#2563eb]">الملخصات</Link></li>
                   <li><Link href="/pricing" className="hover:text-[#2563eb]">الأسعار</Link></li>
                 </ul>
               </div>
