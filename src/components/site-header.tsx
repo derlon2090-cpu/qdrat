@@ -62,13 +62,13 @@ function HeaderUtilityButton({
       onClick={onClick}
       aria-label={label}
       className={cn(
-        "relative flex h-12 w-12 items-center justify-center rounded-[1.15rem] border border-[#e6edf9] bg-white text-[#123B7A] shadow-[0_10px_24px_rgba(15,23,42,0.05)] transition hover:border-[#cdddff] hover:bg-[#f8fbff]",
+        "relative flex h-[56px] w-[56px] items-center justify-center rounded-[1.2rem] border border-[#e6edf9] bg-white text-[#123B7A] shadow-[0_12px_26px_rgba(15,23,42,0.05)] transition hover:border-[#cdddff] hover:bg-[#f8fbff]",
         className,
       )}
     >
       <Icon className="h-5 w-5" />
       {badge ? (
-        <span className="absolute -right-1.5 -top-1.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-[#f97316] px-1 text-[10px] font-extrabold text-white">
+        <span className="absolute left-1 top-1 flex h-6 min-w-6 items-center justify-center rounded-full bg-[#ef4444] px-1 text-[11px] font-extrabold text-white">
           {badge}
         </span>
       ) : null}
@@ -121,12 +121,12 @@ export function SiteHeader({
 
   return (
     <header className="sticky top-0 z-[9999] border-b border-[#edf1f7] bg-[#fbfdff]/95 backdrop-blur-2xl">
-      <div className="mx-auto w-[min(calc(100%-1rem),1480px)] py-4 sm:w-[min(calc(100%-2rem),1480px)]">
-        <div className="flex items-center justify-between gap-4 rounded-[1.6rem] border border-[#e6edf9] bg-white px-4 py-3 shadow-[0_16px_40px_rgba(15,23,42,0.05)] sm:px-5">
-          <div className="flex items-center gap-8">
+      <div className="mx-auto w-[min(calc(100%-1rem),1500px)] py-4 sm:w-[min(calc(100%-2rem),1500px)]">
+        <div className="flex items-center justify-between gap-5 rounded-[1.7rem] border border-[#e6edf9] bg-white px-5 py-4 shadow-[0_16px_40px_rgba(15,23,42,0.05)]">
+          <div className="flex items-center gap-10">
             <MiyaarLogo href={brandHref} />
 
-            <nav className={cn("hidden items-center gap-2 text-sm font-bold text-slate-600", isAuthenticated ? "xl:flex" : "lg:flex")}>
+            <nav className={cn("hidden items-center gap-1 text-sm font-bold text-slate-600", isAuthenticated ? "xl:flex" : "lg:flex")}>
               {desktopLinks.map((item) => {
                 const active = isNavItemActive(pathname, currentSearch, item.href);
                 const Icon = item.icon;
@@ -136,22 +136,22 @@ export function SiteHeader({
                     key={item.href}
                     href={item.href}
                     className={cn(
-                      "relative inline-flex items-center gap-2 rounded-[1rem] px-4 py-2.5 transition",
+                      "relative flex min-w-[110px] flex-col items-center justify-center gap-2 rounded-[1rem] px-4 py-2.5 text-center transition",
                       active
-                        ? "bg-[#f8fbff] text-[#123B7A]"
+                        ? "text-[#2563eb]"
                         : "text-slate-600 hover:bg-[#f8fbff] hover:text-slate-900",
                     )}
                   >
-                    {Icon ? <Icon className="h-4 w-4" /> : null}
-                    <span>{item.label}</span>
-                    {active ? <span className="absolute inset-x-4 -bottom-[14px] h-[3px] rounded-full bg-[#2563eb]" /> : null}
+                    {Icon ? <Icon className={cn("h-5 w-5", active && "text-[#2563eb]")} /> : null}
+                    <span className="leading-none">{item.label}</span>
+                    {active ? <span className="absolute inset-x-4 -bottom-[15px] h-[4px] rounded-full bg-[#2563eb]" /> : null}
                   </Link>
                 );
               })}
             </nav>
           </div>
 
-          <div className="flex items-center gap-2 sm:gap-3" dir="ltr">
+          <div className="flex items-center gap-3" dir="ltr">
             {isAuthenticated ? (
               <>
                 <HeaderUtilityButton href="/dashboard#notifications" icon={Bell} badge={3} label="الإشعارات" className="hidden xl:flex" />
@@ -162,7 +162,7 @@ export function SiteHeader({
             <button
               type="button"
               onClick={() => setOpen(true)}
-              className="flex h-12 w-12 items-center justify-center rounded-[1.15rem] border border-[#e6edf9] bg-white text-[#123B7A] shadow-[0_10px_24px_rgba(15,23,42,0.05)] xl:hidden"
+              className="flex h-[56px] w-[56px] items-center justify-center rounded-[1.2rem] border border-[#e6edf9] bg-white text-[#123B7A] shadow-[0_12px_26px_rgba(15,23,42,0.05)] xl:hidden"
               aria-label="افتح القائمة"
             >
               <Menu className="h-5 w-5" />
@@ -188,7 +188,7 @@ export function SiteHeader({
                 <button
                   type="button"
                   onClick={() => setOpen(false)}
-                  className="flex h-12 w-12 items-center justify-center rounded-[1.15rem] border border-[#e6edf9] bg-white text-[#123B7A] shadow-[0_10px_24px_rgba(15,23,42,0.05)]"
+                  className="flex h-[56px] w-[56px] items-center justify-center rounded-[1.2rem] border border-[#e6edf9] bg-white text-[#123B7A] shadow-[0_12px_26px_rgba(15,23,42,0.05)]"
                   aria-label="إغلاق القائمة"
                 >
                   <X className="h-5 w-5" />
