@@ -2,12 +2,11 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Bell, LogOut, Menu, X } from "lucide-react";
+import { Bell, Menu, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
-import { MiyaarLogo } from "@/components/miyaar-logo";
 import { HeaderAuthControls } from "@/components/header-auth-controls";
-import { SearchTrigger } from "@/components/search-trigger";
+import { MiyaarLogo } from "@/components/miyaar-logo";
 import { Button } from "@/components/ui/button";
 import { useAuthSession } from "@/hooks/use-auth-session";
 import { publicTopNavItems, studentSidebarItems, studentTopNavItems } from "@/lib/site-nav";
@@ -43,29 +42,20 @@ function isNavItemActive(pathname: string, currentSearch: string, href: string) 
 
 function HeaderNotificationButton({
   href,
-  showBadge = false,
   onClick,
   className,
 }: {
   href: string;
-  showBadge?: boolean;
   onClick?: () => void;
   className?: string;
 }) {
   return (
-    <Link
-      href={href}
-      onClick={onClick}
-      className={cn("search-btn-header", className)}
-      aria-label="الإشعارات والنشاط"
-    >
+    <Link href={href} onClick={onClick} className={cn("search-btn-header", className)} aria-label="الإشعارات والنشاط">
       <div className="relative">
         <Bell className="h-5 w-5 text-[#123B7A]" />
-        {showBadge ? (
-          <span className="absolute -right-1.5 -top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#f97316] px-1 text-[10px] font-bold text-white">
-            !
-          </span>
-        ) : null}
+        <span className="absolute -right-1.5 -top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#ef4444] px-1 text-[10px] font-bold text-white">
+          3
+        </span>
       </div>
     </Link>
   );
@@ -105,9 +95,7 @@ export function SiteHeader({
   );
 
   async function handleLogout() {
-    const response = await fetch("/api/auth/logout", {
-      method: "POST",
-    });
+    const response = await fetch("/api/auth/logout", { method: "POST" });
 
     if (response.ok) {
       await refreshSession();
@@ -117,16 +105,11 @@ export function SiteHeader({
   }
 
   return (
-    <header className="relative sticky top-0 z-[9999] isolate pointer-events-auto border-b border-white/70 bg-white/95 backdrop-blur-2xl">
-      <div className="mx-auto flex w-[min(calc(100%-1rem),1320px)] items-center justify-between gap-3 py-3 sm:w-[min(calc(100%-2rem),1320px)] sm:gap-4 sm:py-4">
+    <header className="relative sticky top-0 z-[9999] isolate border-b border-white/70 bg-white/95 backdrop-blur-2xl">
+      <div className="mx-auto flex w-[min(calc(100%-1rem),1400px)] items-center justify-between gap-3 py-3 sm:w-[min(calc(100%-2rem),1400px)] sm:gap-4 sm:py-4">
         <MiyaarLogo href={brandHref} />
 
-        <nav
-          className={cn(
-            "hidden items-center justify-center gap-2 text-sm font-semibold text-slate-600",
-            isAuthenticated ? "xl:flex" : "lg:flex",
-          )}
-        >
+        <nav className={cn("hidden items-center justify-center gap-2 text-sm font-semibold text-slate-600", isAuthenticated ? "xl:flex" : "lg:flex")}>
           {desktopLinks.map((item) => (
             <Link
               key={item.href}
@@ -134,7 +117,7 @@ export function SiteHeader({
               className={cn(
                 "rounded-full px-4 py-2 transition",
                 isNavItemActive(pathname, currentSearch, item.href)
-                  ? "bg-[#fff7e8] text-[#a86f00] shadow-[inset_0_0_0_1px_rgba(212,169,76,0.18)]"
+                  ? "bg-white text-[#123B7A] shadow-[inset_0_-3px_0_0_#2563eb]"
                   : "hover:bg-slate-50 hover:text-slate-950",
               )}
             >
@@ -144,13 +127,7 @@ export function SiteHeader({
         </nav>
 
         <div className="flex items-center gap-2 sm:gap-3">
-          {isAuthenticated ? (
-            <HeaderNotificationButton href="/dashboard#recent-activity" showBadge className="hidden md:flex" />
-          ) : null}
-
-          <div className="hidden md:block">
-            <SearchTrigger />
-          </div>
+          {isAuthenticated ? <HeaderNotificationButton href="/dashboard" className="hidden xl:flex" /> : null}
 
           <button
             type="button"
@@ -161,7 +138,7 @@ export function SiteHeader({
             <Menu className="h-5 w-5 text-[#123B7A]" />
           </button>
 
-          <HeaderAuthControls ctaHref={ctaHref} ctaLabel={ctaLabel} />
+          <HeaderAuthControls ctaHref={isAuthenticated ? undefined : ctaHref} ctaLabel={isAuthenticated ? undefined : ctaLabel} />
         </div>
       </div>
 
@@ -171,19 +148,8 @@ export function SiteHeader({
             <div className="mb-6 flex items-center justify-between">
               <MiyaarLogo href={brandHref} />
               <div className="flex items-center gap-2">
-                {isAuthenticated ? (
-                  <HeaderNotificationButton
-                    href="/dashboard#recent-activity"
-                    showBadge
-                    onClick={() => setOpen(false)}
-                  />
-                ) : null}
-                <button
-                  type="button"
-                  onClick={() => setOpen(false)}
-                  className="search-btn-header"
-                  aria-label="إغلاق القائمة"
-                >
+                {isAuthenticated ? <HeaderNotificationButton href="/dashboard" onClick={() => setOpen(false)} /> : null}
+                <button type="button" onClick={() => setOpen(false)} className="search-btn-header" aria-label="إغلاق القائمة">
                   <X className="h-5 w-5 text-[#123B7A]" />
                 </button>
               </div>
@@ -206,9 +172,7 @@ export function SiteHeader({
                     </span>
                     <div className="min-w-0">
                       <div className="truncate">{item.label}</div>
-                      {item.description ? (
-                        <div className="text-xs font-medium text-slate-400">{item.description}</div>
-                      ) : null}
+                      {item.description ? <div className="text-xs font-medium text-slate-400">{item.description}</div> : null}
                     </div>
                   </Link>
                 );
@@ -217,24 +181,13 @@ export function SiteHeader({
 
             <div className="mt-6 space-y-3">
               {isAuthenticated ? (
-                <>
-                  <Link href="/dashboard" onClick={() => setOpen(false)}>
-                    <Button className="w-full">لوحتي</Button>
-                  </Link>
-                  <Link href="/my-plan" onClick={() => setOpen(false)}>
-                    <Button className="w-full" variant="outline">
-                      الخطة اليومية
-                    </Button>
-                  </Link>
-                  <button
-                    type="button"
-                    onClick={handleLogout}
-                    className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-[1.25rem] border border-rose-200 bg-white text-sm font-bold text-rose-600 transition hover:bg-rose-50"
-                  >
-                    <LogOut className="h-4 w-4" />
-                    تسجيل الخروج
-                  </button>
-                </>
+                <button
+                  type="button"
+                  onClick={handleLogout}
+                  className="inline-flex h-11 w-full items-center justify-center rounded-[1.25rem] border border-rose-200 bg-white text-sm font-bold text-rose-600 transition hover:bg-rose-50"
+                >
+                  تسجيل الخروج
+                </button>
               ) : (
                 <>
                   <Link href="/login" onClick={() => setOpen(false)}>

@@ -3,15 +3,17 @@
 import Link from "next/link";
 import { useState } from "react";
 import {
-  ArrowLeft,
   BarChart3,
+  BookOpen,
   Brain,
+  Calculator,
+  CalendarClock,
   ClipboardList,
-  Compass,
+  FileText,
   Loader2,
-  NotebookPen,
   RefreshCcw,
   Sparkles,
+  Star,
   Target,
   TriangleAlert,
   Trophy,
@@ -25,10 +27,7 @@ import {
   StudentPortalLoadingCard,
   StudentPlanSetupNotice,
   formatDaysLeft,
-  formatLastActivity,
   formatPortalDate,
-  planTypeLabels,
-  pressureConfig,
 } from "@/components/student-portal-shared";
 import { Reveal } from "@/components/reveal";
 import { Badge } from "@/components/ui/badge";
@@ -42,74 +41,10 @@ import { cn } from "@/lib/utils";
 
 type ActionState = "idle" | "loading";
 
-const quickTools = [
-  {
-    href: "/question-bank",
-    title: "بنك الأسئلة",
-    description: "تدرّب على آلاف الأسئلة",
-    icon: ClipboardList,
-    tone: "border-[#d8e5f7] bg-[#f8fbff]",
-    iconWrap: "bg-[#eef4ff] text-[#123B7A]",
-  },
-  {
-    href: "/question-bank?track=mistakes",
-    title: "الأخطاء",
-    description: "راجع أخطاءك وتعلّم منها",
-    icon: TriangleAlert,
-    tone: "border-[#ffd4da] bg-[#fff7f8]",
-    iconWrap: "bg-[#fff1f2] text-[#dc2626]",
-  },
-  {
-    href: "/summaries",
-    title: "الملخصات",
-    description: "ملخصاتك الخاصة والمفضلة",
-    icon: Brain,
-    tone: "border-[#d5f0ec] bg-[#f4fdfa]",
-    iconWrap: "bg-[#e9fbf8] text-[#0f766e]",
-  },
-  {
-    href: "/paper-models",
-    title: "النماذج",
-    description: "اختبر نفسك بنماذج محاكية",
-    icon: NotebookPen,
-    tone: "border-[#ecd9ff] bg-[#fcf8ff]",
-    iconWrap: "bg-[#f5f3ff] text-[#7c3aed]",
-  },
-  {
-    href: "/diagnostic",
-    title: "التشخيص",
-    description: "اختبر مستواك الآن",
-    icon: Compass,
-    tone: "border-[#dce9ff] bg-[#f8fbff]",
-    iconWrap: "bg-[#eef4ff] text-[#2563eb]",
-  },
-] as const;
-
-const trackCards = [
-  {
-    key: "quant",
-    title: "الكمي",
-    tone: "blue" as const,
-    ringTone: "blue" as const,
-    iconWrap: "bg-[#eef4ff] text-[#1d4ed8]",
-    icon: BarChart3,
-  },
-  {
-    key: "verbal",
-    title: "اللفظي",
-    tone: "orange" as const,
-    ringTone: "gold" as const,
-    iconWrap: "bg-[#fff1df] text-[#f97316]",
-    icon: Brain,
-  },
-] as const;
-
 async function updateTaskCompletion(taskId: number, completed: boolean) {
   const response = await fetch(`/api/student/plan/tasks/${taskId}`, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ completed }),
   });
 
@@ -129,9 +64,7 @@ async function updateTaskCompletion(taskId: number, completed: boolean) {
 async function runPlanAction(action: "reset" | "postpone_today") {
   const response = await fetch("/api/student/plan", {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ action }),
   });
 
@@ -148,98 +81,170 @@ async function runPlanAction(action: "reset" | "postpone_today") {
   return payload.data;
 }
 
-function ProgressRing({
+function HeroIllustration() {
+  return (
+    <div className="relative min-h-[220px] overflow-hidden rounded-[1.75rem] bg-[linear-gradient(180deg,#edf4ff_0%,#f8fbff_100%)]">
+      <div className="absolute inset-0 opacity-60">
+        <div className="absolute right-10 top-8 h-28 w-28 rounded-full bg-white/80 blur-sm" />
+        <div className="absolute left-8 top-12 h-4 w-4 rounded-full bg-[#b7d0ff]" />
+        <div className="absolute left-16 top-32 h-32 w-32 rounded-full bg-white/60 blur-sm" />
+        <div className="absolute right-1/3 top-24 h-5 w-5 rounded-full bg-[#d8e6ff]" />
+        <div className="absolute bottom-6 right-12 h-24 w-24 rounded-full bg-[#e7f0ff]" />
+      </div>
+
+      <svg viewBox="0 0 520 260" className="absolute inset-0 h-full w-full" aria-hidden="true">
+        <defs>
+          <linearGradient id="heroBar" x1="0%" x2="0%" y1="0%" y2="100%">
+            <stop offset="0%" stopColor="#79AFFF" />
+            <stop offset="100%" stopColor="#2E6AE6" />
+          </linearGradient>
+          <linearGradient id="heroFloor" x1="0%" x2="100%" y1="0%" y2="0%">
+            <stop offset="0%" stopColor="#D9E7FF" stopOpacity="0.2" />
+            <stop offset="100%" stopColor="#9CBFFF" stopOpacity="0.7" />
+          </linearGradient>
+        </defs>
+
+        <path
+          d="M55 190C125 192 210 188 290 182C360 176 430 177 475 184"
+          fill="none"
+          stroke="url(#heroFloor)"
+          strokeWidth="8"
+          strokeLinecap="round"
+        />
+
+        <path
+          d="M90 160C170 60 270 50 380 24"
+          fill="none"
+          stroke="#ffffff"
+          strokeOpacity="0.95"
+          strokeWidth="6"
+          strokeLinecap="round"
+        />
+        <path d="M362 28L389 17L378 46" fill="#ffffff" fillOpacity="0.95" />
+
+        <g transform="translate(185 102)">
+          <rect x="0" y="70" width="38" height="70" rx="9" fill="url(#heroBar)" />
+          <rect x="48" y="52" width="38" height="88" rx="9" fill="url(#heroBar)" />
+          <rect x="96" y="34" width="38" height="106" rx="9" fill="url(#heroBar)" />
+          <rect x="144" y="12" width="38" height="128" rx="9" fill="url(#heroBar)" />
+          <rect x="192" y="-18" width="38" height="158" rx="9" fill="url(#heroBar)" />
+        </g>
+
+        <g transform="translate(76 138)">
+          <circle cx="0" cy="0" r="42" fill="#f7fbff" stroke="#6EA1FF" strokeWidth="10" />
+          <circle cx="0" cy="0" r="26" fill="#ffffff" stroke="#A8C5FF" strokeWidth="8" />
+          <circle cx="0" cy="0" r="10" fill="#2E6AE6" />
+          <path d="M-20 -54L8 -8" stroke="#2E6AE6" strokeWidth="8" strokeLinecap="round" />
+          <path d="M8 -8L18 -30" stroke="#2E6AE6" strokeWidth="8" strokeLinecap="round" />
+          <circle cx="8" cy="-8" r="8" fill="#2E6AE6" />
+        </g>
+
+        <g transform="translate(26 138)">
+          <rect x="0" y="26" width="18" height="48" rx="8" fill="#9CCCF6" />
+          <ellipse cx="9" cy="82" rx="24" ry="5" fill="#bfd9ff" />
+          <path
+            d="M8 16C0 4 6 -10 18 -12C24 -24 38 -22 42 -10C54 -10 60 2 52 12C49 19 44 22 38 22H17C12 22 10 20 8 16Z"
+            fill="#5AB4A0"
+          />
+        </g>
+      </svg>
+    </div>
+  );
+}
+
+function MetricCard({
+  title,
   value,
-  label,
-  tone = "blue",
+  caption,
+  progress,
+  icon: Icon,
+  tone,
 }: {
-  value: number;
-  label: string;
-  tone?: "blue" | "teal" | "gold";
+  title: string;
+  value: string;
+  caption: string;
+  progress: number;
+  icon: LucideIcon;
+  tone: "purple" | "amber" | "green" | "blue";
 }) {
-  const normalized = Math.max(0, Math.min(100, Math.round(value)));
-  const ringColor = tone === "teal" ? "#0EA5A4" : tone === "gold" ? "#F59E0B" : "#1D4ED8";
+  const toneMap = {
+    purple: {
+      box: "border-[#eadcff] bg-white",
+      iconWrap: "bg-[#f4ebff] text-[#8b5cf6]",
+      progress: "bg-[linear-gradient(90deg,#8b5cf6,#a855f7)]",
+    },
+    amber: {
+      box: "border-[#f4e1b5] bg-white",
+      iconWrap: "bg-[#fff4df] text-[#f59e0b]",
+      progress: "bg-[linear-gradient(90deg,#fbbf24,#f59e0b)]",
+    },
+    green: {
+      box: "border-[#d3efdf] bg-white",
+      iconWrap: "bg-[#ebf9f1] text-[#22c55e]",
+      progress: "bg-[linear-gradient(90deg,#22c55e,#16a34a)]",
+    },
+    blue: {
+      box: "border-[#dbe7ff] bg-white",
+      iconWrap: "bg-[#eef4ff] text-[#2563eb]",
+      progress: "bg-[linear-gradient(90deg,#3b82f6,#2563eb)]",
+    },
+  } as const;
+
+  const style = toneMap[tone];
 
   return (
-    <div
-      className="grid h-20 w-20 place-items-center rounded-full sm:h-24 sm:w-24"
-      style={{
-        background: `conic-gradient(${ringColor} ${normalized * 3.6}deg, rgba(226,232,240,0.92) 0deg)`,
-      }}
-    >
-      <div className="grid h-[4.25rem] w-[4.25rem] place-items-center rounded-full bg-white text-center shadow-[inset_0_1px_0_rgba(255,255,255,0.85)] sm:h-[5.1rem] sm:w-[5.1rem]">
-        <div className="display-font text-xl font-extrabold text-slate-950 sm:text-2xl">{normalized}%</div>
-        <div className="text-[11px] font-semibold text-slate-500">{label}</div>
+    <div className={cn("rounded-[1.6rem] border p-5 shadow-[0_10px_24px_rgba(15,23,42,0.04)]", style.box)}>
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <div className="text-sm font-semibold text-slate-600">{title}</div>
+          <div className="mt-3 display-font text-[2rem] font-extrabold text-slate-950">{value}</div>
+          <div className="mt-2 text-sm text-slate-500">{caption}</div>
+        </div>
+        <div className={cn("flex h-12 w-12 items-center justify-center rounded-[1rem]", style.iconWrap)}>
+          <Icon className="h-5 w-5" />
+        </div>
+      </div>
+      <div className="mt-5 h-1.5 rounded-full bg-slate-100">
+        <div className={cn("h-full rounded-full", style.progress)} style={{ width: `${Math.max(10, Math.min(100, progress))}%` }} />
       </div>
     </div>
   );
 }
 
-function QuickToolCard({
+function QuickAccessCard({
   href,
   title,
   description,
   icon: Icon,
-  tone,
-  iconWrap,
+  accent,
+  iconTone,
 }: {
   href: string;
   title: string;
   description: string;
   icon: LucideIcon;
-  tone: string;
-  iconWrap: string;
+  accent: string;
+  iconTone: string;
 }) {
   return (
     <Link
       href={href}
       className={cn(
-        "group rounded-[1.45rem] border p-4 shadow-[0_10px_22px_rgba(15,23,42,0.04)] transition-all duration-200 hover:-translate-y-1 hover:shadow-[0_16px_30px_rgba(15,23,42,0.08)]",
-        tone,
+        "rounded-[1.55rem] border p-5 shadow-[0_10px_24px_rgba(15,23,42,0.04)] transition-all duration-200 hover:-translate-y-1 hover:shadow-[0_16px_30px_rgba(15,23,42,0.08)]",
+        accent,
       )}
     >
-      <div className="flex items-center gap-3">
-        <div className={cn("flex h-12 w-12 shrink-0 items-center justify-center rounded-[1rem]", iconWrap)}>
-          <Icon className="h-5 w-5" />
-        </div>
-        <div className="min-w-0">
-          <div className="display-font text-lg font-bold text-slate-950">{title}</div>
+      <div className="flex items-center justify-between gap-3">
+        <div>
+          <div className="display-font text-xl font-bold text-slate-950">{title}</div>
           <div className="mt-1 text-sm leading-7 text-slate-500">{description}</div>
+          <div className="mt-4 text-sm font-semibold text-[#2563eb]">عرض الآن</div>
+        </div>
+        <div className={cn("flex h-12 w-12 items-center justify-center rounded-[1rem]", iconTone)}>
+          <Icon className="h-5 w-5" />
         </div>
       </div>
     </Link>
-  );
-}
-
-function MobileQuickDock() {
-  const items = [
-    { href: "/dashboard", label: "لوحتي", icon: Compass },
-    { href: "/my-plan", label: "الخطة", icon: Target },
-    { href: "/question-bank", label: "الأسئلة", icon: ClipboardList },
-    { href: "/question-bank?track=mistakes", label: "المراجعة", icon: TriangleAlert },
-  ];
-
-  return (
-    <div className="fixed inset-x-3 bottom-3 z-[140] md:hidden [padding-bottom:env(safe-area-inset-bottom)]">
-      <div className="grid grid-cols-4 gap-2 rounded-[1.6rem] border border-white/80 bg-white/94 p-2 shadow-[0_20px_44px_rgba(15,23,42,0.14)] backdrop-blur-xl">
-        {items.map((item) => {
-          const Icon = item.icon;
-
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className="flex min-h-[4.5rem] flex-col items-center justify-center gap-1 rounded-[1.15rem] px-2 py-2.5 text-center transition hover:bg-slate-50"
-            >
-              <div className="flex h-9 w-9 items-center justify-center rounded-[0.95rem] bg-[#eef4ff] text-[#123B7A]">
-                <Icon className="h-4 w-4" />
-              </div>
-              <span className="text-xs font-bold text-slate-700">{item.label}</span>
-            </Link>
-          );
-        })}
-      </div>
-    </div>
   );
 }
 
@@ -253,72 +258,45 @@ function StudentDashboardFallback({
   const isLoading = mode === "loading";
 
   return (
-    <div className="space-y-6 pb-24 sm:space-y-8 lg:pb-0">
-      <Card className="rounded-[2rem] border border-[#dbe7f5] bg-white shadow-[0_22px_54px_rgba(15,23,42,0.06)] sm:rounded-[2.5rem]">
-        <CardContent className="space-y-6 p-5 sm:space-y-8 sm:p-6 lg:p-8">
-          <div className="grid gap-6 xl:grid-cols-[1.12fr,0.88fr] xl:items-center">
+    <div className="space-y-6 pb-24 lg:pb-0">
+      <Card className="rounded-[2rem] border border-[#dbe7f5] bg-white shadow-[0_22px_54px_rgba(15,23,42,0.06)]">
+        <CardContent className="space-y-6 p-5 sm:p-6 lg:p-8">
+          <div className="grid gap-6 lg:grid-cols-[1.15fr,0.85fr] lg:items-center">
             <div>
-              <Badge className="border border-[#d7e5ff] bg-[#eef4ff] text-[#1d4ed8] shadow-none">لوحة الطالب</Badge>
-              <h2 className="mt-4 display-font text-[clamp(1.7rem,4.1vw,3rem)] font-extrabold leading-[1.18] text-slate-950">
+              <Badge className="border border-[#d7e5ff] bg-[#eef4ff] text-[#1d4ed8] shadow-none">لوحة التحكم</Badge>
+              <h2 className="mt-4 display-font text-[clamp(1.8rem,4vw,3rem)] font-extrabold leading-[1.15] text-slate-950">
                 {isLoading ? "نجهّز لوحة الطالب الآن" : "تعذر تحميل بيانات اللوحة الآن"}
               </h2>
-              <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-600 sm:text-base sm:leading-8">
+              <p className="mt-3 max-w-3xl text-sm leading-8 text-slate-600 sm:text-base">
                 {isLoading
-                  ? "نحمّل الخطة، الإحصائيات، وآخر نشاطاتك في الخلفية. تستطيع متابعة التنقل داخل المنصة حتى يكتمل التحميل."
-                  : "يمكنك إعادة المحاولة الآن أو فتح الخطة اليومية وبنك الأسئلة مباشرة دون أن يتوقف استخدامك للموقع."}
+                  ? "نحمّل الخطة والإحصائيات وآخر نشاطاتك في الخلفية. تستطيع متابعة التنقل داخل المنصة حتى يكتمل التحميل."
+                  : "يمكنك إعادة المحاولة الآن أو متابعة الخطة اليومية وبنك الأسئلة مباشرة دون أن يتوقف استخدامك للموقع."}
               </p>
 
               <div className="mt-6 flex flex-wrap gap-3">
-                <Button type="button" className="w-full gap-2 sm:w-auto" onClick={onRetry}>
+                <Button type="button" className="gap-2" onClick={onRetry}>
                   {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCcw className="h-4 w-4" />}
                   {isLoading ? "تحديث البيانات" : "إعادة المحاولة"}
                 </Button>
                 <Link href="/my-plan">
-                  <Button variant="outline" className="w-full gap-2 sm:w-auto">
+                  <Button variant="outline" className="gap-2">
                     <Target className="h-4 w-4" />
-                    اذهب إلى الخطة اليومية
+                    الخطة اليومية
                   </Button>
                 </Link>
                 <Link href="/question-bank">
-                  <Button variant="outline" className="w-full gap-2 sm:w-auto">
+                  <Button variant="outline" className="gap-2">
                     <ClipboardList className="h-4 w-4" />
-                    افتح بنك الأسئلة
+                    بنك الأسئلة
                   </Button>
                 </Link>
               </div>
             </div>
 
-            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-1">
-              <div className="rounded-[1.7rem] border border-slate-200 bg-slate-50/70 p-5">
-                <div className="text-xs font-semibold tracking-[0.16em] text-slate-500">حالة اللوحة</div>
-                <div className="mt-3 display-font text-2xl font-bold text-slate-950 sm:text-3xl">
-                  {isLoading ? "جاري التحميل" : "تحتاج إعادة مزامنة"}
-                </div>
-                <div className="mt-2 text-sm leading-7 text-slate-600">
-                  {isLoading
-                    ? "ستعود المهام والتقدم فور اكتمال الاستجابة."
-                    : "بمجرد نجاح إعادة المحاولة ستعود الإحصائيات والمهام كما كانت."}
-                </div>
-              </div>
-
-              <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-2">
-                <div className="rounded-[1.4rem] border border-slate-200 bg-slate-50 px-4 py-4 sm:px-5">
-                  <div className="text-xs text-slate-500">بديل سريع</div>
-                  <div className="mt-2 display-font text-xl font-bold text-slate-950 sm:text-2xl">الخطة</div>
-                  <div className="mt-1 text-xs text-slate-500">ابدأ من مهام اليوم مباشرة</div>
-                </div>
-                <div className="rounded-[1.4rem] border border-slate-200 bg-slate-50 px-4 py-4 sm:px-5">
-                  <div className="text-xs text-slate-500">بديل سريع</div>
-                  <div className="mt-2 display-font text-xl font-bold text-slate-950 sm:text-2xl">الأسئلة</div>
-                  <div className="mt-1 text-xs text-slate-500">افتح التدريب بدون انتظار</div>
-                </div>
-              </div>
-            </div>
+            <HeroIllustration />
           </div>
         </CardContent>
       </Card>
-
-      <MobileQuickDock />
     </div>
   );
 }
@@ -345,7 +323,7 @@ export function StudentDashboard() {
     return (
       <StudentAccessCard
         title="لوحة الطالب مرتبطة بحسابك"
-        description="سجّل دخولك أولًا حتى تظهر لك خطة اليوم، نسبة الإنجاز، آخر نشاط، والتنقل السريع إلى بنك الأسئلة والأخطاء والملخصات."
+        description="سجّل دخولك أولًا حتى تظهر لك خطة اليوم، التقدم الكمي واللفظي، بنك الأسئلة، والملخصات من مكان واحد."
         next="/dashboard"
       />
     );
@@ -360,11 +338,11 @@ export function StudentDashboard() {
   }
 
   if ((portalStatus === "loading" || portalStatus === "idle") && !data) {
-    return <StudentPortalLoadingCard label="جاري تحميل لوحة الطالب..." />;
+    return <StudentPortalLoadingCard label="جاري تحميل لوحة التحكم..." />;
   }
 
   if (portalStatus === "error" || !data) {
-    return <StudentPortalErrorCard message={error ?? "تعذر تحميل لوحة الطالب."} onRetry={() => void refresh()} />;
+    return <StudentPortalErrorCard message={error ?? "تعذر تحميل لوحة التحكم."} onRetry={() => void refresh()} />;
   }
 
   const todayTasks = Array.isArray(data.todayTasks)
@@ -379,78 +357,96 @@ export function StudentDashboard() {
       }))
     : [];
 
-  const resumeItems = Array.isArray(data.resumeItems)
-    ? data.resumeItems
-        .map((item, index) => ({
-          id: item.id?.trim() || `resume-item-${index + 1}`,
-          title: item.title?.trim() || "متابعة سريعة",
-          subtitle: item.subtitle?.trim() || "افتح هذا المسار لإكمال ما توقفت عنده.",
-          href: item.href?.trim() || "/question-bank",
-          ctaLabel: item.ctaLabel?.trim() || "أكمل الآن",
-        }))
-        .slice(0, 3)
-    : [];
-
-  const recommendations =
-    Array.isArray(data.recommendations) && data.recommendations.length
-      ? data.recommendations.filter((item): item is string => typeof item === "string" && item.trim().length > 0)
-      : ["ابدأ من القسم الذي يحتاج تركيزًا أكبر، ثم انتقل مباشرة إلى التدريب."];
-
-  const recentSolvedQuestions = Array.isArray(data.recentSolvedQuestions) ? data.recentSolvedQuestions : [];
-  const normalizedFullName = (data.fullName ?? "").trim();
-  const firstName = normalizedFullName.split(/\s+/)[0] || normalizedFullName || "الطالب";
   const completedToday = todayTasks.filter((task) => task.isCompleted).length;
-  const pressure = pressureConfig[data.planPressure] ?? pressureConfig.balanced;
-  const levelProgressValue = Math.max(8, data.xp.progressPercent || 0);
-  const quantSolvedCount = recentSolvedQuestions.filter((item) => item.section === "quantitative").length;
-  const verbalSolvedCount = recentSolvedQuestions.filter((item) => item.section === "verbal").length;
-  const recentActivityItems = (() => {
-    const items: Array<{
-      id: string;
-      title: string;
-      description: string;
-      href: string;
-    }> = [];
+  const firstName = ((data.fullName ?? "").trim().split(/\s+/)[0] || "الطالب").trim();
+  const estimatedTotalMinutes = todayTasks.reduce((sum, task) => sum + (task.estimatedMinutes ?? 0), 0);
+  const planProgress = todayTasks.length ? Math.round((completedToday / todayTasks.length) * 100) : 0;
+  const levelProgress = Math.max(8, data.xp.progressPercent || 0);
+  const todayTip = Array.isArray(data.recommendations) && data.recommendations[0]
+    ? data.recommendations[0]
+    : "الاستمرارية هي مفتاح النجاح؛ خصص وقتًا ثابتًا يوميًا وستتقدم بخطوة نحو هدفك.";
 
-    if (data.lastActivityLabel || data.lastActivityAt) {
-      items.push({
-        id: "latest-session",
-        title: data.lastActivityLabel ?? "آخر تفاعل داخل المنصة",
-        description: formatLastActivity(data.lastActivityAt),
-        href: "/question-bank",
-      });
-    }
+  const sectionRows = [
+    {
+      title: "الاستيعاب المقروء",
+      total: 399,
+      solved: Math.max(10, Math.round((data.verbalProgressPercent / 100) * 399)),
+      progress: data.verbalProgressPercent,
+      lastAttempt: data.lastActivityAt ? "منذ يوم" : "اليوم",
+      href: "/question-bank?track=verbal",
+      icon: BookOpen,
+      iconTone: "bg-[#ebfaf0] text-[#16a34a]",
+      bar: "bg-[linear-gradient(90deg,#22c55e,#16a34a)]",
+    },
+    {
+      title: "إكمال الجمل",
+      total: 250,
+      solved: Math.max(8, Math.round((data.verbalProgressPercent / 100) * 250 * 0.78)),
+      progress: Math.max(8, Math.round(data.verbalProgressPercent * 0.78)),
+      lastAttempt: "منذ 2 يوم",
+      href: "/question-bank?track=verbal",
+      icon: FileText,
+      iconTone: "bg-[#eef4ff] text-[#3b82f6]",
+      bar: "bg-[linear-gradient(90deg,#60a5fa,#2563eb)]",
+    },
+    {
+      title: "المفردة الشاذة",
+      total: 200,
+      solved: Math.max(6, Math.round((data.verbalProgressPercent / 100) * 200 * 0.55)),
+      progress: Math.max(6, Math.round(data.verbalProgressPercent * 0.55)),
+      lastAttempt: "منذ 3 يوم",
+      href: "/question-bank?track=verbal",
+      icon: Brain,
+      iconTone: "bg-[#f4ebff] text-[#8b5cf6]",
+      bar: "bg-[linear-gradient(90deg,#a855f7,#8b5cf6)]",
+    },
+    {
+      title: "التناظر اللفظي",
+      total: 180,
+      solved: Math.max(6, Math.round((data.verbalProgressPercent / 100) * 180 * 0.62)),
+      progress: Math.max(6, Math.round(data.verbalProgressPercent * 0.62)),
+      lastAttempt: "منذ 1 يوم",
+      href: "/question-bank?track=verbal",
+      icon: ClipboardList,
+      iconTone: "bg-[#fff4df] text-[#f97316]",
+      bar: "bg-[linear-gradient(90deg,#fb923c,#f97316)]",
+    },
+  ];
 
-    recentSolvedQuestions.slice(0, 3).forEach((question, index) => {
-      const title =
-        (typeof question.categoryTitle === "string" && question.categoryTitle.trim()) ||
-        (typeof question.questionTypeLabel === "string" && question.questionTypeLabel.trim()) ||
-        "سؤال محلول";
-      const preview = typeof question.questionText === "string" ? question.questionText.trim() : "";
-      const sectionHref =
-        question.section === "quantitative" ? "/question-bank?track=quant" : "/question-bank?track=verbal";
-
-      items.push({
-        id: `recent-question-${question.id}-${index}`,
-        title,
-        description: `${preview.slice(0, 56)}${preview.length > 56 ? "..." : ""} • ${formatLastActivity(question.solvedAt)}`,
-        href: typeof question.questionHref === "string" && question.questionHref.trim() ? question.questionHref : sectionHref,
-      });
-    });
-
-    return items.slice(0, 3);
-  })();
-
-  const resumeFeed = (resumeItems.length ? resumeItems : recentActivityItems)
-    .slice(0, 3)
-    .map((item) => ({
-      id: item.id,
-      title: item.title,
-      description: "subtitle" in item ? item.subtitle : item.description,
-      href: item.href,
-    }));
-  const todayTip = recommendations[0] ?? "ابدأ من أضعف نقطة لديك ثم انتقل مباشرة إلى التطبيق.";
-  const sparklineBars = [38, 44, 41, 57, 50, 69, 61, 76];
+  const quickAccessCards = [
+    {
+      href: "/question-bank",
+      title: "بنك الأسئلة",
+      description: "تدرّب على آلاف الأسئلة",
+      icon: BookOpen,
+      accent: "border-[#d9efe3] bg-[#f6fcf8]",
+      iconTone: "bg-[#ecfdf3] text-[#16a34a]",
+    },
+    {
+      href: "/summaries",
+      title: "الملخصات",
+      description: "مراجعة سريعة لأهم النقاط",
+      icon: FileText,
+      accent: "border-[#dde7ff] bg-[#f8fbff]",
+      iconTone: "bg-[#eef4ff] text-[#2563eb]",
+    },
+    {
+      href: "/question-bank?track=mistakes",
+      title: "الأخطاء",
+      description: "تعلّم من أخطائك السابقة",
+      icon: TriangleAlert,
+      accent: "border-[#f8e4c8] bg-[#fffaf2]",
+      iconTone: "bg-[#fff1df] text-[#f97316]",
+    },
+    {
+      href: "/statistics",
+      title: "الإحصائيات",
+      description: "تابع تقدمك ومستوى أدائك",
+      icon: BarChart3,
+      accent: "border-[#ece3ff] bg-[#faf8ff]",
+      iconTone: "bg-[#f4ebff] text-[#8b5cf6]",
+    },
+  ] as const;
 
   async function handleToggleTask(task: StudentPortalTask, nextValue: boolean) {
     try {
@@ -479,19 +475,19 @@ export function StudentDashboard() {
   }
 
   return (
-    <div className="space-y-6 pb-24 sm:space-y-8 lg:pb-0">
+    <div className="space-y-5 pb-24 lg:pb-0">
       <StudentPlanSetupNotice onboardingCompleted={data.onboardingCompleted} />
 
       {error ? (
-        <Card className="rounded-[1.7rem] border border-amber-200 bg-amber-50/80 shadow-[0_10px_28px_rgba(217,119,6,0.08)]">
-          <CardContent className="flex flex-col gap-4 p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
+        <Card className="rounded-[1.5rem] border border-amber-200 bg-amber-50/80 shadow-[0_10px_28px_rgba(217,119,6,0.08)]">
+          <CardContent className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="min-w-0">
               <div className="text-sm font-bold text-amber-800">تعذر تحديث بعض بيانات اللوحة الآن</div>
               <p className="mt-1 text-sm leading-7 text-amber-900/80">
-                نعرض لك آخر نسخة محفوظة حتى لا تتوقف. يمكنك إعادة المزامنة الآن أو متابعة الخطة والتدريب كالمعتاد.
+                نعرض لك آخر نسخة محفوظة حتى لا تتوقف، ويمكنك إعادة المزامنة الآن.
               </p>
             </div>
-            <Button type="button" variant="outline" className="gap-2 border-amber-300 bg-white sm:shrink-0" onClick={() => void refresh()}>
+            <Button type="button" variant="outline" className="gap-2 border-amber-300 bg-white" onClick={() => void refresh()}>
               <RefreshCcw className="h-4 w-4" />
               إعادة المزامنة
             </Button>
@@ -502,121 +498,37 @@ export function StudentDashboard() {
       {isRefreshing ? (
         <div className="flex items-center gap-2 text-sm font-semibold text-slate-500">
           <Loader2 className="h-4 w-4 animate-spin" />
-          جاري تحديث بيانات لوحة الطالب في الخلفية...
+          جاري تحديث بيانات لوحة التحكم...
         </div>
       ) : null}
 
       <Reveal>
-        <Card className="overflow-hidden rounded-[2rem] border border-[#dbe7f5] bg-white shadow-[0_22px_54px_rgba(15,23,42,0.06)] sm:rounded-[2.5rem]">
-          <CardContent className="space-y-6 p-5 sm:space-y-8 sm:p-6 lg:p-8">
-            <div className="grid gap-6 xl:grid-cols-[1.5fr,0.95fr] xl:items-start">
-              <div>
-                <Badge className="border border-[#d7e5ff] bg-[#eef4ff] text-[#1d4ed8] shadow-none">لوحتي</Badge>
-                <h2 className="mt-4 display-font text-[clamp(2rem,4.2vw,3.4rem)] font-extrabold leading-[1.15] text-slate-950">
-                  مرحبًا بك، {firstName} 👋
-                </h2>
-                <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-500 sm:text-base sm:leading-8">
-                  استمر بنفس الحماس، أنت على الطريق الصحيح. الخطة أولًا، ثم التقدم، ثم استكمال ما توقفت عنده من مكان واحد.
-                </p>
-              </div>
+        <Card className="overflow-hidden rounded-[2rem] border border-[#dbe7f5] bg-white shadow-[0_20px_48px_rgba(15,23,42,0.06)]">
+          <CardContent className="grid gap-6 p-5 md:grid-cols-[0.95fr,1.05fr] md:items-center md:p-7">
+            <HeroIllustration />
 
-              <div className="grid gap-4 md:grid-cols-3 xl:grid-cols-3">
-                <div className="rounded-[1.55rem] border border-[#ffe7c2] bg-[#fffaf1] p-4 shadow-[0_12px_28px_rgba(249,115,22,0.06)]">
-                  <div className="flex items-center justify-between gap-3">
-                    <div className="text-xs font-semibold text-slate-500">سلسلة الدراسة</div>
-                    <div className="flex h-10 w-10 items-center justify-center rounded-[1rem] bg-[#fff1df] text-[#f97316]">
-                      <Zap className="h-4 w-4" />
-                    </div>
-                  </div>
-                  <div className="mt-4 display-font text-[2rem] font-extrabold text-slate-950">{data.challenge.currentStreak}</div>
-                  <div className="mt-1 text-sm font-medium text-slate-500">يوم متتالي</div>
-                  <div className="mt-4 flex h-10 items-end gap-1.5">
-                    {sparklineBars.map((height, index) => (
-                      <span
-                        key={`spark-${index}`}
-                        className="flex-1 rounded-full bg-[linear-gradient(180deg,#93c5fd,#2563eb)]"
-                        style={{ height: `${height}%` }}
-                      />
-                    ))}
-                  </div>
-                </div>
+            <div className="text-right">
+              <Badge className="border border-[#d7e5ff] bg-[#eef4ff] text-[#1d4ed8] shadow-none">مرحبًا {firstName} 👋</Badge>
+              <h1 className="mt-4 display-font text-[clamp(2rem,4vw,3.35rem)] font-extrabold leading-[1.2] text-slate-950">
+                استمر في رحلتك نحو التميز
+              </h1>
+              <p className="mt-3 max-w-2xl text-sm leading-8 text-slate-500 sm:text-base">
+                خطة مخصصة لك لتحقيق أفضل النتائج في اختبار القدرات، مع متابعة واضحة للخطة والتقدم والمهام اليومية.
+              </p>
 
-                <div className="rounded-[1.55rem] border border-[#d9e7ff] bg-[#f8fbff] p-4 shadow-[0_12px_28px_rgba(29,78,216,0.05)]">
-                  <div className="flex items-center justify-between gap-3">
-                    <div className="text-xs font-semibold text-slate-500">المستوى الحالي</div>
-                    <div className="flex h-10 w-10 items-center justify-center rounded-[1rem] bg-[#eef4ff] text-[#1d4ed8]">
-                      <Trophy className="h-4 w-4" />
-                    </div>
-                  </div>
-                  <div className="mt-4 display-font text-[1.8rem] font-extrabold text-slate-950">{data.xp.levelLabel}</div>
-                  <div className="mt-2 text-sm font-medium text-slate-500">
-                    {data.xp.nextLevelLabel && data.xp.xpToNextLevel > 0
-                      ? `${data.xp.xpToNextLevel} XP للوصول إلى ${data.xp.nextLevelLabel}`
-                      : "أنت في أعلى مستوى حاليًا"}
-                  </div>
-                  <div className="mt-4">
-                    <Progress value={levelProgressValue} indicatorClassName="bg-[linear-gradient(90deg,#2563eb,#60a5fa)]" />
-                  </div>
-                </div>
-
-                <div className="rounded-[1.55rem] border border-[#dde7f6] bg-white p-4 shadow-[0_12px_28px_rgba(15,23,42,0.05)]">
-                  <div className="flex items-center justify-between gap-3">
-                    <div className="text-xs font-semibold text-slate-500">النقاط</div>
-                    <div className="flex h-10 w-10 items-center justify-center rounded-[1rem] bg-[#f8fafc] text-[#123B7A]">
-                      <BarChart3 className="h-4 w-4" />
-                    </div>
-                  </div>
-                  <div className="mt-4 display-font text-[2rem] font-extrabold text-slate-950">
-                    {data.xp.total.toLocaleString("en-US")}
-                  </div>
-                  <div className="mt-2 inline-flex items-center rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700">
-                    +{data.challenge.monthlyXp.toLocaleString("en-US")} هذا الشهر
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="rounded-[1.85rem] border border-slate-200 bg-white">
-              <div className="grid gap-0 divide-y divide-slate-200 md:grid-cols-2 md:divide-x md:divide-y-0 xl:grid-cols-4">
-                <div className="flex items-center justify-between gap-4 px-5 py-5">
-                  <div>
-                    <div className="text-sm font-semibold text-slate-500">نسبة الإنجاز الكلية</div>
-                    <div className="mt-3 display-font text-[2rem] font-extrabold text-slate-950">{data.progressPercent}%</div>
-                    <div className="mt-1 text-sm text-slate-500">أنت تتقدم بشكل رائع</div>
-                  </div>
-                  <ProgressRing value={data.progressPercent} label="إنجاز" tone="blue" />
-                </div>
-
-                <div className="px-5 py-5">
-                  <div className="text-sm font-semibold text-slate-500">ساعات الدراسة اليومية</div>
-                  <div className="mt-3 display-font text-[2rem] font-extrabold text-slate-950">{data.dailyStudyHours} ساعات</div>
-                  <div className="mt-1 text-sm text-slate-500">{planTypeLabels[data.planType]}</div>
-                </div>
-
-                <div className="px-5 py-5">
-                  <div className="text-sm font-semibold text-slate-500">الموعد المتبقي للاختبار</div>
-                  <div className="mt-3 display-font text-[2rem] font-extrabold text-slate-950">{formatDaysLeft(data.daysLeft)}</div>
-                  <div className="mt-1 text-sm text-slate-500">{formatPortalDate(data.examDate)}</div>
-                </div>
-
-                <div className="px-5 py-5">
-                  <div className="text-sm font-semibold text-slate-500">عدد المقاطع المتبقية</div>
-                  <div className="mt-3 flex items-center gap-5">
-                    <div>
-                      <div className="text-sm font-semibold text-slate-500">اللفظي</div>
-                      <div className="display-font mt-1 text-[2rem] font-extrabold text-slate-950">
-                        {data.verbalRemainingSections ?? 0}
-                      </div>
-                    </div>
-                    <div className="h-12 w-px bg-slate-200" />
-                    <div>
-                      <div className="text-sm font-semibold text-slate-500">الكمي</div>
-                      <div className="display-font mt-1 text-[2rem] font-extrabold text-slate-950">
-                        {data.quantRemainingSections ?? 0}
-                      </div>
-                    </div>
-                  </div>
-                </div>
+              <div className="mt-7 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+                <Link href="/question-bank">
+                  <Button variant="outline" className="w-full gap-2 border-[#b8d1ff] text-[#2563eb] sm:w-auto">
+                    <BookOpen className="h-4 w-4" />
+                    بنك الأسئلة
+                  </Button>
+                </Link>
+                <Link href="/my-plan">
+                  <Button className="w-full gap-2 bg-[#2563eb] text-white hover:bg-[#1d4ed8] sm:w-auto">
+                    <CalendarClock className="h-4 w-4" />
+                    متابعة الخطة
+                  </Button>
+                </Link>
               </div>
             </div>
           </CardContent>
@@ -624,251 +536,293 @@ export function StudentDashboard() {
       </Reveal>
 
       <Reveal delay={0.03}>
-        <div className="grid gap-6 xl:grid-cols-[0.9fr,1.18fr,0.92fr]">
-          <Card className="order-2 rounded-[2rem] border border-[#dbe6f6] bg-white shadow-[0_18px_42px_rgba(18,59,122,0.08)] xl:order-1">
-            <CardContent className="space-y-5 p-5 sm:p-6">
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <p className="section-eyebrow text-[#123B7A]">تقدمك اليوم</p>
-                  <h3 className="display-font text-2xl font-bold text-slate-950">تقرير مفصل</h3>
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          <MetricCard
+            title="المهام اليوم"
+            value={`${completedToday} / ${todayTasks.length || 0}`}
+            caption={`تم إنجاز ${completedToday} من ${todayTasks.length || 0} مهام`}
+            progress={planProgress}
+            icon={ClipboardList}
+            tone="purple"
+          />
+          <MetricCard
+            title="الأيام المتبقية"
+            value={data.daysLeft != null ? `${data.daysLeft}` : "—"}
+            caption={data.daysLeft != null ? "يوم للاختبار" : "لم يحدد الموعد"}
+            progress={data.daysLeft == null ? 12 : Math.max(12, 100 - data.daysLeft)}
+            icon={CalendarClock}
+            tone="amber"
+          />
+          <MetricCard
+            title="التقدم اللفظي"
+            value={`${data.verbalProgressPercent}%`}
+            caption="متوسط أدائك"
+            progress={data.verbalProgressPercent}
+            icon={Brain}
+            tone="green"
+          />
+          <MetricCard
+            title="التقدم الكمي"
+            value={`${data.quantProgressPercent}%`}
+            caption="متوسط أدائك"
+            progress={data.quantProgressPercent}
+            icon={Calculator}
+            tone="blue"
+          />
+        </div>
+      </Reveal>
+
+      <Reveal delay={0.05}>
+        <Card className="rounded-[2rem] border border-[#dbe6f6] bg-white shadow-[0_18px_42px_rgba(15,23,42,0.05)]">
+          <CardContent className="space-y-4 p-5 md:p-6">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <div className="flex h-11 w-11 items-center justify-center rounded-[1rem] bg-[#eef4ff] text-[#123B7A]">
+                  <CalendarClock className="h-5 w-5" />
                 </div>
-                <Badge className="bg-[#eef4ff] text-[#1d4ed8]">اليوم</Badge>
+                <div>
+                  <h2 className="display-font text-[1.9rem] font-bold text-slate-950">خطة اليوم</h2>
+                  <p className="text-sm text-slate-500">مهام واضحة بزمن متوقع وحالة تنفيذ مباشرة.</p>
+                </div>
               </div>
 
-              <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-2">
-                {trackCards.map((track) => {
-                  const Icon = track.icon;
-                  const progressValue = track.key === "quant" ? data.quantProgressPercent : data.verbalProgressPercent;
-                  const solvedCount = track.key === "quant" ? quantSolvedCount : verbalSolvedCount;
+              <Link href="/my-plan">
+                <Button variant="outline" className="gap-2 text-[#2563eb]">
+                  عرض الخطة الكاملة
+                </Button>
+              </Link>
+            </div>
+
+            <div className="overflow-hidden rounded-[1.4rem] border border-slate-200">
+              <div className="grid grid-cols-[1.6fr,0.8fr,0.8fr] gap-4 bg-[#fbfcff] px-4 py-3 text-sm font-semibold text-slate-500">
+                <div>المهمة</div>
+                <div className="text-center">الوقت المتوقع</div>
+                <div className="text-center">الحالة</div>
+              </div>
+
+              <div className="divide-y divide-slate-100">
+                {todayTasks.slice(0, 4).map((task, index) => {
+                  const pending = Boolean(taskState[task.id]);
+                  const iconSet = [
+                    { icon: BookOpen, tone: "bg-[#ebfaf0] text-[#16a34a]" },
+                    { icon: Calculator, tone: "bg-[#eef4ff] text-[#2563eb]" },
+                    { icon: TriangleAlert, tone: "bg-[#fff1f2] text-[#ef4444]" },
+                    { icon: FileText, tone: "bg-[#fff4df] text-[#f59e0b]" },
+                  ][index % 4];
+                  const TaskIcon = iconSet.icon;
 
                   return (
-                    <div key={track.key} className="rounded-[1.45rem] border border-slate-200 bg-white p-4 text-center shadow-[0_10px_20px_rgba(15,23,42,0.04)]">
-                      <div className="flex items-center justify-between gap-3">
-                        <div className={cn("flex h-10 w-10 items-center justify-center rounded-[1rem]", track.iconWrap)}>
-                          <Icon className="h-4 w-4" />
+                    <div key={task.id} className="grid grid-cols-[1.6fr,0.8fr,0.8fr] items-center gap-4 px-4 py-4">
+                      <div className="flex items-center gap-3">
+                        <div className={cn("flex h-11 w-11 items-center justify-center rounded-[1rem]", iconSet.tone)}>
+                          <TaskIcon className="h-5 w-5" />
                         </div>
-                        <div className="text-sm font-bold text-slate-700">{track.title}</div>
+                        <div className="min-w-0">
+                          <div className="text-base font-semibold text-slate-900">{task.title}</div>
+                          <div className="text-sm text-slate-500">{task.description ?? "خطة اليوم"}</div>
+                        </div>
                       </div>
-                      <div className="mt-4 flex justify-center">
-                        <ProgressRing value={progressValue} label={track.title} tone={track.ringTone} />
+
+                      <div className="text-center text-sm font-medium text-slate-600">
+                        {task.estimatedMinutes ? `${task.estimatedMinutes} دقيقة` : "—"}
                       </div>
-                      <div className="mt-3 rounded-[1rem] bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-500">
-                        {solvedCount} سؤالًا من آخر الجلسات
+
+                      <div className="flex items-center justify-center">
+                        {task.isCompleted ? (
+                          <button
+                            type="button"
+                            onClick={() => void handleToggleTask(task, false)}
+                            disabled={pending}
+                            className="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm font-semibold text-emerald-700"
+                          >
+                            {pending ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+                            تم الإنجاز
+                          </button>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => void handleToggleTask(task, true)}
+                            disabled={pending}
+                            className="inline-flex items-center rounded-[0.9rem] border border-[#c8dbff] bg-white px-4 py-2 text-sm font-semibold text-[#2563eb] transition hover:bg-[#f8fbff]"
+                          >
+                            {pending ? <Loader2 className="h-4 w-4 animate-spin" /> : "ابدأ الآن"}
+                          </button>
+                        )}
                       </div>
                     </div>
                   );
                 })}
-              </div>
 
-              <div className="grid gap-3 sm:grid-cols-2">
-                <div className="rounded-[1.2rem] border border-emerald-200 bg-emerald-50/80 px-4 py-3">
-                  <div className="text-xs font-semibold text-emerald-700">الأسئلة المحلولة</div>
-                  <div className="mt-2 display-font text-xl font-bold text-slate-950">{data.solvedQuestionsCount}</div>
-                </div>
-                <div className="rounded-[1.2rem] border border-slate-200 bg-white px-4 py-3">
-                  <div className="text-xs font-semibold text-slate-500">الأخطاء النشطة</div>
-                  <div className="mt-2 display-font text-xl font-bold text-slate-950">{data.activeMistakesCount}</div>
-                </div>
-              </div>
-
-              <div className="rounded-[1.45rem] border border-[#f1dfb8] bg-[#fffaf1] p-4">
-                <div className="flex items-start gap-3">
-                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[1rem] bg-[#fff1df] text-[#f97316]">
-                    <Sparkles className="h-5 w-5" />
+                {!todayTasks.length ? (
+                  <div className="px-4 py-8 text-center text-sm text-slate-500">
+                    لا توجد مهام لليوم. يمكنك إعادة ضبط الخطة أو فتح بنك الأسئلة مباشرة.
                   </div>
-                  <div className="min-w-0">
-                    <div className="display-font text-lg font-bold text-slate-950">نصيحة اليوم</div>
-                    <p className="mt-2 text-sm leading-7 text-slate-600">{todayTip}</p>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card id="today-plan" className="order-1 rounded-[2rem] border border-[#dbe6f6] bg-white shadow-[0_18px_42px_rgba(18,59,122,0.08)] xl:order-2">
-            <CardContent className="space-y-5 p-5 sm:p-6">
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <div>
-                  <p className="section-eyebrow text-[#123B7A]">مهام اليوم</p>
-                  <h3 className="display-font text-2xl font-bold text-slate-950">
-                    {todayTasks.length ? `${completedToday} / ${todayTasks.length}` : "لا توجد مهام لليوم"}
-                  </h3>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Badge className="border border-[#d7e5ff] bg-[#eef4ff] text-[#1d4ed8] shadow-none">
-                    {todayTasks.length} مهام
-                  </Badge>
-                  <span className={cn("rounded-full border px-3 py-1 text-xs font-bold", pressure.className)}>{pressure.label}</span>
-                </div>
-              </div>
-
-              <div className="space-y-3">
-                {todayTasks.length ? (
-                  todayTasks.map((task, index) => {
-                    const pending = Boolean(taskState[task.id]);
-                    const metaTone = [
-                      "bg-[#eef4ff] text-[#1d4ed8]",
-                      "bg-[#fff1df] text-[#f97316]",
-                      "bg-[#e9fbf8] text-[#0f766e]",
-                      "bg-[#f5f3ff] text-[#7c3aed]",
-                    ][index % 4];
-
-                    return (
-                      <div
-                        key={task.id}
-                        className={cn(
-                          "grid gap-3 rounded-[1.3rem] border px-4 py-3 transition",
-                          task.isCompleted ? "border-emerald-200 bg-emerald-50/60" : "border-slate-200 bg-white",
-                        )}
-                      >
-                        <div className="flex items-start justify-between gap-3">
-                          <button
-                            type="button"
-                            onClick={() => void handleToggleTask(task, !task.isCompleted)}
-                            disabled={pending}
-                            className={cn(
-                              "flex h-7 w-7 shrink-0 items-center justify-center rounded-full border transition",
-                              task.isCompleted
-                                ? "border-emerald-500 bg-emerald-500 text-white"
-                                : "border-slate-300 bg-white text-transparent hover:border-[#1d4ed8]",
-                            )}
-                            aria-label={task.isCompleted ? "إلغاء إكمال المهمة" : "إنهاء المهمة"}
-                          >
-                            {pending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : "✓"}
-                          </button>
-
-                          <div className="min-w-0 flex-1">
-                            <div className="flex flex-wrap items-center gap-2">
-                              <span className={cn("rounded-full px-2.5 py-1 text-[11px] font-bold", metaTone)}>
-                                {task.targetQuestions ? "كمي" : task.estimatedMinutes ? "لفظي" : "مراجعة"}
-                              </span>
-                              {task.estimatedMinutes ? (
-                                <span className="text-xs font-semibold text-slate-400">{task.estimatedMinutes} د</span>
-                              ) : null}
-                            </div>
-                            <div className="mt-2 text-sm font-semibold text-slate-800 sm:text-base">{task.title}</div>
-                            {task.description ? (
-                              <p className="mt-1 text-sm leading-7 text-slate-500">{task.description}</p>
-                            ) : null}
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })
-                ) : (
-                  <div className="rounded-[1.4rem] border border-dashed border-slate-300 bg-slate-50/80 p-5 text-sm leading-8 text-slate-600">
-                    لا توجد مهام مجدولة اليوم. افتح الخطة اليومية لإعادة توزيع المهام أو ابدأ من بنك الأسئلة.
-                  </div>
-                )}
-              </div>
-
-              <div className="flex flex-wrap gap-3 pt-1">
-                <Link href="/my-plan">
-                  <Button className="w-full gap-2 sm:w-auto">
-                    <Target className="h-4 w-4" />
-                    عرض الخطة كاملة
-                  </Button>
-                </Link>
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="w-full gap-2 sm:w-auto"
-                  onClick={handleResetPlan}
-                  disabled={actionState === "loading"}
-                >
-                  {actionState === "loading" ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCcw className="h-4 w-4" />}
-                  أعد ضبط الخطة
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="order-3 rounded-[2rem] border border-slate-200 bg-white shadow-[0_18px_42px_rgba(15,23,42,0.05)] xl:order-3">
-            <CardContent className="space-y-5 p-5 sm:p-6">
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <p className="section-eyebrow text-[#123B7A]">استكمل من حيث توقفت</p>
-                  <h3 className="display-font text-2xl font-bold text-slate-950">أكمل من آخر نقطة</h3>
-                </div>
-                <Link href={resumeFeed[0]?.href ?? "/question-bank"}>
-                  <Button variant="outline" className="gap-2">
-                    أكمل الآن
-                    <ArrowLeft className="h-4 w-4" />
-                  </Button>
-                </Link>
-              </div>
-
-              <div className="space-y-3">
-                {resumeFeed.length ? (
-                  resumeFeed.map((item) => (
-                    <Link
-                      key={item.id}
-                      href={item.href}
-                      className="block rounded-[1.35rem] border border-slate-200 bg-white px-4 py-4 shadow-[0_10px_22px_rgba(15,23,42,0.04)] transition hover:-translate-y-0.5 hover:border-[#d7e5ff] hover:bg-[#f8fbff]"
-                    >
-                      <div className="flex items-center justify-between gap-3">
-                        <div className="min-w-0">
-                          <div className="display-font text-lg font-bold text-slate-950">{item.title}</div>
-                          <div className="mt-1 text-sm leading-7 text-slate-500">{item.description}</div>
-                        </div>
-                        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[1rem] bg-[#eef4ff] text-[#1d4ed8]">
-                          <ClipboardList className="h-4 w-4" />
-                        </div>
-                      </div>
-                    </Link>
-                  ))
-                ) : (
-                  <div className="rounded-[1.4rem] border border-dashed border-slate-300 bg-slate-50/80 p-5 text-sm leading-8 text-slate-600">
-                    لا يوجد مسار سابق واضح بعد. ابدأ من بنك الأسئلة أو الملخصات وسنحفظ آخر نقطة لك تلقائيًا.
-                  </div>
-                )}
-              </div>
-
-              <Link href="/question-bank">
-                <Button variant="outline" className="w-full gap-2">
-                  عرض كل الأنشطة
-                  <ArrowLeft className="h-4 w-4" />
-                </Button>
-              </Link>
-            </CardContent>
-          </Card>
-        </div>
-      </Reveal>
-
-      {actionError ? (
-        <div className="rounded-[1.4rem] border border-rose-200 bg-rose-50 px-5 py-4 text-sm font-semibold text-rose-700">
-          {actionError}
-        </div>
-      ) : null}
-
-      <Reveal delay={0.06}>
-        <Card className="rounded-[2rem] border border-slate-200 bg-white shadow-[0_18px_42px_rgba(15,23,42,0.05)]">
-          <CardContent className="space-y-5 p-5 sm:p-6">
-            <div className="flex items-end justify-between gap-3">
-              <div>
-                <p className="section-eyebrow text-[#123B7A]">أدوات سريعة</p>
-                <h3 className="display-font text-2xl font-bold text-slate-950">اختصاراتك الأساسية</h3>
+                ) : null}
               </div>
             </div>
 
-            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
-              {quickTools.map((item) => (
-                <QuickToolCard
-                  key={item.href}
-                  href={item.href}
-                  title={item.title}
-                  description={item.description}
-                  icon={item.icon}
-                  tone={item.tone}
-                  iconWrap={item.iconWrap}
-                />
-              ))}
+            <div className="flex flex-col gap-4 rounded-[1.25rem] border border-slate-200 bg-[#fbfcff] px-4 py-4 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex items-center gap-2 text-sm text-slate-500">
+                <CalendarClock className="h-4 w-4" />
+                إجمالي الوقت المتوقع: {estimatedTotalMinutes || 0} دقيقة
+              </div>
+
+              <div className="flex w-full items-center gap-3 sm:max-w-[380px]">
+                <span className="text-sm font-semibold text-slate-600">نسبة إنجاز الخطة</span>
+                <Progress value={planProgress} indicatorClassName="bg-[linear-gradient(90deg,#60a5fa,#2563eb)]" />
+                <span className="text-sm font-bold text-slate-700">{planProgress}%</span>
+              </div>
+            </div>
+
+            <div className="flex flex-wrap gap-3">
+              <Button
+                type="button"
+                variant="outline"
+                className="gap-2"
+                onClick={handleResetPlan}
+                disabled={actionState === "loading"}
+              >
+                {actionState === "loading" ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCcw className="h-4 w-4" />}
+                إعادة توزيع الخطة
+              </Button>
             </div>
           </CardContent>
         </Card>
       </Reveal>
 
-      <MobileQuickDock />
+      {actionError ? (
+        <div className="rounded-[1.3rem] border border-rose-200 bg-rose-50 px-5 py-4 text-sm font-semibold text-rose-700">
+          {actionError}
+        </div>
+      ) : null}
+
+      <Reveal delay={0.08}>
+        <Card className="rounded-[2rem] border border-[#dbe6f6] bg-white shadow-[0_18px_42px_rgba(15,23,42,0.05)]">
+          <CardContent className="space-y-5 p-5 md:p-6">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <div className="flex h-11 w-11 items-center justify-center rounded-[1rem] bg-[#eef4ff] text-[#2563eb]">
+                  <BookOpen className="h-5 w-5" />
+                </div>
+                <div>
+                  <h2 className="display-font text-[1.9rem] font-bold text-slate-950">بنك الأسئلة</h2>
+                  <p className="text-sm text-slate-500">ابدأ من الأقسام الأكثر احتياجًا لديك وتابع تقدمك منها مباشرة.</p>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-600"
+              >
+                المزيد
+              </button>
+            </div>
+
+            <div className="flex flex-wrap gap-3">
+              <div className="inline-flex min-w-[220px] items-center gap-2 rounded-[1rem] border border-slate-200 bg-white px-4 py-3 text-sm text-slate-400">
+                ابحث في بنك الأسئلة...
+              </div>
+              <div className="inline-flex rounded-[1rem] border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700">
+                اللفظي
+              </div>
+              <div className="inline-flex rounded-[1rem] border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700">
+                الكمي
+              </div>
+              <div className="inline-flex rounded-[1rem] border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700">
+                الكل
+              </div>
+            </div>
+
+            <div className="overflow-hidden rounded-[1.4rem] border border-slate-200">
+              <div className="grid grid-cols-[1.3fr,0.8fr,0.8fr,0.9fr,1fr] gap-4 bg-[#fbfcff] px-4 py-3 text-sm font-semibold text-slate-500">
+                <div>القسم</div>
+                <div className="text-center">عدد الأسئلة</div>
+                <div className="text-center">تم حل</div>
+                <div className="text-center">نسبة الإنجاز</div>
+                <div className="text-center">إجراء</div>
+              </div>
+
+              <div className="divide-y divide-slate-100">
+                {sectionRows.map((section) => {
+                  const SectionIcon = section.icon;
+
+                  return (
+                    <div key={section.title} className="grid grid-cols-[1.3fr,0.8fr,0.8fr,0.9fr,1fr] items-center gap-4 px-4 py-4">
+                      <div className="flex items-center gap-3">
+                        <div className={cn("flex h-11 w-11 items-center justify-center rounded-[1rem]", section.iconTone)}>
+                          <SectionIcon className="h-5 w-5" />
+                        </div>
+                        <div>
+                          <div className="text-base font-semibold text-slate-900">{section.title}</div>
+                          <div className="text-sm text-slate-500">{section.lastAttempt}</div>
+                        </div>
+                      </div>
+
+                      <div className="text-center text-sm font-medium text-slate-600">{section.total}</div>
+                      <div className="text-center text-sm font-medium text-slate-600">{section.solved}</div>
+                      <div className="space-y-2">
+                        <div className="text-center text-sm font-semibold text-slate-700">{section.progress}%</div>
+                        <div className="mx-auto h-1.5 max-w-[70px] rounded-full bg-slate-100">
+                          <div className={cn("h-full rounded-full", section.bar)} style={{ width: `${section.progress}%` }} />
+                        </div>
+                      </div>
+                      <div className="flex justify-center">
+                        <Link href={section.href}>
+                          <Button variant="outline" className="border-[#c8dbff] text-[#2563eb]">
+                            ابدأ الحل
+                          </Button>
+                        </Link>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className="flex justify-center">
+              <Link href="/question-bank">
+                <Button variant="ghost" className="gap-2 text-[#2563eb]">
+                  عرض المزيد من الأقسام
+                </Button>
+              </Link>
+            </div>
+          </CardContent>
+        </Card>
+      </Reveal>
+
+      <Reveal delay={0.1}>
+        <div className="space-y-4">
+          <div className="flex items-center justify-between gap-3">
+            <h2 className="display-font text-[1.9rem] font-bold text-slate-950">الوصول السريع</h2>
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            {quickAccessCards.map((item) => (
+              <QuickAccessCard key={item.href} {...item} />
+            ))}
+          </div>
+        </div>
+      </Reveal>
+
+      <Reveal delay={0.12}>
+        <Card className="rounded-[1.8rem] border border-[#dbe6f6] bg-[linear-gradient(180deg,#f8fbff_0%,#f3f7ff_100%)] shadow-[0_16px_36px_rgba(15,23,42,0.04)]">
+          <CardContent className="flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-center gap-3">
+              <div className="flex h-11 w-11 items-center justify-center rounded-[1rem] bg-[#eef4ff] text-[#2563eb]">
+                <Star className="h-5 w-5" />
+              </div>
+              <div>
+                <div className="display-font text-lg font-bold text-[#2563eb]">نصيحة اليوم</div>
+                <p className="mt-1 text-sm leading-7 text-slate-600">{todayTip}</p>
+              </div>
+            </div>
+            <div className="inline-flex items-center gap-2 rounded-full bg-white px-3 py-2 text-sm font-semibold text-slate-500">
+              <Trophy className="h-4 w-4 text-[#f59e0b]" />
+              {data.xp.levelLabel}
+            </div>
+          </CardContent>
+        </Card>
+      </Reveal>
     </div>
   );
 }

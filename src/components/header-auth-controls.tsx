@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { House, Loader2, LogOut } from "lucide-react";
+import { ChevronDown, Loader2, LogOut, UserRound } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { useAuthSession } from "@/hooks/use-auth-session";
@@ -22,9 +22,7 @@ export function HeaderAuthControls({
   const { status, user, refreshSession } = useAuthSession();
 
   async function handleLogout() {
-    const response = await fetch("/api/auth/logout", {
-      method: "POST",
-    });
+    const response = await fetch("/api/auth/logout", { method: "POST" });
 
     if (response.ok) {
       await refreshSession();
@@ -45,21 +43,22 @@ export function HeaderAuthControls({
 
   if (status === "authenticated" && user) {
     return (
-      <div className="hidden items-center gap-2 xl:flex">
-        <div className="rounded-[1.1rem] border border-slate-200 bg-white px-4 py-3 shadow-[0_10px_24px_rgba(15,23,42,0.05)]">
-          <div className="text-sm font-bold text-slate-900">{user.fullName}</div>
-          <div className="text-xs font-medium text-slate-400">مساحتك التعليمية</div>
+      <div className="hidden items-center gap-3 xl:flex">
+        <div className="flex items-center gap-3 rounded-[1.15rem] border border-slate-200 bg-white px-4 py-2.5 shadow-[0_10px_24px_rgba(15,23,42,0.05)]">
+          <div className="flex h-11 w-11 items-center justify-center rounded-full bg-[#eef4ff] text-[#2563eb]">
+            <UserRound className="h-5 w-5" />
+          </div>
+          <div className="leading-tight">
+            <div className="text-sm font-bold text-slate-900">{user.fullName}</div>
+            <div className="mt-1 text-xs font-medium text-slate-400">مستوى متقدم</div>
+          </div>
+          <ChevronDown className="h-4 w-4 text-slate-400" />
         </div>
-        <Link href="/dashboard">
-          <Button variant="outline" className="gap-2">
-            <House className="h-4 w-4" />
-            لوحة الطالب
-          </Button>
-        </Link>
+
         <button
           type="button"
           onClick={handleLogout}
-          className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:border-rose-200 hover:text-rose-600"
+          className="inline-flex items-center gap-2 rounded-[1.15rem] border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 shadow-[0_8px_20px_rgba(15,23,42,0.04)] transition hover:border-rose-200 hover:text-rose-600"
         >
           <LogOut className="h-4 w-4" />
           {LOGOUT_LABEL}
@@ -72,13 +71,13 @@ export function HeaderAuthControls({
     <div className="hidden items-center gap-2 lg:flex">
       <Link
         href="/login"
-        className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:border-[#123B7A]/20 hover:text-[#123B7A]"
+        className="rounded-[1.15rem] border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:border-[#123B7A]/20 hover:text-[#123B7A]"
       >
         {LOGIN_LABEL}
       </Link>
       <Link
         href="/register"
-        className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:border-[#123B7A]/20 hover:text-[#123B7A]"
+        className="rounded-[1.15rem] border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:border-[#123B7A]/20 hover:text-[#123B7A]"
       >
         {REGISTER_LABEL}
       </Link>
