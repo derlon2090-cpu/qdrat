@@ -34,18 +34,18 @@ export const publicTopNavItems: SiteNavItem[] = [
     iconWrap: "bg-[#eef4ff]",
   },
   {
-    href: "/diagnostic",
-    label: "التشخيص",
-    icon: ClipboardList,
-    accent: "text-[#2563eb]",
-    iconWrap: "bg-[#eff6ff]",
-  },
-  {
     href: "/question-bank",
     label: "بنك الأسئلة",
     icon: BriefcaseBusiness,
     accent: "text-[#d97706]",
     iconWrap: "bg-[#fff7ed]",
+  },
+  {
+    href: "/my-plan",
+    label: "الخطط",
+    icon: NotebookPen,
+    accent: "text-[#2f855a]",
+    iconWrap: "bg-[#edfdf3]",
   },
   {
     href: "/summaries",
@@ -55,18 +55,25 @@ export const publicTopNavItems: SiteNavItem[] = [
     iconWrap: "bg-[#eef4ff]",
   },
   {
-    href: "/paper-models",
-    label: "النماذج",
-    icon: Files,
-    accent: "text-[#0f766e]",
-    iconWrap: "bg-[#ecfeff]",
-  },
-  {
     href: "/pricing",
     label: "الأسعار",
     icon: Coins,
     accent: "text-[#b7791f]",
     iconWrap: "bg-[#fff8e5]",
+  },
+  {
+    href: "/challenge",
+    label: "المسابقات",
+    icon: Trophy,
+    accent: "text-[#7c3aed]",
+    iconWrap: "bg-[#f5f3ff]",
+  },
+  {
+    href: "/wall-of-love",
+    label: "تجارب الطلاب",
+    icon: FileHeart,
+    accent: "text-[#db2777]",
+    iconWrap: "bg-[#fdf2f8]",
   },
 ];
 
@@ -206,11 +213,12 @@ export const studentSidebarItems: SiteNavItem[] = [
 
 export const publicFooterLinks = [
   { href: "/", label: "الرئيسية" },
-  { href: "/diagnostic", label: "التشخيص" },
   { href: "/question-bank", label: "بنك الأسئلة" },
+  { href: "/my-plan", label: "الخطط" },
   { href: "/summaries", label: "الملخصات" },
-  { href: "/paper-models", label: "النماذج" },
   { href: "/pricing", label: "الأسعار" },
+  { href: "/challenge", label: "المسابقات" },
+  { href: "/wall-of-love", label: "تجارب الطلاب" },
   { href: "/faq", label: "الأسئلة الشائعة" },
   { href: "/contact", label: "تواصل معنا" },
 ];

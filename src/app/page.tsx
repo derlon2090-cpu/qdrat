@@ -27,6 +27,7 @@ import {
   PublicLaptopIllustration,
   PublicNewsletterIllustration,
 } from "@/components/public-site-illustrations";
+import { SiteHeader } from "@/components/site-header";
 
 const navLinks = [
   { href: "/", label: "الرئيسية", active: true },
@@ -163,40 +164,7 @@ export default function HomePage() {
     <div dir="rtl" className="min-h-screen bg-[#f8fbff] text-slate-900">
       <HomeAuthRedirect />
 
-      <header className="border-b border-[#e8eefb] bg-white/96 backdrop-blur-xl">
-        <div className="mx-auto flex w-[min(calc(100%-1.5rem),1280px)] items-center justify-between gap-6 px-1 py-5 sm:w-[min(calc(100%-2rem),1280px)]">
-          <div className="flex items-center gap-8">
-            <MiyaarLogo href="/" className="shrink-0" />
-            <nav className="hidden items-center gap-7 text-[1.02rem] font-bold text-slate-500 lg:flex">
-              {navLinks.map((item) => (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={item.active ? "text-[#2563eb]" : "transition hover:text-slate-900"}
-                >
-                  {item.label}
-                </Link>
-              ))}
-            </nav>
-          </div>
-
-          <div className="hidden items-center gap-3 md:flex">
-            <Link
-              href="/register"
-              className="inline-flex h-12 items-center justify-center rounded-[1rem] border border-[#cfe0ff] bg-white px-5 text-sm font-bold text-[#2563eb] transition hover:bg-[#f8fbff]"
-            >
-              إنشاء حساب
-            </Link>
-            <Link
-              href="/login"
-              className="inline-flex h-12 items-center justify-center gap-2 rounded-[1rem] bg-[#2563eb] px-5 text-sm font-bold text-white shadow-[0_14px_26px_rgba(37,99,235,0.22)] transition hover:bg-[#1d4ed8]"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              تسجيل الدخول
-            </Link>
-          </div>
-        </div>
-      </header>
+      <SiteHeader variant="public" links={navLinks} />
 
       <main>
         <section className="overflow-hidden border-b border-[#edf2fb] bg-[radial-gradient(circle_at_top_left,rgba(37,99,235,0.08),transparent_26%),linear-gradient(180deg,#ffffff_0%,#fbfdff_100%)]">

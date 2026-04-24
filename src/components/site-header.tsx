@@ -125,10 +125,14 @@ export function SiteHeader({
     setCurrentSearch(window.location.search);
   }, []);
 
-  const desktopLinks = useMemo(
-    () => links ?? (isStudentArea ? studentTopNavItems : publicTopNavItems),
-    [isStudentArea, links],
-  );
+  const desktopLinks = useMemo(() => {
+    if (isStudentArea) {
+      return links ?? studentTopNavItems;
+    }
+
+    // Keep the public top navigation identical across the homepage and all public pages.
+    return publicTopNavItems;
+  }, [isStudentArea, links]);
 
   const mobileItems = useMemo(() => {
     const source = isStudentArea ? [...studentTopNavItems, ...studentSidebarItems] : publicTopNavItems;
@@ -144,6 +148,128 @@ export function SiteHeader({
       setOpen(false);
       window.location.href = "/";
     }
+  }
+
+  if (!isStudentArea) {
+    return (
+      <header className="sticky top-0 z-[9999] border-b border-[#e8eefb] bg-white/96 backdrop-blur-xl">
+        <div className="mx-auto flex w-[min(calc(100%-1.5rem),1280px)] items-center justify-between gap-6 px-1 py-5 sm:w-[min(calc(100%-2rem),1280px)]">
+          <div className="flex items-center gap-8">
+            <MiyaarLogo href={brandHref} className="shrink-0" />
+
+            <nav className="hidden items-center gap-7 text-[1.02rem] font-bold text-slate-500 lg:flex">
+              {desktopLinks.map((item) => {
+                const active = isNavItemActive(pathname, currentSearch, item.href);
+
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className={cn(active ? "text-[#2563eb]" : "transition hover:text-slate-900")}
+                  >
+                    {item.label}
+                  </Link>
+                );
+              })}
+            </nav>
+          </div>
+
+          <div className="flex items-center gap-2.5" dir="ltr">
+            <button
+              type="button"
+              onClick={() => setOpen(true)}
+              className="flex h-[52px] w-[52px] items-center justify-center rounded-[1.05rem] border border-[#e6edf9] bg-white text-[#123B7A] shadow-[0_10px_22px_rgba(15,23,42,0.045)] lg:hidden"
+              aria-label="افتح القائمة"
+            >
+              <Menu className="h-5 w-5" />
+            </button>
+
+            <HeaderAuthControls
+              variant="public"
+              ctaHref={isAuthenticated ? undefined : ctaHref}
+              ctaLabel={isAuthenticated ? undefined : ctaLabel}
+            />
+          </div>
+        </div>
+
+        {open ? (
+          <div className="fixed inset-0 z-[220] bg-black/30 backdrop-blur-sm lg:hidden">
+            <div className="mr-auto flex h-full w-[min(92vw,360px)] flex-col overflow-y-auto bg-white px-5 py-6 shadow-[0_20px_80px_rgba(0,0,0,0.18)]">
+              <div className="mb-6 flex items-center justify-between">
+                <MiyaarLogo href={brandHref} />
+                <button
+                  type="button"
+                  onClick={() => setOpen(false)}
+                  className="flex h-[56px] w-[56px] items-center justify-center rounded-[1.2rem] border border-[#e6edf9] bg-white text-[#123B7A] shadow-[0_12px_26px_rgba(15,23,42,0.05)]"
+                  aria-label="إغلاق القائمة"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+
+              <div className="space-y-2">
+                {mobileItems.map((item) => {
+                  const Icon = item.icon;
+                  const active = isNavItemActive(pathname, currentSearch, item.href);
+
+                  return (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      onClick={() => setOpen(false)}
+                      className={cn("nav-item", active && "nav-item-active")}
+                    >
+                      <span className={cn("nav-icon-wrap", item.iconWrap, item.accent)}>
+                        <Icon className="h-5 w-5" />
+                      </span>
+                      <div className="min-w-0">
+                        <div className="truncate">{item.label}</div>
+                        {item.description ? <div className="text-xs font-medium text-slate-400">{item.description}</div> : null}
+                      </div>
+                    </Link>
+                  );
+                })}
+              </div>
+
+              <div className="mt-6 space-y-3">
+                {isAuthenticated ? (
+                  <>
+                    <Link href="/dashboard" onClick={() => setOpen(false)}>
+                      <Button className="w-full">لوحة الطالب</Button>
+                    </Link>
+                    <button
+                      type="button"
+                      onClick={handleLogout}
+                      className="inline-flex h-11 w-full items-center justify-center rounded-[1.25rem] border border-rose-200 bg-white text-sm font-bold text-rose-600 transition hover:bg-rose-50"
+                    >
+                      تسجيل الخروج
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <Link href="/login" onClick={() => setOpen(false)}>
+                      <Button className="w-full" variant="outline">
+                        تسجيل الدخول
+                      </Button>
+                    </Link>
+                    <Link href="/register" onClick={() => setOpen(false)}>
+                      <Button className="w-full" variant="outline">
+                        إنشاء حساب
+                      </Button>
+                    </Link>
+                    {ctaHref && ctaLabel ? (
+                      <Link href={ctaHref} onClick={() => setOpen(false)}>
+                        <Button className="w-full">{ctaLabel}</Button>
+                      </Link>
+                    ) : null}
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+        ) : null}
+      </header>
+    );
   }
 
   return (
