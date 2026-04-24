@@ -1,6 +1,14 @@
 "use client";
 
-import { BarChart3, BookOpen, BriefcaseBusiness, House } from "lucide-react";
+import {
+  BarChart3,
+  BookOpen,
+  CalendarDays,
+  ClipboardList,
+  House,
+  Trophy,
+  UserRound,
+} from "lucide-react";
 
 import { DashboardRuntimeGuard } from "@/components/dashboard-runtime-guard";
 import { SiteHeader } from "@/components/site-header";
@@ -8,10 +16,13 @@ import { StudentDashboard } from "@/components/student-dashboard";
 
 export function DashboardShell() {
   const dashboardLinks = [
-    { href: "/dashboard", label: "لوحة التحكم", icon: House },
-    { href: "/question-bank", label: "بنك الأسئلة", icon: BriefcaseBusiness },
-    { href: "/summaries", label: "الملخصات", icon: BookOpen },
+    { href: "/dashboard", label: "لوحتي", icon: House },
+    { href: "/my-plan", label: "الخطة اليومية", icon: CalendarDays },
+    { href: "/question-bank", label: "بنك الأسئلة", icon: BookOpen },
+    { href: "/challenge", label: "تحدي الشهر", icon: Trophy },
+    { href: "/paper-models", label: "النماذج", icon: ClipboardList },
     { href: "/statistics", label: "الإحصائيات", icon: BarChart3 },
+    { href: "/account", label: "الإعدادات", icon: UserRound },
   ];
 
   return (

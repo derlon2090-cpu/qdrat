@@ -345,7 +345,6 @@ export function StudentDashboard() {
     return <StudentDashboardFallback loading={false} onRetry={() => void refresh()} />;
   }
 
-  const firstName = (data.fullName?.trim().split(/\s+/)[0] || "أحمد").trim();
   const todayTasks = Array.isArray(data.todayTasks) ? data.todayTasks.slice(0, 4) : [];
   const completedToday = todayTasks.filter((task) => task.isCompleted).length;
   const planProgress = todayTasks.length ? Math.round((completedToday / todayTasks.length) * 100) : 0;
@@ -452,14 +451,14 @@ export function StudentDashboard() {
       <section className="rounded-[2rem] border border-[#e6edf9] bg-white p-5 shadow-[0_18px_42px_rgba(15,23,42,0.05)] sm:p-6 lg:p-7">
         <div className="flex flex-col gap-6 lg:flex-row-reverse lg:items-center">
           <div className="flex-1">
-            <div className="text-[1.9rem] font-bold text-slate-950 sm:text-[2.2rem]">
-              مرحبًا بك، {firstName} <span className="mr-1">👋</span>
+            <div className="text-[1.8rem] font-bold text-slate-950 sm:text-[2.1rem]">
+              مرحبًا بك! <span className="mr-1">👋</span>
             </div>
             <h2 className="mt-4 display-font text-[clamp(2rem,4vw,3.5rem)] font-extrabold leading-[1.15] text-slate-950">
               استمر في رحلتك نحو التميز
             </h2>
             <p className="mt-4 max-w-2xl text-sm leading-8 text-slate-500 sm:text-base">
-              خطة مخصصة لك لتحقيق أفضل النتائج في اختبار القدرات، مع متابعة واضحة للخطة اليومية وبنك الأسئلة.
+              خطة مخصصة لك لتحقيق أفضل النتائج في اختبار القدرات.
             </p>
 
             <div className="mt-6 flex flex-wrap gap-3">
