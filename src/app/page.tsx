@@ -1,6 +1,5 @@
-"use client";
-
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import {
   ArrowLeft,
   BadgeCheck,
@@ -27,6 +26,7 @@ import {
   PublicNewsletterIllustration,
 } from "@/components/public-site-illustrations";
 import { SiteHeader } from "@/components/site-header";
+import { getInitialAuthUser } from "@/lib/server-auth";
 
 const navLinks = [
   { href: "/", label: "الرئيسية", active: true },
@@ -158,7 +158,13 @@ const whyChoose = [
   },
 ];
 
-export default function HomePage() {
+export default async function HomePage() {
+  const initialAuthUser = await getInitialAuthUser();
+
+  if (initialAuthUser) {
+    redirect("/dashboard");
+  }
+
   return (
     <div dir="rtl" className="min-h-screen bg-[#f8fbff] text-slate-900">
       <SiteHeader variant="public" links={navLinks} />
