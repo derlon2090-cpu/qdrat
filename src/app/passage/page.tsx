@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { passageQuestions } from "@/data/miyaar";
+import { getInitialAuthUser } from "@/lib/server-auth";
 
 const navLinks = [
   { href: "/", label: "الرئيسية" },
@@ -15,10 +16,18 @@ const navLinks = [
   { href: "/results", label: "النتائج" },
 ];
 
-export default function PassagePage() {
+export default async function PassagePage() {
+  const initialAuthUser = await getInitialAuthUser();
+
   return (
     <div className="min-h-screen">
-      <SiteHeader links={navLinks} ctaHref="/verbal/reading" ctaLabel="ابدأ اختبار القطع" />
+      <SiteHeader
+        variant={initialAuthUser ? "student" : "public"}
+        links={initialAuthUser ? undefined : navLinks}
+        ctaHref="/verbal/reading"
+        ctaLabel="ابدأ اختبار القطع"
+        initialUser={initialAuthUser}
+      />
       <main className="section-shell pt-10 md:pt-14">
         <div className="mx-auto grid w-[min(calc(100%-2rem),1180px)] gap-8 lg:grid-cols-[1.08fr,0.92fr]">
           <Reveal>
@@ -28,9 +37,8 @@ export default function PassagePage() {
                 تجربة قراءة مريحة تربط النص بعدة أسئلة بلا تكرار
               </h1>
               <p className="section-copy max-w-2xl">
-                هذه الواجهة مصممة لتخزين القطعة مرة واحدة ثم ربطها بأسئلة متعددة،
-                مع مساحة قراءة واضحة، وعرض الأسئلة بطريقة تساعد الطالب على الفهم
-                لا على التشتت.
+                هذه الواجهة مصممة لتخزين القطعة مرة واحدة ثم ربطها بأسئلة متعددة، مع مساحة
+                قراءة واضحة، وعرض الأسئلة بطريقة تساعد الطالب على الفهم لا على التشتت.
               </p>
               <div className="mt-7 flex flex-wrap gap-3">
                 <Link href="/verbal/reading">
@@ -81,14 +89,14 @@ export default function PassagePage() {
 
                 <div className="space-y-5 text-base leading-9 text-slate-900">
                   <p>
-                    النجاح في أسئلة القطع لا يعتمد على القراءة السريعة وحدها، بل على
-                    القدرة على فهم البناء العام للنص، وربط كل فقرة بهدفها، والتمييز بين
-                    الفكرة الرئيسة والتفاصيل الداعمة.
+                    النجاح في أسئلة القطع لا يعتمد على القراءة السريعة وحدها، بل على القدرة
+                    على فهم البناء العام للنص، وربط كل فقرة بهدفها، والتمييز بين الفكرة
+                    الرئيسية والتفاصيل الداعمة.
                   </p>
                   <p>
-                    ولهذا صُممت واجهة معيار بحيث تبرز النص بوضوح، وتضع الأسئلة المرتبطة
-                    به في تدفق متسلسل، وتقلل أي عناصر جانبية قد تصرف الانتباه عن مهمة
-                    القراءة والتحليل.
+                    ولهذا صممت واجهة معيار بحيث تبرز النص بوضوح، وتضع الأسئلة المرتبطة به في
+                    تدفق متسلسل، وتقلل أي عناصر جانبية قد تصرف الانتباه عن مهمة القراءة
+                    والتحليل.
                   </p>
                 </div>
               </CardContent>

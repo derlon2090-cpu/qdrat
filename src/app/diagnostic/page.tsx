@@ -4,6 +4,7 @@ import { PageShell } from "@/components/page-shell";
 import { Reveal } from "@/components/reveal";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { getInitialAuthUser } from "@/lib/server-auth";
 
 const steps = [
   {
@@ -20,7 +21,9 @@ const steps = [
   },
 ];
 
-export default function DiagnosticPage() {
+export default async function DiagnosticPage() {
+  const initialAuthUser = await getInitialAuthUser();
+
   return (
     <PageShell
       eyebrow="التشخيص"
@@ -32,6 +35,8 @@ export default function DiagnosticPage() {
       accentClass="shadow-[0_20px_45px_rgba(37,99,235,0.16)]"
       ctaLabel="ابدأ الاختبار"
       ctaHref="/exam"
+      headerVariant={initialAuthUser ? "student" : "public"}
+      initialAuthUser={initialAuthUser}
     >
       <div className="grid gap-5 lg:grid-cols-[1.1fr,0.9fr]">
         <Reveal>
@@ -41,7 +46,10 @@ export default function DiagnosticPage() {
               <h2 className="section-title max-w-none">3 خطوات فقط قبل أن تبدأ الخطة</h2>
               <div className="grid gap-4 md:grid-cols-3">
                 {steps.map((item, index) => (
-                  <div key={item.title} className="rounded-[1.5rem] border border-slate-200/80 bg-slate-50/80 p-5">
+                  <div
+                    key={item.title}
+                    className="rounded-[1.5rem] border border-slate-200/80 bg-slate-50/80 p-5"
+                  >
                     <div className="display-font text-sm font-bold tracking-[0.18em] text-[#2563eb]">
                       0{index + 1}
                     </div>
@@ -58,7 +66,9 @@ export default function DiagnosticPage() {
           <Card className="surface-dark rounded-[2rem] border-0">
             <CardContent className="p-8">
               <p className="text-sm text-white/70">مثال على الناتج</p>
-              <h2 className="display-font mt-3 text-3xl font-bold">نتيجة أولية تحدد القرار التالي</h2>
+              <h2 className="display-font mt-3 text-3xl font-bold">
+                نتيجة أولية تحدد القرار التالي
+              </h2>
               <div className="mt-6 space-y-4">
                 {[
                   "الكمي: أساسيات النسب ثم السرعة.",

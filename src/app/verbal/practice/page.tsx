@@ -10,6 +10,7 @@ import {
   getVerbalQuestionsByCategory,
   verbalQuestionCategories,
 } from "@/data/verbal-mixed-bank";
+import { getInitialAuthUser } from "@/lib/server-auth";
 
 type VerbalPracticePageProps = {
   searchParams: Promise<{
@@ -19,6 +20,7 @@ type VerbalPracticePageProps = {
 };
 
 export default async function VerbalPracticePage({ searchParams }: VerbalPracticePageProps) {
+  const initialAuthUser = await getInitialAuthUser();
   const resolvedSearchParams = await searchParams;
 
   if (
@@ -55,7 +57,12 @@ export default async function VerbalPracticePage({ searchParams }: VerbalPractic
   return (
     <div className="min-h-screen bg-[#f8fafc] text-slate-950">
       <DashboardRuntimeGuard resetKey="verbal-practice-header">
-        <SiteHeader ctaHref="/question-bank?track=verbal" ctaLabel="ارجع إلى بنك الأسئلة" />
+        <SiteHeader
+          variant={initialAuthUser ? "student" : "public"}
+          ctaHref="/question-bank?track=verbal"
+          ctaLabel="ارجع إلى بنك الأسئلة"
+          initialUser={initialAuthUser}
+        />
       </DashboardRuntimeGuard>
 
       <main className="mx-auto w-full max-w-[1600px] px-4 pb-16 pt-6 sm:px-6 xl:px-8">
@@ -83,7 +90,7 @@ export default async function VerbalPracticePage({ searchParams }: VerbalPractic
             <Suspense
               fallback={
                 <div className="rounded-[1.7rem] border border-dashed border-slate-300 bg-white/80 p-8 text-center text-sm text-slate-500">
-                  جاري تجهيز واجهة التدريب اللفظي...
+                  جار تجهيز واجهة التدريب اللفظي...
                 </div>
               }
             >

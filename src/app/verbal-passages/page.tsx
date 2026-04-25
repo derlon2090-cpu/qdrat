@@ -4,12 +4,20 @@ import { DashboardRuntimeGuard } from "@/components/dashboard-runtime-guard";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { VerbalPassagesBrowser } from "@/components/verbal-passages-browser";
+import { getInitialAuthUser } from "@/lib/server-auth";
 
-export default function VerbalPassagesPage() {
+export default async function VerbalPassagesPage() {
+  const initialAuthUser = await getInitialAuthUser();
+
   return (
     <div className="min-h-screen bg-[#f8fafc] text-slate-950">
       <DashboardRuntimeGuard resetKey="verbal-passages-header">
-        <SiteHeader ctaHref="/question-bank?track=verbal" ctaLabel="ارجع إلى بنك الأسئلة" />
+        <SiteHeader
+          variant={initialAuthUser ? "student" : "public"}
+          ctaHref="/question-bank?track=verbal"
+          ctaLabel="ارجع إلى بنك الأسئلة"
+          initialUser={initialAuthUser}
+        />
       </DashboardRuntimeGuard>
 
       <main className="mx-auto w-full max-w-[1600px] px-4 pb-16 pt-6 sm:px-6 xl:px-8">
@@ -37,7 +45,7 @@ export default function VerbalPassagesPage() {
             <Suspense
               fallback={
                 <div className="rounded-[1.8rem] border border-slate-200 bg-white p-8 text-center text-sm text-slate-500 shadow-sm">
-                  جاري تجهيز بنك الاستيعاب المقروء...
+                  جار تجهيز بنك الاستيعاب المقروء...
                 </div>
               }
             >

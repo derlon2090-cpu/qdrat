@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { resultsBreakdown, resultsMetrics, reviewCards } from "@/data/miyaar";
+import { getInitialAuthUser } from "@/lib/server-auth";
 
 const navLinks = [
   { href: "/", label: "الرئيسية" },
@@ -15,10 +16,18 @@ const navLinks = [
   { href: "/dashboard", label: "لوحة الطالب" },
 ];
 
-export default function ResultsPage() {
+export default async function ResultsPage() {
+  const initialAuthUser = await getInitialAuthUser();
+
   return (
     <div className="min-h-screen">
-      <SiteHeader links={navLinks} ctaHref="/dashboard" ctaLabel="لوحة الطالب" />
+      <SiteHeader
+        variant={initialAuthUser ? "student" : "public"}
+        links={initialAuthUser ? undefined : navLinks}
+        ctaHref="/dashboard"
+        ctaLabel="لوحة الطالب"
+        initialUser={initialAuthUser}
+      />
       <main className="section-shell pt-10 md:pt-14">
         <div className="mx-auto w-[min(calc(100%-2rem),1180px)]">
           <Reveal>
