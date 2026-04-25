@@ -293,7 +293,7 @@ export function SummaryLibrary({
       <StudentAccessCard
         title="قسم الملخصات مرتبط بحسابك"
         description="يجب إنشاء حساب وتسجيل الدخول لاستخدام قسم الملخصات وحفظ ملفاتك وملاحظاتك والرجوع لها لاحقًا من مكتبتك الخاصة."
-        next="/summaries"
+        next="/summaries/library"
       />
     );
   }

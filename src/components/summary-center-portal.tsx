@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import {
   BookOpen,
@@ -43,10 +44,6 @@ type SummaryCenterRow = {
   statusTone: string;
   href: string;
 };
-
-const summaryCenterStudentLinks = studentTopNavItems.map((item) =>
-  item.href === "/summaries" ? { ...item, href: "/summary-center" } : item,
-);
 
 const previewRows: SummaryCenterRow[] = [
   {
@@ -254,6 +251,7 @@ export function SummaryCenterPortal({
 }: {
   initialAuthUser?: AuthSessionUser | null;
 }) {
+  const pathname = usePathname();
   const { status, user } = useAuthSession();
   const [items, setItems] = useState<SummaryListItem[]>([]);
   const [isLoadingItems, setIsLoadingItems] = useState(false);
@@ -266,6 +264,15 @@ export function SummaryCenterPortal({
 
   const effectiveUser = status === "authenticated" ? user : status === "loading" ? initialAuthUser : null;
   const isAuthenticated = Boolean(effectiveUser);
+  const summaryRouteHref = pathname?.startsWith("/summary-center") ? "/summary-center" : "/summaries";
+
+  const summaryCenterStudentLinks = useMemo(
+    () =>
+      studentTopNavItems.map((item) =>
+        item.href === "/summaries" ? { ...item, href: summaryRouteHref } : item,
+      ),
+    [summaryRouteHref],
+  );
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -374,37 +381,41 @@ export function SummaryCenterPortal({
 
       <main className="pb-16 pt-8 md:pt-10">
         <div className="mx-auto w-[min(calc(100%-1rem),1280px)] space-y-8 sm:w-[min(calc(100%-2rem),1280px)]">
-          <Card className="overflow-hidden rounded-[2rem] border border-[#e9eef8] bg-[radial-gradient(circle_at_top_left,rgba(37,99,235,0.08),transparent_24%),linear-gradient(180deg,#ffffff_0%,#fbfdff_100%)] shadow-[0_24px_50px_rgba(15,23,42,0.05)]">
-            <CardContent className="p-7 md:p-8">
-              <div className="grid gap-8 lg:grid-cols-[0.92fr,1.08fr] lg:items-center">
+          <Card className="overflow-hidden rounded-[2rem] border border-[#e8eefb] bg-[linear-gradient(180deg,#ffffff_0%,#fbfdff_100%)] shadow-[0_20px_50px_rgba(15,23,42,0.05)]">
+            <CardContent className="p-6 md:p-8">
+              <div className="grid gap-8 lg:grid-cols-[1.02fr,0.98fr] lg:items-center">
                 <div className="order-2 lg:order-1">
-                  <PublicSummaryFolderIllustration className="h-[250px] rounded-[1.6rem] sm:h-[320px]" />
+                  <PublicSummaryFolderIllustration className="h-[270px] rounded-[1.75rem] sm:h-[340px]" />
                 </div>
 
                 <div className="order-1 lg:order-2">
-                  <div className="text-sm font-semibold text-slate-400">الرئيسية / مركز الملخصات</div>
+                  <div className="flex items-center justify-end gap-2 text-sm font-semibold text-slate-400">
+                    <span>الرئيسية</span>
+                    <span>/</span>
+                    <span>مركز الملخصات</span>
+                  </div>
                   <div className="mt-5 flex items-start justify-between gap-4">
                     <div>
-                      <h1 className="display-font text-[2.2rem] font-black text-[#123B7A] sm:text-[3rem]">
+                      <h1 className="display-font text-[2.5rem] font-black text-[#123B7A] sm:text-[3.35rem]">
                         مركز الملخصات
                       </h1>
                       <p className="mt-4 max-w-2xl text-[1rem] leading-8 text-slate-500">
                         ملخصات شاملة ومنظمة لجميع مواضيع القدرات مختصرة ومكتوبة بعناية لمساعدتك على الفهم والمراجعة السريعة.
                       </p>
                     </div>
-                    <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-[1.25rem] bg-[#eef4ff] text-[#2563eb] shadow-[0_16px_30px_rgba(37,99,235,0.12)]">
+                    <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-[1.3rem] bg-[#eef4ff] text-[#2563eb] shadow-[0_16px_30px_rgba(37,99,235,0.12)]">
                       <FileText className="h-8 w-8" />
                     </div>
                   </div>
 
-                  <div className="mt-6 flex flex-wrap gap-3">
+                  <div className="mt-7 flex flex-wrap gap-3">
                     {isAuthenticated ? (
                       <>
-                        <Link href="/summaries">
-                          <Button className="h-12 px-6">إدارة مكتبة PDF</Button>
-                        </Link>
                         <Link href="/question-bank">
-                          <Button variant="outline" className="h-12 px-6">الانتقال إلى بنك الأسئلة</Button>
+                          <Button className="h-12 min-w-[210px] px-6">الانتقال إلى بنك الأسئلة</Button>
+                        </Link>
+                        <Link href="/summaries/library">
+                          <Button variant="outline" className="h-12 min-w-[210px] px-6">إدارة مكتبة PDF</Button>
                         </Link>
                       </>
                     ) : (
@@ -430,7 +441,7 @@ export function SummaryCenterPortal({
             topicsCount={currentStats.topicsCount}
           />
 
-          <div className="relative grid gap-6 xl:grid-cols-[320px_minmax(0,1fr)]">
+          <div className="relative grid gap-6 xl:grid-cols-[minmax(0,1fr)_320px]">
             {!isAuthenticated ? (
               <div className="absolute inset-0 z-20 flex items-center justify-center">
                 <Card className="w-full max-w-xl border border-[#e5e9f6] bg-white/96 shadow-[0_24px_56px_rgba(15,23,42,0.14)] backdrop-blur">
@@ -456,6 +467,147 @@ export function SummaryCenterPortal({
                 </Card>
               </div>
             ) : null}
+
+            <section className={cn("space-y-5", !isAuthenticated && "pointer-events-none blur-[2px] opacity-45")}>
+              <Card className="rounded-[1.7rem] border border-[#e9eef8] bg-white/95 shadow-[0_14px_34px_rgba(15,23,42,0.04)]">
+                <CardContent className="space-y-5 p-6">
+                  <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="display-font text-2xl font-bold text-slate-950">جميع الملخصات</div>
+                      <span className="rounded-full bg-[#eef4ff] px-3 py-1 text-xs font-bold text-[#2563eb]">
+                        {formatNumber(isAuthenticated ? filteredRows.length : previewRows.length)} ملخص
+                      </span>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setQuery("");
+                        setCategory("الكل");
+                        setLevel("الكل");
+                        setSortKey("الأحدث");
+                      }}
+                      className="w-fit text-sm font-bold text-[#2563eb]"
+                    >
+                      مسح الكل
+                    </button>
+                  </div>
+
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="rounded-full bg-[#f5f8ff] px-4 py-2 text-xs font-bold text-slate-500">
+                      ترتيب العرض: {sortKey}
+                    </div>
+
+                    <div className="flex w-full items-center gap-3 sm:max-w-md">
+                      <div className="flex h-12 flex-1 items-center gap-3 rounded-[1rem] border border-[#e7edf8] bg-[#fbfdff] px-4">
+                        <Search className="h-4 w-4 text-slate-400" />
+                        <input
+                          value={query}
+                          onChange={(event) => setQuery(event.target.value)}
+                          placeholder="ابحث في الملخصات..."
+                          className="w-full bg-transparent text-sm outline-none placeholder:text-slate-400"
+                          disabled={!isAuthenticated}
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {isLoadingItems ? (
+                    <div className="flex min-h-[220px] items-center justify-center gap-3 text-slate-500">
+                      <Loader2 className="h-5 w-5 animate-spin" />
+                      جارٍ تحميل الملخصات...
+                    </div>
+                  ) : error ? (
+                    <div className="rounded-[1.2rem] border border-rose-200 bg-rose-50 px-5 py-4 text-sm font-semibold text-rose-700">
+                      {error}
+                    </div>
+                  ) : isAuthenticated && !filteredRows.length ? (
+                    <div className="rounded-[1.5rem] border border-dashed border-[#d7e3f7] bg-[#fbfdff] px-6 py-10 text-center">
+                      <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#eef4ff] text-[#2563eb]">
+                        <FolderOpen className="h-7 w-7" />
+                      </div>
+                      <div className="mt-4 display-font text-2xl font-bold text-slate-950">لا توجد ملخصات مطابقة</div>
+                      <p className="mt-3 text-sm leading-8 text-slate-600">
+                        غيّر الفلاتر الحالية أو ابدأ برفع أول ملخص من مكتبة PDF الخاصة بك.
+                      </p>
+                      <div className="mt-5">
+                        <Link href="/summaries/library">
+                          <Button>اذهب إلى مكتبة PDF</Button>
+                        </Link>
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="hidden grid-cols-[140px_120px_110px_110px_110px_minmax(0,1fr)] gap-4 rounded-[1.2rem] bg-[#f8fbff] px-5 py-3 text-sm font-bold text-slate-400 lg:grid">
+                        <div>الحالة</div>
+                        <div>تاريخ الإضافة</div>
+                        <div>وقت القراءة</div>
+                        <div>عدد الصفحات</div>
+                        <div>التصنيف</div>
+                        <div>عنوان الملخص</div>
+                      </div>
+
+                      <div className="space-y-3">
+                        {activeRows.map((row) => (
+                          <div
+                            key={row.id}
+                            className="grid gap-4 rounded-[1.35rem] border border-[#edf2fb] bg-white px-5 py-4 lg:grid-cols-[140px_120px_110px_110px_110px_minmax(0,1fr)] lg:items-center"
+                          >
+                            <div className="lg:order-6">
+                              <Link
+                                href={row.href}
+                                className={cn(
+                                  "inline-flex min-h-[42px] items-center justify-center rounded-full border px-4 text-sm font-bold transition",
+                                  row.statusTone,
+                                )}
+                              >
+                                {row.status}
+                              </Link>
+                            </div>
+                            <div className="text-sm font-semibold text-slate-500 lg:order-5">{formatDate(row.createdAt)}</div>
+                            <div className="text-sm font-semibold text-slate-500 lg:order-4">{formatNumber(row.readingMinutes)} دقيقة</div>
+                            <div className="text-sm font-semibold text-slate-500 lg:order-3">{formatNumber(row.pageCount)}</div>
+                            <div className="lg:order-2">
+                              <span
+                                className={cn(
+                                  "inline-flex rounded-full px-3 py-1 text-xs font-bold",
+                                  row.category === "كمي"
+                                    ? "bg-[#eef4ff] text-[#2563eb]"
+                                    : "bg-[#edfdf3] text-[#16a34a]",
+                                )}
+                              >
+                                {row.category}
+                              </span>
+                            </div>
+                            <div className="flex items-start gap-3 lg:order-1">
+                              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[0.9rem] bg-[#eef4ff] text-[#2563eb]">
+                                <FileText className="h-5 w-5" />
+                              </div>
+                              <div className="min-w-0">
+                                <div className="truncate text-base font-bold text-slate-900">{row.title}</div>
+                                <div className="mt-1 text-sm text-slate-500">{row.subtitle}</div>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+
+                      {isAuthenticated && filteredRows.length > visibleCount ? (
+                        <div className="flex justify-center pt-2">
+                          <button
+                            type="button"
+                            onClick={() => setVisibleCount((current) => current + 8)}
+                            className="inline-flex h-11 items-center justify-center rounded-full border border-[#d8e3f8] bg-white px-6 text-sm font-bold text-[#2563eb] transition hover:bg-[#f8fbff]"
+                          >
+                            عرض المزيد
+                          </button>
+                        </div>
+                      ) : null}
+                    </>
+                  )}
+                </CardContent>
+              </Card>
+            </section>
 
             <aside className={cn("space-y-5", !isAuthenticated && "pointer-events-none blur-[2px] opacity-45")}>
               <Card className="rounded-[1.7rem] border border-[#e9eef8] bg-white/95 shadow-[0_14px_34px_rgba(15,23,42,0.04)]">
@@ -561,128 +713,6 @@ export function SummaryCenterPortal({
                 </CardContent>
               </Card>
             </aside>
-
-            <section className={cn("space-y-5", !isAuthenticated && "pointer-events-none blur-[2px] opacity-45")}>
-              <Card className="rounded-[1.7rem] border border-[#e9eef8] bg-white/95 shadow-[0_14px_34px_rgba(15,23,42,0.04)]">
-                <CardContent className="space-y-5 p-6">
-                  <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="display-font text-2xl font-bold text-slate-950">جميع الملخصات</div>
-                      <span className="rounded-full bg-[#eef4ff] px-3 py-1 text-xs font-bold text-[#2563eb]">
-                        {formatNumber(isAuthenticated ? filteredRows.length : previewRows.length)} ملخص
-                      </span>
-                    </div>
-
-                    <div className="flex w-full items-center gap-3 sm:max-w-md">
-                      <div className="flex h-12 flex-1 items-center gap-3 rounded-[1rem] border border-[#e7edf8] bg-[#fbfdff] px-4">
-                        <Search className="h-4 w-4 text-slate-400" />
-                        <input
-                          value={query}
-                          onChange={(event) => setQuery(event.target.value)}
-                          placeholder="ابحث في الملخصات..."
-                          className="w-full bg-transparent text-sm outline-none placeholder:text-slate-400"
-                          disabled={!isAuthenticated}
-                        />
-                      </div>
-                    </div>
-                  </div>
-
-                  {isLoadingItems ? (
-                    <div className="flex min-h-[220px] items-center justify-center gap-3 text-slate-500">
-                      <Loader2 className="h-5 w-5 animate-spin" />
-                      جارٍ تحميل الملخصات...
-                    </div>
-                  ) : error ? (
-                    <div className="rounded-[1.2rem] border border-rose-200 bg-rose-50 px-5 py-4 text-sm font-semibold text-rose-700">
-                      {error}
-                    </div>
-                  ) : isAuthenticated && !filteredRows.length ? (
-                    <div className="rounded-[1.5rem] border border-dashed border-[#d7e3f7] bg-[#fbfdff] px-6 py-10 text-center">
-                      <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#eef4ff] text-[#2563eb]">
-                        <FolderOpen className="h-7 w-7" />
-                      </div>
-                      <div className="mt-4 display-font text-2xl font-bold text-slate-950">لا توجد ملخصات مطابقة</div>
-                      <p className="mt-3 text-sm leading-8 text-slate-600">
-                        غيّر الفلاتر الحالية أو ابدأ برفع أول ملخص من مكتبة PDF الخاصة بك.
-                      </p>
-                      <div className="mt-5">
-                        <Link href="/summaries">
-                          <Button>اذهب إلى مكتبة PDF</Button>
-                        </Link>
-                      </div>
-                    </div>
-                  ) : (
-                    <>
-                      <div className="hidden grid-cols-[140px_120px_110px_110px_110px_minmax(0,1fr)] gap-4 rounded-[1.2rem] bg-[#f8fbff] px-5 py-3 text-sm font-bold text-slate-400 lg:grid">
-                        <div>الحالة</div>
-                        <div>تاريخ الإضافة</div>
-                        <div>وقت القراءة</div>
-                        <div>عدد الصفحات</div>
-                        <div>التصنيف</div>
-                        <div>عنوان الملخص</div>
-                      </div>
-
-                      <div className="space-y-3">
-                        {activeRows.map((row) => (
-                          <div
-                            key={row.id}
-                            className="grid gap-4 rounded-[1.35rem] border border-[#edf2fb] bg-white px-5 py-4 lg:grid-cols-[140px_120px_110px_110px_110px_minmax(0,1fr)] lg:items-center"
-                          >
-                            <div className="lg:order-6">
-                              <Link
-                                href={row.href}
-                                className={cn(
-                                  "inline-flex min-h-[42px] items-center justify-center rounded-full border px-4 text-sm font-bold transition",
-                                  row.statusTone,
-                                )}
-                              >
-                                {row.status}
-                              </Link>
-                            </div>
-                            <div className="text-sm font-semibold text-slate-500 lg:order-5">{formatDate(row.createdAt)}</div>
-                            <div className="text-sm font-semibold text-slate-500 lg:order-4">{formatNumber(row.readingMinutes)} دقيقة</div>
-                            <div className="text-sm font-semibold text-slate-500 lg:order-3">{formatNumber(row.pageCount)}</div>
-                            <div className="lg:order-2">
-                              <span
-                                className={cn(
-                                  "inline-flex rounded-full px-3 py-1 text-xs font-bold",
-                                  row.category === "كمي"
-                                    ? "bg-[#eef4ff] text-[#2563eb]"
-                                    : "bg-[#edfdf3] text-[#16a34a]",
-                                )}
-                              >
-                                {row.category}
-                              </span>
-                            </div>
-                            <div className="flex items-start gap-3 lg:order-1">
-                              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[0.9rem] bg-[#eef4ff] text-[#2563eb]">
-                                <FileText className="h-5 w-5" />
-                              </div>
-                              <div className="min-w-0">
-                                <div className="truncate text-base font-bold text-slate-900">{row.title}</div>
-                                <div className="mt-1 text-sm text-slate-500">{row.subtitle}</div>
-                              </div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-
-                      {isAuthenticated && filteredRows.length > visibleCount ? (
-                        <div className="flex justify-center pt-2">
-                          <button
-                            type="button"
-                            onClick={() => setVisibleCount((current) => current + 8)}
-                            className="inline-flex h-11 items-center justify-center rounded-full border border-[#d8e3f8] bg-white px-6 text-sm font-bold text-[#2563eb] transition hover:bg-[#f8fbff]"
-                          >
-                            عرض المزيد
-                          </button>
-                        </div>
-                      ) : null}
-                    </>
-                  )}
-                </CardContent>
-              </Card>
-            </section>
           </div>
 
           <section className="space-y-6">
