@@ -2,8 +2,11 @@ import { UserRound } from "lucide-react";
 
 import { PageShell } from "@/components/page-shell";
 import { StudentAccount } from "@/components/student-account";
+import { getInitialAuthUser } from "@/lib/server-auth";
 
-export default function AccountPage() {
+export default async function AccountPage() {
+  const initialAuthUser = await getInitialAuthUser();
+
   return (
     <PageShell
       eyebrow="الحساب"
@@ -16,6 +19,7 @@ export default function AccountPage() {
       ctaLabel="تعديل الإعدادات"
       ctaHref="/onboarding"
       headerVariant="student"
+      initialAuthUser={initialAuthUser}
     >
       <StudentAccount />
     </PageShell>

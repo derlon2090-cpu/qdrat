@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, type ChangeEvent } from "react";
 import { FilePlus2, FileText, Loader2, Trash2, UploadCloud } from "lucide-react";
 
+import type { AuthSessionUser } from "@/lib/auth-shared";
 import { useAuthSession } from "@/hooks/use-auth-session";
 import type { SummaryListItem } from "@/lib/summaries";
 import { StudentAccessCard } from "@/components/student-access-card";
@@ -185,8 +186,14 @@ async function deleteSummary(summaryId: string) {
   }
 }
 
-export function SummaryLibrary() {
+export function SummaryLibrary({
+  initialAuthUser = null,
+}: {
+  initialAuthUser?: AuthSessionUser | null;
+}) {
   const { status, user } = useAuthSession();
+  const effectiveUser = status === "authenticated" ? user : status === "loading" ? initialAuthUser : null;
+  const isAuthenticated = Boolean(effectiveUser);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [items, setItems] = useState<SummaryListItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -197,7 +204,7 @@ export function SummaryLibrary() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (status !== "authenticated") {
+    if (!isAuthenticated) {
       setIsLoading(false);
       return;
     }
@@ -225,7 +232,7 @@ export function SummaryLibrary() {
     return () => {
       aborted = true;
     };
-  }, [status]);
+  }, [isAuthenticated]);
 
   async function handleFileChange(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
@@ -270,7 +277,7 @@ export function SummaryLibrary() {
     }
   }
 
-  if (status === "loading") {
+  if (status === "loading" && !initialAuthUser) {
     return (
       <Card>
         <CardContent className="flex items-center justify-center gap-3 p-10 text-slate-500">
@@ -281,7 +288,7 @@ export function SummaryLibrary() {
     );
   }
 
-  if (status !== "authenticated" || !user) {
+  if (!isAuthenticated || !effectiveUser) {
     return (
       <StudentAccessCard
         title="قسم الملخصات مرتبط بحسابك"

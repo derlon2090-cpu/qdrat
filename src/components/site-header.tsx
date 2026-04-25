@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { Bell, Cog, Menu, X, type LucideIcon } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
+import type { AuthSessionUser } from "@/lib/auth-shared";
 import { HeaderAuthControls } from "@/components/header-auth-controls";
 import { MiyaarLogo } from "@/components/miyaar-logo";
 import { Button } from "@/components/ui/button";
@@ -98,17 +99,20 @@ export function SiteHeader({
   ctaLabel,
   links,
   variant = "public",
+  initialUser = null,
 }: {
   ctaHref?: string;
   ctaLabel?: string;
   links?: BasicNavLink[];
   variant?: SiteHeaderVariant;
+  initialUser?: AuthSessionUser | null;
 }) {
   const pathname = usePathname();
   const { status, user, refreshSession } = useAuthSession();
   const [open, setOpen] = useState(false);
   const [currentSearch, setCurrentSearch] = useState("");
-  const isAuthenticated = status === "authenticated" && Boolean(user);
+  const effectiveUser = status === "authenticated" ? user : status === "loading" ? initialUser : null;
+  const isAuthenticated = Boolean(effectiveUser);
 
   const isStudentArea = useMemo(() => {
     if (variant === "student") {
@@ -133,19 +137,40 @@ export function SiteHeader({
       return links ?? studentTopNavItems;
     }
 
-    // Keep the public top navigation identical across the homepage and all public pages.
-    return publicTopNavItems;
-  }, [isStudentArea, links]);
+    if (!isAuthenticated) {
+      return publicTopNavItems;
+    }
+
+    return publicTopNavItems.map((item) => {
+      if (item.href === "/plans") {
+        return { ...item, href: "/my-plan" };
+      }
+
+      if (item.href === "/summary-center") {
+        return { ...item, href: "/summaries" };
+      }
+
+      if (item.href === "/competitions") {
+        return { ...item, href: "/challenge" };
+      }
+
+      return item;
+    });
+  }, [isAuthenticated, isStudentArea, links]);
 
   const mobileItems = useMemo(() => {
     if (links?.length) {
       return links.filter((item, index, array) => array.findIndex((candidate) => candidate.href === item.href) === index);
     }
 
-    const source = isStudentArea ? [...studentTopNavItems, ...studentSidebarItems] : publicTopNavItems;
+    const source = isStudentArea
+      ? [...studentTopNavItems, ...studentSidebarItems]
+      : isAuthenticated
+        ? desktopLinks
+        : publicTopNavItems;
 
     return source.filter((item, index, array) => array.findIndex((candidate) => candidate.href === item.href) === index);
-  }, [isStudentArea, links]);
+  }, [desktopLinks, isAuthenticated, isStudentArea, links]);
 
   async function handleLogout() {
     const response = await fetch("/api/auth/logout", { method: "POST" });
@@ -195,6 +220,7 @@ export function SiteHeader({
               variant="public"
               ctaHref={isAuthenticated ? undefined : ctaHref}
               ctaLabel={isAuthenticated ? undefined : ctaLabel}
+              initialUser={initialUser}
             />
           </div>
         </div>
@@ -332,6 +358,7 @@ export function SiteHeader({
               variant={isStudentArea ? "student" : "public"}
               ctaHref={isAuthenticated ? undefined : ctaHref}
               ctaLabel={isAuthenticated ? undefined : ctaLabel}
+              initialUser={initialUser}
             />
           </div>
         </div>

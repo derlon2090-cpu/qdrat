@@ -4,6 +4,7 @@ import { PageShell } from "@/components/page-shell";
 import { Reveal } from "@/components/reveal";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { getInitialAuthUser } from "@/lib/server-auth";
 
 const models = [
   { title: "نماذج لفظي", text: "ملفات تدريب مرتبة حسب المهارة والصعوبة.", cta: "تحميل الملف" },
@@ -11,7 +12,9 @@ const models = [
   { title: "نماذج مختلطة", text: "ملفات سريعة قبل الاختبار تجمع الكمي واللفظي.", cta: "عرض الملفات" },
 ];
 
-export default function PaperModelsPage() {
+export default async function PaperModelsPage() {
+  const initialAuthUser = await getInitialAuthUser();
+
   return (
     <PageShell
       eyebrow="نماذج الورقي"
@@ -21,7 +24,8 @@ export default function PaperModelsPage() {
       iconWrap="bg-[#ecfeff]"
       iconColor="text-[#0f766e]"
       accentClass="shadow-[0_20px_45px_rgba(15,118,110,0.16)]"
-      headerVariant="auto"
+      headerVariant={initialAuthUser ? "student" : "public"}
+      initialAuthUser={initialAuthUser}
     >
       <div className="grid gap-5 md:grid-cols-3">
         {models.map((item, index) => (

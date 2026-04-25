@@ -4,12 +4,20 @@ import { DashboardRuntimeGuard } from "@/components/dashboard-runtime-guard";
 import { QuestionBankOrganizer } from "@/components/question-bank-organizer";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
+import { getInitialAuthUser } from "@/lib/server-auth";
 
-export default function QuestionBankPage() {
+export default async function QuestionBankPage() {
+  const initialAuthUser = await getInitialAuthUser();
+
   return (
     <div className="min-h-screen">
       <DashboardRuntimeGuard resetKey="question-bank-header">
-        <SiteHeader variant="auto" ctaHref="/exam" ctaLabel="ابدأ اختبارًا الآن" />
+        <SiteHeader
+          variant={initialAuthUser ? "student" : "public"}
+          ctaHref="/exam"
+          ctaLabel="ابدأ اختبارًا الآن"
+          initialUser={initialAuthUser}
+        />
       </DashboardRuntimeGuard>
 
       <main className="section-shell pb-8 pt-6 md:pb-12 md:pt-8">

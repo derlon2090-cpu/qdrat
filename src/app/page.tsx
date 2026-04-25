@@ -21,7 +21,6 @@ import {
   Users,
 } from "lucide-react";
 
-import { HomeAuthRedirect } from "@/components/home-auth-redirect";
 import { MiyaarLogo } from "@/components/miyaar-logo";
 import {
   PublicLaptopIllustration,
@@ -162,8 +161,6 @@ const whyChoose = [
 export default function HomePage() {
   return (
     <div dir="rtl" className="min-h-screen bg-[#f8fbff] text-slate-900">
-      <HomeAuthRedirect />
-
       <SiteHeader variant="public" links={navLinks} />
 
       <main>

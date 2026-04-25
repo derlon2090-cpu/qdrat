@@ -21,6 +21,7 @@ import { SiteHeader } from "@/components/site-header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useAuthSession } from "@/hooks/use-auth-session";
+import type { AuthSessionUser } from "@/lib/auth-shared";
 import { studentTopNavItems } from "@/lib/site-nav";
 import type { SummaryListItem } from "@/lib/summaries";
 import { cn } from "@/lib/utils";
@@ -248,7 +249,11 @@ function SummaryStatsCards({
   );
 }
 
-export function SummaryCenterPortal() {
+export function SummaryCenterPortal({
+  initialAuthUser = null,
+}: {
+  initialAuthUser?: AuthSessionUser | null;
+}) {
   const { status, user } = useAuthSession();
   const [items, setItems] = useState<SummaryListItem[]>([]);
   const [isLoadingItems, setIsLoadingItems] = useState(false);
@@ -259,7 +264,8 @@ export function SummaryCenterPortal() {
   const [sortKey, setSortKey] = useState<SortKey>("الأحدث");
   const [visibleCount, setVisibleCount] = useState(8);
 
-  const isAuthenticated = status === "authenticated" && Boolean(user);
+  const effectiveUser = status === "authenticated" ? user : status === "loading" ? initialAuthUser : null;
+  const isAuthenticated = Boolean(effectiveUser);
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -360,7 +366,11 @@ export function SummaryCenterPortal() {
 
   return (
     <div dir="rtl" className="min-h-screen bg-[#f7fbff] text-slate-900">
-      <SiteHeader variant={isAuthenticated ? "student" : "public"} links={isAuthenticated ? summaryCenterStudentLinks : undefined} />
+      <SiteHeader
+        variant={isAuthenticated ? "student" : "public"}
+        links={isAuthenticated ? summaryCenterStudentLinks : undefined}
+        initialUser={initialAuthUser}
+      />
 
       <main className="pb-16 pt-8 md:pt-10">
         <div className="mx-auto w-[min(calc(100%-1rem),1280px)] space-y-8 sm:w-[min(calc(100%-2rem),1280px)]">

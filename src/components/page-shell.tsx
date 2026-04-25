@@ -6,6 +6,7 @@ import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import type { AuthSessionUser } from "@/lib/auth-shared";
 
 export function PageShell({
   eyebrow,
@@ -18,6 +19,7 @@ export function PageShell({
   ctaLabel,
   ctaHref,
   headerVariant = "public",
+  initialAuthUser,
   children,
 }: {
   eyebrow: string;
@@ -30,6 +32,7 @@ export function PageShell({
   ctaLabel?: string;
   ctaHref?: string;
   headerVariant?: "auto" | "public" | "student";
+  initialAuthUser?: AuthSessionUser | null;
   children: React.ReactNode;
 }) {
   return (
@@ -38,6 +41,7 @@ export function PageShell({
         variant={headerVariant}
         ctaHref={headerVariant === "public" ? undefined : ctaHref}
         ctaLabel={headerVariant === "public" ? undefined : ctaLabel}
+        initialUser={initialAuthUser}
       />
       <main className="section-shell pt-10 md:pt-14">
         <div className="mx-auto w-[min(calc(100%-1rem),1480px)] space-y-10 sm:w-[min(calc(100%-2rem),1480px)]">

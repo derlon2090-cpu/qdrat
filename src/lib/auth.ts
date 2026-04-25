@@ -149,6 +149,62 @@ type AuthenticatedSession = {
   expiresAt: Date;
 };
 
+async function getAuthenticatedSessionFromToken(
+  token: string | null | undefined,
+): Promise<AuthenticatedSession | null> {
+  const normalizedToken = token?.trim();
+  if (!normalizedToken) return null;
+
+  const sql = getSql();
+
+  const rows = (await sql.query(
+    `
+      select
+        u.id::text,
+        u.email,
+        u.phone,
+        u.full_name,
+        u.gender,
+        u.role,
+        sessions.expires_at
+      from app_user_sessions sessions
+      inner join app_users u on u.id::text = sessions.user_id::text
+      where sessions.session_token_hash = $1
+        and sessions.expires_at > now()
+        and u.is_active = true
+      limit 1
+    `,
+    [sha256(normalizedToken)],
+  )) as Array<
+    Pick<DbUserRow, "id" | "email" | "phone" | "full_name" | "gender" | "role"> & {
+      expires_at: string | Date;
+    }
+  >;
+
+  const row = rows[0];
+  if (!row) {
+    return null;
+  }
+
+  const expiresAt = new Date(Date.now() + SESSION_TTL_MS);
+  await sql.query(
+    `
+      update app_user_sessions
+      set
+        last_seen_at = now(),
+        expires_at = $2::timestamptz
+      where session_token_hash = $1
+    `,
+    [sha256(normalizedToken), expiresAt.toISOString()],
+  );
+
+  return {
+    user: mapDbUser(row),
+    token: normalizedToken,
+    expiresAt,
+  };
+}
+
 async function createSession(userId: string, request: NextRequest) {
   const sql = getSql();
   const token = randomBytes(32).toString("hex");
@@ -239,60 +295,16 @@ export async function deleteSessionByToken(token: string | null | undefined) {
 
 async function getAuthenticatedSessionFromRequest(request: NextRequest): Promise<AuthenticatedSession | null> {
   const token = request.cookies.get(AUTH_COOKIE_NAME)?.value?.trim();
-  if (!token) return null;
-
-  const sql = getSql();
-
-  const rows = (await sql.query(
-    `
-      select
-        u.id::text,
-        u.email,
-        u.phone,
-        u.full_name,
-        u.gender,
-        u.role,
-        sessions.expires_at
-      from app_user_sessions sessions
-      inner join app_users u on u.id::text = sessions.user_id::text
-      where sessions.session_token_hash = $1
-        and sessions.expires_at > now()
-        and u.is_active = true
-      limit 1
-    `,
-    [sha256(token)],
-  )) as Array<
-    Pick<DbUserRow, "id" | "email" | "phone" | "full_name" | "gender" | "role"> & {
-      expires_at: string | Date;
-    }
-  >;
-
-  const row = rows[0];
-  if (!row) {
-    return null;
-  }
-
-  const expiresAt = new Date(Date.now() + SESSION_TTL_MS);
-  await sql.query(
-    `
-      update app_user_sessions
-      set
-        last_seen_at = now(),
-        expires_at = $2::timestamptz
-      where session_token_hash = $1
-    `,
-    [sha256(token), expiresAt.toISOString()],
-  );
-
-  return {
-    user: mapDbUser(row),
-    token,
-    expiresAt,
-  };
+  return getAuthenticatedSessionFromToken(token);
 }
 
 export async function getAuthenticatedUserFromRequest(request: NextRequest) {
   const session = await getAuthenticatedSessionFromRequest(request);
+  return session?.user ?? null;
+}
+
+export async function getAuthenticatedUserFromToken(token: string | null | undefined) {
+  const session = await getAuthenticatedSessionFromToken(token);
   return session?.user ?? null;
 }
 

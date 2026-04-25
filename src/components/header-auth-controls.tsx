@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { ArrowLeft, ChevronDown, Loader2, LogOut, Plus, Settings, UserRound } from "lucide-react";
 
+import type { AuthSessionUser } from "@/lib/auth-shared";
 import { Button } from "@/components/ui/button";
 import { useAuthSession } from "@/hooks/use-auth-session";
 
@@ -16,12 +17,14 @@ type HeaderAuthControlsProps = {
   ctaHref?: string;
   ctaLabel?: string;
   variant?: "public" | "student";
+  initialUser?: AuthSessionUser | null;
 };
 
 export function HeaderAuthControls({
   ctaHref,
   ctaLabel,
   variant = "public",
+  initialUser = null,
 }: HeaderAuthControlsProps) {
   const router = useRouter();
   const { status, user, refreshSession } = useAuthSession();
@@ -67,8 +70,10 @@ export function HeaderAuthControls({
 
   const containerClass =
     variant === "student" ? "hidden items-center gap-2 lg:flex xl:gap-2.5" : "hidden items-center gap-2 lg:flex";
+  const effectiveUser = status === "authenticated" ? user : status === "loading" ? initialUser : null;
+  const isAuthenticated = Boolean(effectiveUser);
 
-  if (status === "loading") {
+  if (status === "loading" && !effectiveUser) {
     return (
       <div className={containerClass} dir="ltr">
         <div className="flex h-[52px] w-[52px] items-center justify-center rounded-[1.05rem] border border-[#e6edf9] bg-white shadow-[0_10px_22px_rgba(15,23,42,0.045)]">
@@ -78,7 +83,7 @@ export function HeaderAuthControls({
     );
   }
 
-  if (status === "authenticated" && user) {
+  if (isAuthenticated && effectiveUser) {
     if (variant === "public") {
       return (
         <div className={containerClass} dir="ltr">
@@ -110,7 +115,7 @@ export function HeaderAuthControls({
               className={`h-4 w-4 text-slate-400 transition-transform ${menuOpen ? "rotate-180" : ""}`}
             />
             <div className="max-w-[116px] text-right leading-tight xl:max-w-[148px]" dir="rtl">
-              <div className="truncate text-[0.95rem] font-extrabold text-slate-900 xl:text-[1rem]">{user.fullName}</div>
+              <div className="truncate text-[0.95rem] font-extrabold text-slate-900 xl:text-[1rem]">{effectiveUser.fullName}</div>
               <div className="mt-1 text-sm font-medium text-slate-400">مستوى متقدم</div>
             </div>
             <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#eef4ff] text-[#2563eb]">
