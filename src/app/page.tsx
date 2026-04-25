@@ -184,8 +184,8 @@ export default async function HomePage() {
           </div>
           <div className="pointer-events-none absolute bottom-[-56px] left-[45%] h-44 w-44 rounded-full bg-[radial-gradient(circle,rgba(150,180,255,0.22),rgba(150,180,255,0.08)_62%,transparent_75%)]" />
 
-          <div className="mx-auto flex w-[min(calc(100%-1.5rem),1360px)] flex-col gap-10 px-1 py-12 sm:w-[min(calc(100%-2rem),1360px)] lg:flex-row lg:items-center lg:justify-between lg:gap-20 lg:py-16">
-            <div className="order-2 w-full lg:order-1 lg:max-w-[47%]">
+          <div className="mx-auto grid w-[min(calc(100%-1.5rem),1360px)] gap-10 px-1 py-12 sm:w-[min(calc(100%-2rem),1360px)] lg:[direction:ltr] lg:grid-cols-[0.98fr,1.02fr] lg:items-center lg:gap-16 lg:py-16">
+            <div className="w-full">
               <div className="relative mr-auto w-full max-w-[760px] lg:mr-0">
                 <div className="absolute inset-x-[8%] bottom-2 h-20 rounded-full bg-[radial-gradient(circle,rgba(132,164,255,0.28),rgba(132,164,255,0.08)_62%,transparent_82%)] blur-lg" />
                 <div className="rounded-[2.1rem] border border-[#dfe8fb] bg-[linear-gradient(180deg,#f8fbff_0%,#eff4ff_100%)] p-6 shadow-[0_28px_64px_rgba(15,23,42,0.06)] sm:p-8">
@@ -194,9 +194,9 @@ export default async function HomePage() {
               </div>
             </div>
 
-            <div className="order-1 w-full lg:order-2 lg:max-w-[46%]">
-              <div className="max-w-[670px] text-right [direction:rtl] lg:mr-auto">
-                <h1 className="display-font text-[clamp(4.3rem,8.1vw,8.5rem)] font-black leading-[0.83] tracking-[-0.07em] text-[#123B7A]">
+            <div className="w-full">
+              <div className="max-w-[620px] text-right [direction:rtl] lg:mr-auto">
+                <h1 className="display-font text-[clamp(3.15rem,6.1vw,6.55rem)] font-black leading-[0.9] tracking-[-0.055em] text-[#123B7A]">
                   <span className="block">معيار</span>
                   <span className="block bg-[linear-gradient(180deg,#2f6df2_0%,#2563eb_100%)] bg-clip-text text-transparent">
                     طريقك
@@ -204,13 +204,13 @@ export default async function HomePage() {
                   <span className="block">الذكي نحو</span>
                   <span className="block">أعلى الدرجات</span>
                 </h1>
-                <div className="mt-5 mr-auto h-1.5 w-24 rounded-full bg-[linear-gradient(90deg,#2f6df2_0%,#69a2ff_100%)]" />
-                <p className="mt-8 max-w-[640px] text-[1.22rem] leading-[2.15] text-[#5f7398]">
+                <div className="mt-4 mr-auto h-1.5 w-20 rounded-full bg-[linear-gradient(90deg,#2f6df2_0%,#69a2ff_100%)]" />
+                <p className="mt-7 max-w-[560px] text-[1.12rem] leading-[2.05] text-[#5f7398]">
                   منصة تعليمية متكاملة تساعدك على الاستعداد
                   لاختبار القدرات بأحدث الطرق وأعلى كفاءة.
                 </p>
 
-                <div className="mt-10 flex flex-wrap gap-4">
+                <div className="mt-8 flex flex-wrap gap-4">
                   <Link
                     href="/diagnostic"
                     className="inline-flex h-[60px] min-w-[228px] items-center justify-center rounded-[1.05rem] bg-[#2563eb] px-8 text-[1.08rem] font-bold text-white shadow-[0_16px_30px_rgba(37,99,235,0.2)] transition hover:bg-[#1d4ed8]"
