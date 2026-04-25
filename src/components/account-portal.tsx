@@ -8,7 +8,6 @@ import {
   CalendarDays,
   Camera,
   Check,
-  ChevronDown,
   CreditCard,
   Flame,
   Heart,
@@ -25,13 +24,14 @@ import {
   User,
 } from "lucide-react";
 
-import { MiyaarLogo } from "@/components/miyaar-logo";
+import { SiteHeader } from "@/components/site-header";
 import type { AuthSessionUser } from "@/lib/auth-shared";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { useAuthSession } from "@/hooks/use-auth-session";
 import { useStudentPortal } from "@/hooks/use-student-portal";
+import { studentTopNavItems } from "@/lib/site-nav";
 import { cn } from "@/lib/utils";
 
 type AccountPortalProps = {
@@ -43,15 +43,6 @@ type SettingsTab = {
   icon: typeof User;
   active?: boolean;
 };
-
-const topNav = [
-  { href: "/dashboard", label: "الرئيسية" },
-  { href: "/question-bank", label: "بنك الأسئلة" },
-  { href: "/summaries", label: "الملخصات" },
-  { href: "/paper-models", label: "النماذج" },
-  { href: "/statistics", label: "إحصائيات" },
-  { href: "/pricing", label: "الأسعار" },
-];
 
 const settingsTabs: SettingsTab[] = [
   { label: "الملف الشخصي", icon: User, active: true },
@@ -225,61 +216,9 @@ export function AccountPortal({ initialAuthUser }: AccountPortalProps) {
 
   return (
     <div dir="rtl" className="min-h-screen bg-[radial-gradient(circle_at_top,#eef5ff_0%,#f8fbff_32%,#ffffff_70%)] text-slate-900">
-      <header className="mx-auto w-[min(calc(100%-2rem),1440px)] pt-4">
-        <div className="rounded-[1.7rem] border border-[#dfe8fb] bg-white px-7 py-5 shadow-[0_18px_42px_rgba(15,23,42,0.06)]">
-          <div className="flex items-center justify-between gap-6">
-            <div className="flex items-center gap-4" dir="ltr">
-              <button
-                type="button"
-                onClick={handleLogout}
-                className="inline-flex h-14 items-center justify-center rounded-[1rem] bg-[#2563eb] px-8 text-base font-bold text-white shadow-[0_14px_28px_rgba(37,99,235,0.22)] transition hover:bg-[#1d4ed8]"
-              >
-                تسجيل الخروج
-              </button>
+      <SiteHeader variant="student" links={studentTopNavItems} initialUser={initialAuthUser} />
 
-              <button
-                type="button"
-                className="relative flex h-12 w-12 items-center justify-center rounded-full border border-[#e6edf9] bg-white text-[#123B7A] shadow-[0_12px_22px_rgba(15,23,42,0.04)]"
-              >
-                <Bell className="h-5 w-5" />
-                <span className="absolute -right-1 -top-1 flex h-6 w-6 items-center justify-center rounded-full bg-[#ff4b63] text-xs font-black text-white">
-                  3
-                </span>
-              </button>
-
-              <div className="flex items-center gap-3 rounded-full border border-[#e6edf9] bg-white px-3 py-2 shadow-[0_12px_22px_rgba(15,23,42,0.04)]">
-                <ChevronDown className="h-4 w-4 text-slate-400" />
-                <div className="text-right leading-tight" dir="rtl">
-                  <div className="text-lg font-extrabold text-slate-900">{effectiveUser.fullName}</div>
-                  <div className="mt-1 text-sm font-medium text-slate-400">مستوى متقدم</div>
-                </div>
-                <div className="h-14 w-14 overflow-hidden rounded-full border border-[#e8eefc] bg-[#eef4ff]">
-                  <img src={avatarSrc} alt={effectiveUser.fullName} className="h-full w-full object-cover" />
-                </div>
-              </div>
-            </div>
-
-            <nav className="hidden items-center gap-9 lg:flex">
-              {topNav.map((item) => (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={cn(
-                    "text-lg font-semibold transition hover:text-[#2563eb]",
-                    item.href === "/dashboard" ? "text-slate-900" : "text-slate-600",
-                  )}
-                >
-                  {item.label}
-                </Link>
-              ))}
-            </nav>
-
-            <MiyaarLogo href="/dashboard" />
-          </div>
-        </div>
-      </header>
-
-      <main className="mx-auto w-[min(calc(100%-2rem),1440px)] py-6">
+      <main className="mx-auto w-[min(calc(100%-1rem),1480px)] pb-8 pt-5 sm:w-[min(calc(100%-2rem),1480px)] md:pb-12 md:pt-7">
         <div className="grid gap-6 xl:[direction:ltr] xl:grid-cols-[minmax(0,1fr)_280px]">
           <section className="space-y-6 xl:[direction:rtl]">
             <Card className="overflow-hidden rounded-[2rem] border border-[#dbe5ff] bg-[radial-gradient(circle_at_left,rgba(255,255,255,0.08),transparent_35%),linear-gradient(120deg,#2c54f1_0%,#2950ec_35%,#1d49df_100%)] text-white shadow-[0_26px_64px_rgba(37,80,235,0.24)]">
