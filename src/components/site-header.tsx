@@ -16,6 +16,9 @@ type BasicNavLink = {
   href: string;
   label: string;
   icon?: LucideIcon;
+  accent?: string;
+  iconWrap?: string;
+  description?: string;
 };
 
 type SiteHeaderVariant = "auto" | "public" | "student";
@@ -135,10 +138,14 @@ export function SiteHeader({
   }, [isStudentArea, links]);
 
   const mobileItems = useMemo(() => {
+    if (links?.length) {
+      return links.filter((item, index, array) => array.findIndex((candidate) => candidate.href === item.href) === index);
+    }
+
     const source = isStudentArea ? [...studentTopNavItems, ...studentSidebarItems] : publicTopNavItems;
 
     return source.filter((item, index, array) => array.findIndex((candidate) => candidate.href === item.href) === index);
-  }, [isStudentArea]);
+  }, [isStudentArea, links]);
 
   async function handleLogout() {
     const response = await fetch("/api/auth/logout", { method: "POST" });
@@ -219,9 +226,11 @@ export function SiteHeader({
                       onClick={() => setOpen(false)}
                       className={cn("nav-item", active && "nav-item-active")}
                     >
-                      <span className={cn("nav-icon-wrap", item.iconWrap, item.accent)}>
-                        <Icon className="h-5 w-5" />
-                      </span>
+                      {Icon ? (
+                        <span className={cn("nav-icon-wrap", item.iconWrap, item.accent)}>
+                          <Icon className="h-5 w-5" />
+                        </span>
+                      ) : null}
                       <div className="min-w-0">
                         <div className="truncate">{item.label}</div>
                         {item.description ? <div className="text-xs font-medium text-slate-400">{item.description}</div> : null}
@@ -358,9 +367,11 @@ export function SiteHeader({
                     onClick={() => setOpen(false)}
                     className={cn("nav-item", active && "nav-item-active")}
                   >
-                    <span className={cn("nav-icon-wrap", item.iconWrap, item.accent)}>
-                      <Icon className="h-5 w-5" />
-                    </span>
+                    {Icon ? (
+                      <span className={cn("nav-icon-wrap", item.iconWrap, item.accent)}>
+                        <Icon className="h-5 w-5" />
+                      </span>
+                    ) : null}
                     <div className="min-w-0">
                       <div className="truncate">{item.label}</div>
                       {item.description ? <div className="text-xs font-medium text-slate-400">{item.description}</div> : null}

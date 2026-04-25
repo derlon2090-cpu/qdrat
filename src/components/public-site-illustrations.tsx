@@ -120,3 +120,64 @@ export function PublicNewsletterIllustration({
     </svg>
   );
 }
+
+export function PublicSummaryFolderIllustration({
+  className,
+}: {
+  className?: string;
+}) {
+  return (
+    <div
+      className={cn(
+        "relative h-[300px] w-full overflow-hidden rounded-[2rem] bg-[radial-gradient(circle_at_26%_18%,rgba(255,255,255,0.96),transparent_28%),linear-gradient(180deg,#f6f9ff_0%,#eef4ff_100%)]",
+        className,
+      )}
+    >
+      <div className="absolute left-8 top-8 h-12 w-12 rounded-[1rem] border border-[#e6edff] bg-white/80 shadow-[0_10px_24px_rgba(15,23,42,0.05)]" />
+      <div className="absolute right-10 top-10 h-10 w-10 rounded-[0.9rem] border border-[#d9e4ff] bg-white/70 shadow-[0_10px_24px_rgba(15,23,42,0.04)]" />
+      <div className="absolute inset-x-[10%] bottom-6 h-20 rounded-full bg-[radial-gradient(circle,rgba(111,145,255,0.24),rgba(111,145,255,0.08)_60%,transparent_80%)] blur-sm" />
+
+      <svg viewBox="0 0 720 420" className="absolute inset-0 h-full w-full" aria-hidden="true">
+        <defs>
+          <linearGradient id="folderCover" x1="0%" x2="100%" y1="0%" y2="100%">
+            <stop offset="0%" stopColor="#8bb4ff" />
+            <stop offset="100%" stopColor="#2f6df2" />
+          </linearGradient>
+          <linearGradient id="folderBase" x1="0%" x2="0%" y1="0%" y2="100%">
+            <stop offset="0%" stopColor="#5e90ff" />
+            <stop offset="100%" stopColor="#245bd6" />
+          </linearGradient>
+          <linearGradient id="paperFill" x1="0%" x2="0%" y1="0%" y2="100%">
+            <stop offset="0%" stopColor="#ffffff" />
+            <stop offset="100%" stopColor="#eef4ff" />
+          </linearGradient>
+        </defs>
+
+        <path d="M88 320C88 278 122 244 164 244H420C462 244 496 278 496 320V332H88Z" fill="#d8e5ff" opacity="0.55" />
+
+        <g transform="translate(132 84)">
+          <path d="M66 56H210C228 56 242 70 242 88V110H10V88C10 70 24 56 42 56H66Z" fill="#5c8dff" opacity="0.92" />
+          <path d="M18 112H390C410 112 426 128 426 148V242C426 264 408 282 386 282H42C20 282 2 264 2 242V128C2 119 9 112 18 112Z" fill="url(#folderBase)" />
+          <path d="M38 96H254C270 96 284 104 292 118L302 134H16L26 112C30 102 38 96 48 96Z" fill="url(#folderCover)" />
+
+          <g transform="translate(110 18)">
+            <rect x="0" y="0" width="176" height="194" rx="18" fill="url(#paperFill)" />
+            <rect x="30" y="42" width="116" height="10" rx="5" fill="#d4e1ff" />
+            <rect x="30" y="70" width="94" height="10" rx="5" fill="#dce6ff" />
+            <rect x="30" y="98" width="122" height="10" rx="5" fill="#d4e1ff" />
+            <rect x="30" y="126" width="102" height="10" rx="5" fill="#dce6ff" />
+            <circle cx="146" cy="28" r="12" fill="#eef4ff" />
+            <path d="M146 20v8l6 4" stroke="#4d7ef5" strokeWidth="3" strokeLinecap="round" />
+            <circle cx="146" cy="28" r="14" fill="none" stroke="#4d7ef5" strokeWidth="3" />
+          </g>
+        </g>
+
+        <g transform="translate(74 276)">
+          <ellipse cx="24" cy="64" rx="34" ry="8" fill="#d6e2ff" />
+          <path d="M12 12C8 -4 22 -20 40 -18C46 -30 66 -30 74 -14C92 -12 100 8 90 24C84 34 74 40 62 40H34C22 40 15 34 12 12Z" fill="#60b897" />
+          <rect x="20" y="36" width="16" height="32" rx="8" fill="#7ac3a6" />
+        </g>
+      </svg>
+    </div>
+  );
+}
