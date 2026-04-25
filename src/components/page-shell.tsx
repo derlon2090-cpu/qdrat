@@ -29,15 +29,15 @@ export function PageShell({
   accentClass?: string;
   ctaLabel?: string;
   ctaHref?: string;
-  headerVariant?: "public" | "student";
+  headerVariant?: "auto" | "public" | "student";
   children: React.ReactNode;
 }) {
   return (
     <div className="min-h-screen">
       <SiteHeader
         variant={headerVariant}
-        ctaHref={headerVariant === "student" ? ctaHref : undefined}
-        ctaLabel={headerVariant === "student" ? ctaLabel : undefined}
+        ctaHref={headerVariant === "public" ? undefined : ctaHref}
+        ctaLabel={headerVariant === "public" ? undefined : ctaLabel}
       />
       <main className="section-shell pt-10 md:pt-14">
         <div className="mx-auto w-[min(calc(100%-1rem),1480px)] space-y-10 sm:w-[min(calc(100%-2rem),1480px)]">
@@ -57,7 +57,7 @@ export function PageShell({
                     >
                       <Icon className={`h-9 w-9 ${iconColor}`} />
                     </div>
-                    {headerVariant === "student" && ctaLabel && ctaHref ? (
+                    {headerVariant !== "public" && ctaLabel && ctaHref ? (
                       <Link href={ctaHref}>
                         <Button>{ctaLabel}</Button>
                       </Link>

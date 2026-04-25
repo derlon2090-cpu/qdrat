@@ -21,8 +21,7 @@ export default function PaperModelsPage() {
       iconWrap="bg-[#ecfeff]"
       iconColor="text-[#0f766e]"
       accentClass="shadow-[0_20px_45px_rgba(15,118,110,0.16)]"
-      ctaLabel="عرض آخر الملفات"
-      ctaHref="/paper-models"
+      headerVariant="auto"
     >
       <div className="grid gap-5 md:grid-cols-3">
         {models.map((item, index) => (
