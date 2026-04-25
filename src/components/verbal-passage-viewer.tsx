@@ -272,6 +272,29 @@ function findQuestionIndexById(
   });
 }
 
+function resolveNextPassageQuestionIndex(
+  passage: VerbalPassageRecord,
+  answeredQuestionIds: Set<string>,
+  lastSolvedQuestionId: string | null,
+) {
+  const lastSolvedIndex = findQuestionIndexById(passage, lastSolvedQuestionId);
+
+  const nextUnansweredAfterLastSolved =
+    lastSolvedIndex >= 0
+      ? passage.questions
+          .slice(lastSolvedIndex + 1)
+          .find((question) => !answeredQuestionIds.has(question.id))
+      : null;
+
+  const firstUnansweredQuestion = passage.questions.find(
+    (question) => !answeredQuestionIds.has(question.id),
+  );
+  const targetQuestionId =
+    nextUnansweredAfterLastSolved?.id ?? firstUnansweredQuestion?.id ?? lastSolvedQuestionId;
+
+  return findQuestionIndexById(passage, targetQuestionId);
+}
+
 export function VerbalPassageViewer({
   passage,
   mode = "student",
@@ -426,12 +449,21 @@ export function VerbalPassageViewer({
           response.snapshot.lastQuestionKey,
           passage.slug,
         );
-        const resumeQuestionIndex = findQuestionIndexById(passage, resumeQuestionId);
+        const answeredQuestionIds = new Set(
+          Object.keys(passageSubmissions)
+            .map((questionKey) => extractPassageQuestionId(questionKey, passage.slug))
+            .filter((questionId): questionId is string => Boolean(questionId)),
+        );
+        const resumeQuestionIndex = resolveNextPassageQuestionIndex(
+          passage,
+          answeredQuestionIds,
+          resumeQuestionId,
+        );
 
         if (
           canAutoResume &&
           resumeQuestionIndex >= 0 &&
-          resumeQuestionId !== requestedQuestionId
+          passage.questions[resumeQuestionIndex]?.id !== requestedQuestionId
         ) {
           setQuestionIndex(resumeQuestionIndex);
         }
@@ -757,9 +789,11 @@ export function VerbalPassageViewer({
   const noticesContent =
     mode === "student" ? (
       <>
-        <div className="rounded-[1.2rem] border border-slate-200 bg-slate-50 px-4 py-3 text-sm leading-7 text-slate-600">
-          {progressNotice}
-        </div>
+        {questionIndex === 0 ? (
+          <div className="rounded-[1.2rem] border border-slate-200 bg-slate-50 px-4 py-3 text-sm leading-7 text-slate-600">
+            {progressNotice}
+          </div>
+        ) : null}
 
         {authPromptQuestionId === currentQuestion.id ? (
           <div className="rounded-[1.2rem] border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-8 text-amber-800">
@@ -1141,7 +1175,7 @@ export function VerbalPassageViewer({
                 disabled={
                   isNavigating || (!onOpenNextPassage && questionIndex === passage.questions.length - 1)
                 }
-                className="inline-flex h-12 items-center justify-center gap-2 rounded-[1rem] border border-[#1f4b94] bg-[#1f4b94] px-4 text-sm font-bold text-white shadow-[0_12px_24px_rgba(31,75,148,0.22)] transition hover:bg-[#163b77] disabled:cursor-not-allowed disabled:opacity-55"
+                className="order-2 inline-flex h-12 items-center justify-center gap-2 rounded-[1rem] border border-[#1f4b94] bg-[#1f4b94] px-4 text-sm font-bold text-white shadow-[0_12px_24px_rgba(31,75,148,0.22)] transition hover:bg-[#163b77] disabled:cursor-not-allowed disabled:opacity-55"
               >
                 <ArrowLeft className="h-4 w-4" />
                 {questionIndex === passage.questions.length - 1 && onOpenNextPassage
@@ -1153,7 +1187,7 @@ export function VerbalPassageViewer({
                 type="button"
                 onClick={goToPreviousQuestion}
                 disabled={isNavigating || questionIndex === 0}
-                className="inline-flex h-12 items-center justify-center gap-2 rounded-[1rem] border border-slate-200 bg-white px-4 text-sm font-bold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-55"
+                className="order-1 inline-flex h-12 items-center justify-center gap-2 rounded-[1rem] border border-slate-200 bg-white px-4 text-sm font-bold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-55"
               >
                 <ArrowRight className="h-4 w-4" />
                 السؤال السابق

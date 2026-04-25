@@ -123,6 +123,29 @@ function extractQuestionIdFromProgressKey(questionKey: string | null, categoryId
   return questionKey.startsWith(prefix) ? questionKey.slice(prefix.length) : null;
 }
 
+function resolveNextPracticeQuestionId(
+  questions: VerbalPracticeQuestion[],
+  answeredQuestionIds: Set<string>,
+  lastSolvedQuestionId: string | null,
+) {
+  const lastSolvedIndex = lastSolvedQuestionId
+    ? questions.findIndex((question) => question.id === lastSolvedQuestionId)
+    : -1;
+
+  const nextUnansweredAfterLastSolved =
+    lastSolvedIndex >= 0
+      ? questions
+          .slice(lastSolvedIndex + 1)
+          .find((question) => !answeredQuestionIds.has(question.id))
+      : null;
+
+  const firstUnansweredQuestion = questions.find(
+    (question) => !answeredQuestionIds.has(question.id),
+  );
+
+  return nextUnansweredAfterLastSolved?.id ?? firstUnansweredQuestion?.id ?? lastSolvedQuestionId;
+}
+
 function buildPracticeHref(
   pathname: string,
   currentParams: URLSearchParams,
@@ -341,14 +364,26 @@ export function VerbalPracticeBank({
           response.snapshot.lastQuestionKey,
           currentCategory.id,
         );
+        const answeredQuestionIds = new Set(
+          Object.keys(categoryAnswers)
+            .map((questionKey) =>
+              extractQuestionIdFromProgressKey(questionKey, currentCategory.id),
+            )
+            .filter((questionId): questionId is string => Boolean(questionId)),
+        );
+        const targetQuestionId = resolveNextPracticeQuestionId(
+          questions,
+          answeredQuestionIds,
+          resumeQuestionId,
+        );
 
         if (
           canAutoResume &&
-          resumeQuestionId &&
-          resumeQuestionId !== requestedQuestionId &&
-          questions.some((question) => question.id === resumeQuestionId)
+          targetQuestionId &&
+          targetQuestionId !== requestedQuestionId &&
+          questions.some((question) => question.id === targetQuestionId)
         ) {
-          openQuestion(currentCategory.id, resumeQuestionId);
+          openQuestion(currentCategory.id, targetQuestionId);
         }
 
         setIsAccountProgressLoading(false);
@@ -570,9 +605,11 @@ export function VerbalPracticeBank({
 
   const noticesContent = (
     <>
-      <div className="rounded-[1.2rem] border border-slate-200 bg-slate-50 px-4 py-3 text-sm leading-7 text-slate-600">
-        {progressNotice}
-      </div>
+      {currentQuestionIndex === 0 ? (
+        <div className="rounded-[1.2rem] border border-slate-200 bg-slate-50 px-4 py-3 text-sm leading-7 text-slate-600">
+          {progressNotice}
+        </div>
+      ) : null}
 
       {showAuthPrompt ? (
         <div className="rounded-[1.2rem] border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-8 text-amber-800">

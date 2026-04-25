@@ -69,6 +69,20 @@ type PracticeSessionShellProps = {
   sidebarFooter?: ReactNode;
 };
 
+function orderFooterActions(actions: PracticeFooterAction[]) {
+  const nextIndex = actions.findIndex((action) => action.key === "next");
+  const previousIndex = actions.findIndex((action) => action.key === "previous");
+
+  if (nextIndex < 0 || previousIndex < 0 || previousIndex < nextIndex) {
+    return actions;
+  }
+
+  const orderedActions = [...actions];
+  const [nextAction] = orderedActions.splice(nextIndex, 1);
+  orderedActions.splice(previousIndex, 0, nextAction);
+  return orderedActions;
+}
+
 function getNavigatorClasses(status: PracticeNavigatorStatus, active: boolean) {
   if (status === "correct") {
     return active
@@ -232,6 +246,8 @@ export function PracticeSessionShell({
   infoItems,
   sidebarFooter,
 }: PracticeSessionShellProps) {
+  const orderedFooterActions = orderFooterActions(footerActions);
+
   return (
     <div className="space-y-4">
       {topBar}
@@ -273,7 +289,7 @@ export function PracticeSessionShell({
             {completion ? <div className="mt-5">{completion}</div> : null}
 
             <div className="mt-6 flex flex-wrap items-center gap-3">
-              {footerActions.map((action) => (
+              {orderedFooterActions.map((action) => (
                 <FooterActionButton key={action.key} action={action} />
               ))}
             </div>
