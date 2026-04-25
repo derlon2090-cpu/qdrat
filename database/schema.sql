@@ -120,6 +120,7 @@ create table if not exists app_users (
   phone varchar(30),
   full_name varchar(160) not null,
   gender app_user_gender,
+  avatar_data text,
   password_hash text,
   role app_user_role not null default 'student',
   is_active boolean not null default true,

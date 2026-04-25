@@ -6,6 +6,7 @@ export type AuthSessionUser = {
   email: string | null;
   phone: string | null;
   gender: UserGender | null;
+  avatarData?: string | null;
   role: "student" | "admin" | "editor" | "coach";
 };
 

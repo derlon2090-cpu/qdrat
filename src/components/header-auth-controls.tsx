@@ -3,11 +3,14 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { ArrowLeft, ChevronDown, Loader2, LogOut, Plus, Settings, UserRound } from "lucide-react";
+import { ArrowLeft, ChevronDown, Loader2, LogOut, Plus, Settings } from "lucide-react";
 
 import type { AuthSessionUser } from "@/lib/auth-shared";
-import { Button } from "@/components/ui/button";
 import { useAuthSession } from "@/hooks/use-auth-session";
+
+function fallbackAvatar(user: AuthSessionUser) {
+  return user.gender === "female" ? "/avatars/female-student.svg" : "/avatars/male-student.svg";
+}
 
 const LOGIN_LABEL = "تسجيل الدخول";
 const REGISTER_LABEL = "إنشاء حساب";
@@ -21,8 +24,6 @@ type HeaderAuthControlsProps = {
 };
 
 export function HeaderAuthControls({
-  ctaHref,
-  ctaLabel,
   variant = "public",
   initialUser = null,
 }: HeaderAuthControlsProps) {
@@ -43,9 +44,7 @@ export function HeaderAuthControls({
   }
 
   useEffect(() => {
-    if (!menuOpen) {
-      return;
-    }
+    if (!menuOpen) return;
 
     function handlePointerDown(event: MouseEvent) {
       if (!menuRef.current?.contains(event.target as Node)) {
@@ -69,7 +68,7 @@ export function HeaderAuthControls({
   }, [menuOpen]);
 
   const containerClass =
-    variant === "student" ? "hidden items-center gap-2 lg:flex xl:gap-2.5" : "hidden items-center gap-2 lg:flex";
+    variant === "student" ? "hidden items-center gap-2 lg:flex xl:gap-2.5" : "hidden items-center gap-3 lg:flex";
   const effectiveUser = status === "authenticated" ? user : status === "loading" ? initialUser : null;
   const isAuthenticated = Boolean(effectiveUser);
 
@@ -103,8 +102,12 @@ export function HeaderAuthControls({
               </div>
               <div className="mt-1 text-sm font-medium text-slate-400">مستوى متقدم</div>
             </div>
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#eef4ff] text-[#2563eb]">
-              <UserRound className="h-5 w-5" />
+            <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-[#eef4ff] text-[#2563eb]">
+              <img
+                src={effectiveUser.avatarData || fallbackAvatar(effectiveUser)}
+                alt={effectiveUser.fullName}
+                className="h-full w-full object-cover"
+              />
             </div>
           </button>
 

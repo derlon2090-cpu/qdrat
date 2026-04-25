@@ -25,12 +25,21 @@ type DbUserRow = {
   phone: string | null;
   full_name: string;
   gender: UserGender | null;
+  avatar_data: string | null;
   role: AuthSessionUser["role"];
   password_hash: string | null;
 };
 
 function getSql() {
   return getSqlClient();
+}
+
+async function ensureAuthUserColumns() {
+  const sql = getSql();
+  await sql.query(`
+    alter table app_users
+      add column if not exists avatar_data text
+  `);
 }
 
 function sha256(value: string) {
@@ -122,7 +131,7 @@ function createPlaceholderEmail(phone: string) {
 }
 
 function mapDbUser(
-  row: Pick<DbUserRow, "id" | "email" | "phone" | "full_name" | "gender" | "role">,
+  row: Pick<DbUserRow, "id" | "email" | "phone" | "full_name" | "gender" | "avatar_data" | "role">,
 ): AuthSessionUser {
   return {
     id: row.id,
@@ -130,6 +139,7 @@ function mapDbUser(
     email: row.email?.endsWith("@miyaar.local") ? null : row.email,
     phone: row.phone,
     gender: row.gender,
+    avatarData: row.avatar_data,
     role: row.role,
   };
 }
@@ -155,6 +165,7 @@ async function getAuthenticatedSessionFromToken(
   const normalizedToken = token?.trim();
   if (!normalizedToken) return null;
 
+  await ensureAuthUserColumns();
   const sql = getSql();
 
   const rows = (await sql.query(
@@ -165,6 +176,7 @@ async function getAuthenticatedSessionFromToken(
         u.phone,
         u.full_name,
         u.gender,
+        u.avatar_data,
         u.role,
         sessions.expires_at
       from app_user_sessions sessions
@@ -176,7 +188,7 @@ async function getAuthenticatedSessionFromToken(
     `,
     [sha256(normalizedToken)],
   )) as Array<
-    Pick<DbUserRow, "id" | "email" | "phone" | "full_name" | "gender" | "role"> & {
+    Pick<DbUserRow, "id" | "email" | "phone" | "full_name" | "gender" | "avatar_data" | "role"> & {
       expires_at: string | Date;
     }
   >;
@@ -329,6 +341,7 @@ export async function registerUser(input: {
   password: string;
   gender?: UserGender | "";
 }) {
+  await ensureAuthUserColumns();
   const sql = getSql();
   const fullName = input.fullName.trim();
   const email = input.email ? normalizeEmail(input.email) : "";
@@ -355,7 +368,7 @@ export async function registerUser(input: {
 
   const existingRows = (await sql.query(
     `
-      select id::text, email, phone, full_name, gender, role, password_hash
+      select id::text, email, phone, full_name, gender, avatar_data, role, password_hash
       from app_users
       where ($1::text <> '' and lower(email) = $1)
          or (cardinality($2::text[]) > 0 and phone = any($2::text[]))
@@ -380,11 +393,12 @@ export async function registerUser(input: {
         phone,
         full_name,
         gender,
+        avatar_data,
         password_hash,
         role
       )
-      values ($1, $2, $3, $4::app_user_gender, $5, 'student')
-      returning id::text, email, phone, full_name, gender, role, password_hash
+      values ($1, $2, $3, $4::app_user_gender, null, $5, 'student')
+      returning id::text, email, phone, full_name, gender, avatar_data, role, password_hash
     `,
     [resolvedEmail, phone || null, fullName, gender, hashPassword(normalizedPassword)],
   )) as DbUserRow[];
@@ -398,6 +412,7 @@ export async function registerUser(input: {
 }
 
 export async function authenticateUser(input: { identifier: string; password: string }) {
+  await ensureAuthUserColumns();
   const sql = getSql();
   const identifier = input.identifier.trim();
   const normalizedEmail = normalizeEmail(identifier);
@@ -410,7 +425,7 @@ export async function authenticateUser(input: { identifier: string; password: st
 
   const rows = (await sql.query(
     `
-      select id::text, email, phone, full_name, gender, role, password_hash
+      select id::text, email, phone, full_name, gender, avatar_data, role, password_hash
       from app_users
       where lower(email) = $1
          or (cardinality($2::text[]) > 0 and phone = any($2::text[]))
@@ -463,4 +478,132 @@ export async function authenticateUser(input: { identifier: string; password: st
 
 export async function createSessionForUser(userId: string, request: NextRequest) {
   return createSession(userId, request);
+}
+
+export async function updateUserProfile(input: {
+  userId: string;
+  fullName?: string;
+  email?: string | null;
+  phone?: string | null;
+  gender?: UserGender | null;
+  avatarData?: string | null;
+}) {
+  await ensureAuthUserColumns();
+  const sql = getSql();
+
+  const currentRows = (await sql.query(
+    `
+      select id::text, email, phone, full_name, gender, avatar_data, role, password_hash
+      from app_users
+      where id::text = $1
+      limit 1
+    `,
+    [input.userId],
+  )) as DbUserRow[];
+
+  const current = currentRows[0];
+  if (!current) {
+    throw new Error("تعذر العثور على الحساب المطلوب.");
+  }
+
+  const fullName = String(input.fullName ?? current.full_name).trim();
+  if (!fullName) {
+    throw new Error("الاسم الكامل مطلوب.");
+  }
+
+  const providedEmail = typeof input.email === "string" ? normalizeEmail(input.email) : "";
+  const providedPhone = typeof input.phone === "string" ? normalizeStoredPhone(input.phone) : "";
+
+  const emailForDisplay =
+    providedEmail || (current.email?.endsWith("@miyaar.local") ? "" : current.email ?? "");
+  const phoneValue = providedPhone || current.phone || "";
+
+  if (!emailForDisplay && !phoneValue) {
+    throw new Error("يجب إضافة بريد إلكتروني أو رقم جوال واحد على الأقل.");
+  }
+
+  const storedEmail = emailForDisplay || createPlaceholderEmail(phoneValue);
+  const phoneLookup = buildPhoneLookupVariants(phoneValue);
+
+  const emailConflictRows = storedEmail
+    ? ((await sql.query(
+        `
+          select id::text
+          from app_users
+          where id::text <> $1
+            and lower(email) = $2
+          limit 1
+        `,
+        [input.userId, storedEmail],
+      )) as Array<{ id: string }>)
+    : [];
+
+  if (emailConflictRows[0]) {
+    throw new Error("هذا البريد الإلكتروني مستخدم في حساب آخر.");
+  }
+
+  const phoneConflictRows = phoneValue
+    ? ((await sql.query(
+        `
+          select id::text
+          from app_users
+          where id::text <> $1
+            and (
+              phone = any($2::text[])
+              or regexp_replace(coalesce(phone, ''), '[^0-9]', '', 'g') = any($3::text[])
+            )
+          limit 1
+        `,
+        [input.userId, phoneLookup.exact, phoneLookup.digits],
+      )) as Array<{ id: string }>)
+    : [];
+
+  if (phoneConflictRows[0]) {
+    throw new Error("رقم الجوال مستخدم في حساب آخر.");
+  }
+
+  let avatarData = input.avatarData;
+  if (typeof avatarData === "string") {
+    avatarData = avatarData.trim();
+  }
+
+  if (avatarData && !avatarData.startsWith("data:image/")) {
+    throw new Error("صيغة الصورة غير مدعومة.");
+  }
+
+  if (avatarData && avatarData.length > 2_000_000) {
+    throw new Error("حجم الصورة كبير جدًا، اختر صورة أصغر.");
+  }
+
+  const gender = input.gender === "male" || input.gender === "female" ? input.gender : current.gender;
+
+  const updatedRows = (await sql.query(
+    `
+      update app_users
+      set
+        full_name = $2,
+        email = $3,
+        phone = $4,
+        gender = $5::app_user_gender,
+        avatar_data = $6,
+        updated_at = now()
+      where id::text = $1
+      returning id::text, email, phone, full_name, gender, avatar_data, role, password_hash
+    `,
+    [
+      input.userId,
+      fullName,
+      storedEmail,
+      phoneValue || null,
+      gender,
+      avatarData === undefined ? current.avatar_data : avatarData,
+    ],
+  )) as DbUserRow[];
+
+  const updated = updatedRows[0];
+  if (!updated) {
+    throw new Error("تعذر حفظ بيانات الحساب.");
+  }
+
+  return mapDbUser(updated);
 }
