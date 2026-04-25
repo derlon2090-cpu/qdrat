@@ -1,34 +1,15 @@
 "use client";
 
-import {
-  BarChart3,
-  BookOpen,
-  CalendarDays,
-  ClipboardList,
-  House,
-  Trophy,
-  UserRound,
-} from "lucide-react";
-
 import { DashboardRuntimeGuard } from "@/components/dashboard-runtime-guard";
 import { SiteHeader } from "@/components/site-header";
 import { StudentDashboard } from "@/components/student-dashboard";
+import { studentTopNavItems } from "@/lib/site-nav";
 
 export function DashboardShell() {
-  const dashboardLinks = [
-    { href: "/dashboard", label: "لوحتي", icon: House },
-    { href: "/my-plan", label: "الخطة اليومية", icon: CalendarDays },
-    { href: "/question-bank", label: "بنك الأسئلة", icon: BookOpen },
-    { href: "/challenge", label: "تحدي الشهر", icon: Trophy },
-    { href: "/paper-models", label: "النماذج", icon: ClipboardList },
-    { href: "/statistics", label: "الإحصائيات", icon: BarChart3 },
-    { href: "/account", label: "الإعدادات", icon: UserRound },
-  ];
-
   return (
     <div className="min-h-screen bg-[#fbfdff]">
       <DashboardRuntimeGuard resetKey="dashboard-header">
-        <SiteHeader variant="student" links={dashboardLinks} />
+        <SiteHeader variant="student" links={studentTopNavItems} />
       </DashboardRuntimeGuard>
 
       <main className="pb-8 pt-5 md:pb-12 md:pt-7">
@@ -39,7 +20,7 @@ export function DashboardShell() {
 
           <DashboardRuntimeGuard resetKey="dashboard-footer">
             <footer className="pb-4 pt-8 text-center text-sm font-medium text-slate-400">
-              2024 © جميع الحقوق محفوظة - معيار
+              جميع الحقوق محفوظة - معيار 2024
             </footer>
           </DashboardRuntimeGuard>
         </div>
