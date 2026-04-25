@@ -181,3 +181,86 @@ export function PublicSummaryFolderIllustration({
     </div>
   );
 }
+
+export function PublicPaperModelsIllustration({
+  className,
+}: {
+  className?: string;
+}) {
+  return (
+    <div
+      className={cn(
+        "relative h-[320px] w-full overflow-hidden rounded-[2rem] bg-[radial-gradient(circle_at_26%_16%,rgba(255,255,255,0.96),transparent_28%),linear-gradient(180deg,#f7faff_0%,#eef4ff_100%)]",
+        className,
+      )}
+    >
+      <div className="absolute inset-x-[12%] bottom-5 h-20 rounded-full bg-[radial-gradient(circle,rgba(111,145,255,0.24),rgba(111,145,255,0.08)_60%,transparent_80%)] blur-sm" />
+      <svg viewBox="0 0 720 420" className="absolute inset-0 h-full w-full" aria-hidden="true">
+        <defs>
+          <linearGradient id="paperModelBlue" x1="0%" x2="100%" y1="0%" y2="100%">
+            <stop offset="0%" stopColor="#9cc0ff" />
+            <stop offset="100%" stopColor="#3b82f6" />
+          </linearGradient>
+          <linearGradient id="paperSheet" x1="0%" x2="0%" y1="0%" y2="100%">
+            <stop offset="0%" stopColor="#ffffff" />
+            <stop offset="100%" stopColor="#eef4ff" />
+          </linearGradient>
+        </defs>
+
+        <ellipse cx="292" cy="338" rx="210" ry="38" fill="#dce8ff" />
+
+        <g transform="translate(102 58)">
+          <rect x="130" y="10" width="218" height="274" rx="18" fill="url(#paperSheet)" stroke="#6b90f4" strokeWidth="10" />
+          <rect x="196" y="-4" width="86" height="28" rx="11" fill="#4b5563" />
+          <circle cx="315" cy="42" r="28" fill="#ffffff" stroke="#9bb9ff" strokeWidth="6" />
+          <text x="301" y="53" fontSize="34" fontWeight="800" fill="#7c93cf">A+</text>
+
+          <rect x="168" y="66" width="128" height="10" rx="5" fill="#d2deff" />
+          <rect x="168" y="90" width="112" height="10" rx="5" fill="#e1eaff" />
+          {[0, 1, 2, 3].map((index) => (
+            <g key={index} transform={`translate(280 ${118 + index * 52})`}>
+              <rect x="0" y="0" width="32" height="32" rx="7" fill="#ffffff" stroke="#9bb9ff" strokeWidth="4" />
+              <path d="M8 17l6 6 10-12" fill="none" stroke="#5c85ee" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />
+            </g>
+          ))}
+          <rect x="168" y="124" width="84" height="10" rx="5" fill="#d2deff" />
+          <rect x="168" y="148" width="72" height="10" rx="5" fill="#e1eaff" />
+          <rect x="168" y="176" width="96" height="10" rx="5" fill="#d2deff" />
+          <rect x="168" y="200" width="82" height="10" rx="5" fill="#e1eaff" />
+          <rect x="168" y="228" width="104" height="10" rx="5" fill="#d2deff" />
+
+          <g transform="translate(0 176)">
+            <circle cx="72" cy="58" r="56" fill="#eff4ff" stroke="#5f89ef" strokeWidth="10" />
+            <circle cx="72" cy="58" r="44" fill="#ffffff" stroke="#8fb1ff" strokeWidth="8" />
+            <circle cx="72" cy="58" r="10" fill="#1d4ed8" />
+            <path d="M72 58l-3-30" stroke="#1f2937" strokeWidth="6" strokeLinecap="round" />
+            <path d="M72 58l22-18" stroke="#1f2937" strokeWidth="6" strokeLinecap="round" />
+            {[0, 1, 2, 3].map((index) => (
+              <rect
+                key={index}
+                x={26 + index * 14}
+                y={114 + index * 8}
+                width={72}
+                height={12}
+                rx={4}
+                fill={index % 2 === 0 ? "#4f74d5" : "#80a6ff"}
+              />
+            ))}
+          </g>
+
+          <g transform="translate(394 220)">
+            <rect x="0" y="22" width="88" height="18" rx="4" fill="#5f89ef" />
+            <rect x="14" y="0" width="88" height="26" rx="5" fill="#7ea8ff" />
+            <rect x="10" y="40" width="90" height="16" rx="4" fill="#d5e3ff" />
+          </g>
+
+          <g transform="translate(6 254)">
+            <ellipse cx="34" cy="70" rx="40" ry="8" fill="#d6e2ff" />
+            <path d="M16 14C8 -4 22 -20 42 -18C50 -30 72 -30 80 -12C98 -10 106 8 96 24C90 34 80 40 66 40H36C26 40 20 34 16 14Z" fill="#64b99a" />
+            <rect x="28" y="38" width="16" height="30" rx="8" fill="#7ac3a6" />
+          </g>
+        </g>
+      </svg>
+    </div>
+  );
+}
