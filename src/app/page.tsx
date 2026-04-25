@@ -7,7 +7,6 @@ import {
   BookOpen,
   BookText,
   CalendarCheck2,
-  CalendarDays,
   ChevronDown,
   Headphones,
   Mail,
@@ -48,7 +47,7 @@ const topStats = [
 const features = [
   {
     title: "خطط دراسية ذكية",
-    text: "خطة مخصصة حسب مستواك ووقتك لتصل إلى هدفك.",
+    text: "خطة مخصصة حسب مستواك ووقتك لتصل إلى هدفك بخطوات عملية وواضحة.",
     cta: "عرض الخطط",
     href: "/plans",
     icon: CalendarCheck2,
@@ -56,7 +55,7 @@ const features = [
   },
   {
     title: "بنك الأسئلة",
-    text: "آلاف الأسئلة مع الحلول التفصيلية والتصنيفات الذكية.",
+    text: "آلاف الأسئلة مع الحلول التفصيلية والتصنيفات الذكية والتدريب المنظم.",
     cta: "تصفح الأسئلة",
     href: "/question-bank",
     icon: BookText,
@@ -64,7 +63,7 @@ const features = [
   },
   {
     title: "مسابقات وتحديات",
-    text: "شارك في المسابقات الأسبوعية واختر مستواك بين الطلاب.",
+    text: "شارك في المسابقات الأسبوعية والتحديات التعليمية وقارن أدائك بالآخرين.",
     cta: "استكشف المسابقات",
     href: "/competitions",
     icon: Trophy,
@@ -72,7 +71,7 @@ const features = [
   },
   {
     title: "إحصائيات دقيقة",
-    text: "تابع تقدمك وتحليل أدائك بشكل تفصيلي وواضح.",
+    text: "تابع تقدمك وتحليل أدائك بشكل تفصيلي وواضح يساعدك على التطور.",
     cta: "عرض الإحصائيات",
     href: "/statistics",
     icon: BarChart3,
@@ -80,7 +79,7 @@ const features = [
   },
   {
     title: "أخطاء شائعة",
-    text: "تعلّم من أخطائك السابقة وتجنب تكرارها في اختبارك.",
+    text: "تعلّم من أخطائك السابقة وتجنب تكرارها في التدريب والاختبار الحقيقي.",
     cta: "تصفح الأخطاء",
     href: "/question-bank?track=mistakes",
     icon: TriangleAlert,
@@ -88,7 +87,7 @@ const features = [
   },
   {
     title: "ملخصات مركزة",
-    text: "ملخصات شاملة ومبسطة لجميع الموضوعات المهمة.",
+    text: "ملخصات شاملة ومبسطة لجميع الموضوعات المهمة لسرعة المراجعة والفهم.",
     cta: "استعرض الملخصات",
     href: "/summary-center",
     icon: BookOpen,
@@ -99,19 +98,19 @@ const features = [
 const steps = [
   {
     title: "أنشئ حسابك",
-    text: "سجل دخولك وابدأ رحلتك التعليمية معنا.",
+    text: "سجل دخولك وابدأ رحلتك التعليمية معنا من أول خطوة.",
     icon: Users,
     tone: "text-[#2563eb] bg-[#eef4ff]",
   },
   {
     title: "اختر خطتك",
-    text: "اختر الخطة المناسبة لمستواك وهدفك.",
+    text: "اختر الخطة المناسبة لمستواك وهدفك الدراسي.",
     icon: CalendarCheck2,
     tone: "text-[#2563eb] bg-[#eef4ff]",
   },
   {
     title: "ابدأ التعلم",
-    text: "حل الأسئلة، تابع تقدمك، واصل لأعلى الدرجات.",
+    text: "حل الأسئلة، تابع تقدمك، واصل لأعلى الدرجات بثقة.",
     icon: BadgeCheck,
     tone: "text-[#2563eb] bg-[#eef4ff]",
   },
@@ -119,17 +118,17 @@ const steps = [
 
 const testimonials = [
   {
-    text: "الخطة الدراسية المنظمة وفرت علي وقت كثير وأصبح كل طالب يجرب يرى معيار.",
+    text: "الخطة الدراسية المنظمة وفرت علي وقتًا كثيرًا، وأصبح كل شيء أوضح وأسهل في المتابعة.",
     name: "محمد الشهري",
     score: "الدرجة: 97",
   },
   {
-    text: "بنك الأسئلة قوي جدًا، والتصنيفات ساعدتني أركز على نقاط ضعفي واختباري كان أفضل.",
+    text: "بنك الأسئلة قوي جدًا، والتصنيفات ساعدتني أركز على نقاط ضعفي وأرفع مستواي بسرعة.",
     name: "سارة العتيبي",
     score: "الدرجة: 96",
   },
   {
-    text: "الملخصات في معيار كانت سببًا رئيسيًا في فهمي السريع للمفاهيم وحل العديد من الأسئلة.",
+    text: "الملخصات في معيار كانت سببًا رئيسيًا في فهمي السريع للمفاهيم وحل أسئلة أكثر بثقة.",
     name: "عبدالله الحربي",
     score: "الدرجة: 98",
   },
@@ -196,7 +195,7 @@ export default async function HomePage() {
 
             <div className="w-full">
               <div className="max-w-[610px] text-right [direction:rtl] lg:mr-auto">
-                <h1 className="display-font text-[clamp(2.7rem,5.1vw,5.4rem)] font-black leading-[1.06] tracking-[-0.045em] text-[#123B7A]">
+                <h1 className="display-font text-[clamp(2.7rem,5.1vw,5.2rem)] font-black leading-[1.16] tracking-[-0.045em] text-[#123B7A]">
                   <span className="block whitespace-nowrap">معيار</span>
                   <span className="block whitespace-nowrap bg-[linear-gradient(180deg,#2f6df2_0%,#2563eb_100%)] bg-clip-text text-transparent">
                     طريقك
@@ -204,10 +203,10 @@ export default async function HomePage() {
                   <span className="block whitespace-nowrap">الذكي نحو</span>
                   <span className="block whitespace-nowrap">أعلى الدرجات</span>
                 </h1>
-                <div className="mt-7 mr-auto h-1.5 w-20 rounded-full bg-[linear-gradient(90deg,#2f6df2_0%,#69a2ff_100%)]" />
-                <p className="mt-7 max-w-[540px] text-[1.08rem] leading-[2] text-[#5f7398]">
-                  منصة تعليمية متكاملة تساعدك على الاستعداد
-                  لاختبار القدرات بأحدث الطرق وأعلى كفاءة.
+                <div className="mt-8 mr-auto h-1.5 w-20 rounded-full bg-[linear-gradient(90deg,#2f6df2_0%,#69a2ff_100%)]" />
+                <p className="mt-8 max-w-[540px] text-[1.08rem] leading-[2] text-[#5f7398]">
+                  منصة تعليمية متكاملة تساعدك على الاستعداد لاختبار القدرات
+                  بأحدث الطرق وأعلى كفاءة.
                 </p>
 
                 <div className="mt-8 flex flex-wrap gap-4">
@@ -398,7 +397,7 @@ export default async function HomePage() {
                 </p>
                 <div className="mt-5 flex items-center gap-3 text-[#2563eb]">
                   <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#eef4ff]">𝕏</span>
-                  <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#eef4ff]">◉</span>
+                  <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#eef4ff]">◎</span>
                   <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#eef4ff]">▶</span>
                   <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#eef4ff]">in</span>
                 </div>
@@ -427,7 +426,7 @@ export default async function HomePage() {
               </div>
 
               <div>
-                <h3 className="display-font text-[1.25rem] font-bold text-[#0f2f69]">حمل تطبيقنا</h3>
+                <h3 className="display-font text-[1.25rem] font-bold text-[#0f2f69]">حمّل تطبيقنا</h3>
                 <p className="mt-5 text-[0.98rem] leading-8 text-slate-500">تجربة أفضل على التطبيق</p>
                 <div className="mt-5 space-y-3">
                   <div className="rounded-[1rem] bg-black px-4 py-3 text-center text-sm font-bold text-white">Download on the App Store</div>
