@@ -196,7 +196,7 @@ export default async function HomePage() {
 
             <div className="w-full">
               <div className="max-w-[610px] text-right [direction:rtl] lg:mr-auto">
-                <h1 className="display-font text-[clamp(2.7rem,5.1vw,5.4rem)] font-black leading-[0.96] tracking-[-0.045em] text-[#123B7A]">
+                <h1 className="display-font text-[clamp(2.7rem,5.1vw,5.4rem)] font-black leading-[1.06] tracking-[-0.045em] text-[#123B7A]">
                   <span className="block whitespace-nowrap">معيار</span>
                   <span className="block whitespace-nowrap bg-[linear-gradient(180deg,#2f6df2_0%,#2563eb_100%)] bg-clip-text text-transparent">
                     طريقك
@@ -204,7 +204,7 @@ export default async function HomePage() {
                   <span className="block whitespace-nowrap">الذكي نحو</span>
                   <span className="block whitespace-nowrap">أعلى الدرجات</span>
                 </h1>
-                <div className="mt-5 mr-auto h-1.5 w-20 rounded-full bg-[linear-gradient(90deg,#2f6df2_0%,#69a2ff_100%)]" />
+                <div className="mt-7 mr-auto h-1.5 w-20 rounded-full bg-[linear-gradient(90deg,#2f6df2_0%,#69a2ff_100%)]" />
                 <p className="mt-7 max-w-[540px] text-[1.08rem] leading-[2] text-[#5f7398]">
                   منصة تعليمية متكاملة تساعدك على الاستعداد
                   لاختبار القدرات بأحدث الطرق وأعلى كفاءة.
