@@ -34,7 +34,11 @@ export function PageShell({
 }) {
   return (
     <div className="min-h-screen">
-      <SiteHeader variant={headerVariant} ctaHref={ctaHref} ctaLabel={ctaLabel} />
+      <SiteHeader
+        variant={headerVariant}
+        ctaHref={headerVariant === "student" ? ctaHref : undefined}
+        ctaLabel={headerVariant === "student" ? ctaLabel : undefined}
+      />
       <main className="section-shell pt-10 md:pt-14">
         <div className="mx-auto w-[min(calc(100%-1rem),1480px)] space-y-10 sm:w-[min(calc(100%-2rem),1480px)]">
           <Reveal>
@@ -53,7 +57,7 @@ export function PageShell({
                     >
                       <Icon className={`h-9 w-9 ${iconColor}`} />
                     </div>
-                    {ctaLabel && ctaHref ? (
+                    {headerVariant === "student" && ctaLabel && ctaHref ? (
                       <Link href={ctaHref}>
                         <Button>{ctaLabel}</Button>
                       </Link>

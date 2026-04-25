@@ -257,11 +257,6 @@ export function SiteHeader({
                         إنشاء حساب
                       </Button>
                     </Link>
-                    {ctaHref && ctaLabel ? (
-                      <Link href={ctaHref} onClick={() => setOpen(false)}>
-                        <Button className="w-full">{ctaLabel}</Button>
-                      </Link>
-                    ) : null}
                   </>
                 )}
               </div>

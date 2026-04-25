@@ -106,11 +106,6 @@ export function HeaderAuthControls({
         <Plus className="h-4 w-4" />
         {REGISTER_LABEL}
       </Link>
-      {ctaHref && ctaLabel ? (
-        <Link href={ctaHref}>
-          <Button className="h-12 rounded-[1rem] px-5 shadow-[0_14px_26px_rgba(37,99,235,0.22)]">{ctaLabel}</Button>
-        </Link>
-      ) : null}
     </div>
   );
 }
