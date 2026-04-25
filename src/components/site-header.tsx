@@ -278,12 +278,17 @@ export function SiteHeader({
 
   return (
     <header className="sticky top-0 z-[9999] border-b border-[#e6edf9] bg-white/98 shadow-[0_10px_26px_rgba(15,23,42,0.035)] backdrop-blur-2xl">
-      <div className="w-full px-4 py-3.5 sm:px-5 lg:px-6 xl:px-8">
+      <div className="w-full px-3 py-3 sm:px-5 lg:px-5 xl:px-8">
         <div className="flex items-center justify-between gap-4">
-          <div className="flex items-center gap-7">
+          <div className="flex min-w-0 items-center gap-4 lg:gap-5 xl:gap-7">
             <MiyaarLogo href={brandHref} />
 
-            <nav className={cn("hidden items-center gap-1 text-sm font-bold text-slate-600", isStudentArea ? "xl:flex" : "lg:flex")}>
+            <nav
+              className={cn(
+                "hidden min-w-0 items-center gap-0.5 overflow-x-auto text-sm font-bold text-slate-600 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden",
+                isStudentArea ? "md:flex lg:gap-1 xl:gap-1" : "lg:flex",
+              )}
+            >
               {desktopLinks.map((item) => {
                 const active = isNavItemActive(pathname, currentSearch, item.href);
                 const Icon = item.icon;
@@ -293,12 +298,12 @@ export function SiteHeader({
                     key={item.href}
                     href={item.href}
                     className={cn(
-                      "relative flex min-w-[94px] flex-col items-center justify-center gap-1.5 rounded-[0.95rem] px-3 py-2 text-center transition",
+                      "relative flex min-w-[74px] flex-col items-center justify-center gap-1 rounded-[0.95rem] px-2 py-2 text-center transition xl:min-w-[94px] xl:gap-1.5 xl:px-3",
                       active ? "text-[#2563eb]" : "text-slate-600 hover:bg-[#f8fbff] hover:text-slate-900",
                     )}
                   >
-                    {Icon ? <Icon className={cn("h-5 w-5", active && "text-[#2563eb]")} /> : null}
-                    <span className="text-[0.95rem] leading-[1.15]">{item.label}</span>
+                    {Icon ? <Icon className={cn("h-4 w-4 xl:h-5 xl:w-5", active && "text-[#2563eb]")} /> : null}
+                    <span className="text-[0.78rem] leading-[1.15] lg:text-[0.82rem] xl:text-[0.95rem]">{item.label}</span>
                     {active ? <span className="absolute inset-x-3 bottom-0 h-[4px] rounded-full bg-[#2563eb]" /> : null}
                   </Link>
                 );
@@ -317,7 +322,7 @@ export function SiteHeader({
             <button
               type="button"
               onClick={() => setOpen(true)}
-              className="flex h-[52px] w-[52px] items-center justify-center rounded-[1.05rem] border border-[#e6edf9] bg-white text-[#123B7A] shadow-[0_10px_22px_rgba(15,23,42,0.045)] xl:hidden"
+              className="flex h-[52px] w-[52px] items-center justify-center rounded-[1.05rem] border border-[#e6edf9] bg-white text-[#123B7A] shadow-[0_10px_22px_rgba(15,23,42,0.045)] md:hidden"
               aria-label="افتح القائمة"
             >
               <Menu className="h-5 w-5" />
@@ -333,7 +338,7 @@ export function SiteHeader({
       </div>
 
       {open ? (
-        <div className="fixed inset-0 z-[220] bg-black/30 backdrop-blur-sm xl:hidden">
+        <div className="fixed inset-0 z-[220] bg-black/30 backdrop-blur-sm md:hidden">
           <div className="mr-auto flex h-full w-[min(92vw,360px)] flex-col overflow-y-auto bg-white px-5 py-6 shadow-[0_20px_80px_rgba(0,0,0,0.18)]">
             <div className="mb-6 flex items-center justify-between">
               <MiyaarLogo href={brandHref} />
