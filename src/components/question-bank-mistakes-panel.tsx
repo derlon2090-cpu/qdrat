@@ -9,6 +9,7 @@ import {
   CheckCircle2,
   Loader2,
   RefreshCcw,
+  ScrollText,
   Sparkles,
   Target,
   TimerReset,
@@ -342,6 +343,7 @@ export function QuestionBankMistakesPanel({
   );
   const [loadedDuel, setLoadedDuel] = useState<LoadedDuel | null>(null);
   const [isLoadingDuel, setIsLoadingDuel] = useState(false);
+  const [showCurrentExplanation, setShowCurrentExplanation] = useState(false);
   const duelIdParam = Number(searchParams.get("duelId") ?? "");
   const shouldAutoStartDuel = searchParams.get("duelStart") === "1";
 
@@ -831,6 +833,7 @@ export function QuestionBankMistakesPanel({
     setSuccessMessage("");
     setMode(nextMode);
     setSuccessMessage("");
+    setShowCurrentExplanation(false);
     setSession({
       sessionKey: Date.now(),
       mode: nextMode,
@@ -865,6 +868,7 @@ export function QuestionBankMistakesPanel({
       sourceMode,
     );
 
+    setShowCurrentExplanation(false);
     setSession({
       sessionKey: Date.now(),
       mode: sourceMode,
@@ -890,6 +894,7 @@ export function QuestionBankMistakesPanel({
   function setCurrentAnswer(answer: string) {
     if (!session || !currentQuestion || currentSubmission) return;
 
+    setShowCurrentExplanation(false);
     setSession({
       ...session,
       answers: {
@@ -905,6 +910,7 @@ export function QuestionBankMistakesPanel({
     if (!selectedAnswer) return;
 
     const isCorrect = selectedAnswer === currentQuestion.correctAnswer;
+    setShowCurrentExplanation(false);
 
     try {
       if (!session.isDuel) {
@@ -965,6 +971,7 @@ export function QuestionBankMistakesPanel({
       return;
     }
 
+    setShowCurrentExplanation(false);
     setSession({
       ...session,
       currentIndex: session.currentIndex + 1,
@@ -1497,6 +1504,17 @@ export function QuestionBankMistakesPanel({
                 >
                   🔁 قيد التدريب
                 </button>
+                {session.mode !== "speed" ? (
+                  <button
+                    type="button"
+                    onClick={() => setShowCurrentExplanation((current) => !current)}
+                    disabled={!currentSubmission}
+                    className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 disabled:opacity-60"
+                  >
+                    <ScrollText className="h-4 w-4" />
+                    {showCurrentExplanation ? "إخفاء الشرح" : "حل الشرح"}
+                  </button>
+                ) : null}
                 {currentQuestion.questionHref ? (
                   <Link
                     href={currentQuestion.questionHref}
@@ -1526,16 +1544,12 @@ export function QuestionBankMistakesPanel({
                       {currentQuestion.correctAnswer}
                     </div>
                   ) : null}
-                  {session.mode !== "speed" ? (
+                  {session.mode !== "speed" && showCurrentExplanation ? (
                     <div className="mt-3">
                       <span className="font-bold">الشرح:</span>{" "}
                       {currentQuestion.explanation}
                     </div>
-                  ) : (
-                    <div className="mt-3 text-sm font-semibold">
-                      وضع السرعة يخفي الشرح التفصيلي حتى تركز على التكرار السريع.
-                    </div>
-                  )}
+                  ) : null}
                 </div>
               ) : null}
             </div>

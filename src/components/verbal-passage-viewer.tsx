@@ -306,6 +306,7 @@ export function VerbalPassageViewer({
   const [questionElapsedSeconds, setQuestionElapsedSeconds] = useState(45);
   const [isFocusMode, setIsFocusMode] = useState(false);
   const [isLargeText, setIsLargeText] = useState(false);
+  const [showExplanation, setShowExplanation] = useState(false);
 
   useEffect(() => {
     setSelectedAnswers(readSavedAnswers());
@@ -319,6 +320,7 @@ export function VerbalPassageViewer({
     setAuthPromptQuestionId(null);
     setProgressFeedback(null);
     setSavedCompletionChoice(false);
+    setShowExplanation(false);
   }, [initialQuestionId, passage]);
 
   const currentQuestion =
@@ -517,6 +519,7 @@ export function VerbalPassageViewer({
   async function confirmCurrentAnswer() {
     if (!selectedKey) return;
 
+    setShowExplanation(false);
     setSubmittedAnswers((previous) => {
       const next = {
         ...previous,
@@ -598,6 +601,7 @@ export function VerbalPassageViewer({
     setProgressFeedback(null);
     setAuthPromptQuestionId((current) => (current === currentQuestion.id ? null : current));
     setSavedCompletionChoice(false);
+    setShowExplanation(false);
   }
 
   function toggleQuestionFlag(flag: "saved" | "pinned") {
@@ -629,12 +633,14 @@ export function VerbalPassageViewer({
     setProgressFeedback(null);
     setAuthPromptQuestionId((current) => (current === currentQuestion.id ? null : current));
     setSavedCompletionChoice(false);
+    setShowExplanation(false);
   }
 
   function goToQuestion(index: number) {
     if (index < 0 || index >= passage.questions.length) return;
     setQuestionIndex(index);
     setAuthPromptQuestionId(null);
+    setShowExplanation(false);
   }
 
   function goToPreviousQuestion() {
@@ -701,20 +707,24 @@ export function VerbalPassageViewer({
         <div className="text-base font-black">
           {isCorrect ? "لماذا هذا هو الصحيح؟" : "هذه المحاولة تحتاج مراجعة"}
         </div>
-        <div className="mt-2">
-          <span className="font-bold">شرح اختيارك:</span>{" "}
-          {getSelectedExplanation(currentQuestion, selectedKey)}
-        </div>
         {!isCorrect ? (
+          <div className="mt-2">
+            <span className="font-bold">الإجابة الصحيحة:</span>{" "}
+            {getCorrectAnswerText(currentQuestion)}
+          </div>
+        ) : null}
+        {showExplanation ? (
           <>
             <div className="mt-2">
-              <span className="font-bold">الإجابة الصحيحة:</span>{" "}
-              {getCorrectAnswerText(currentQuestion)}
+              <span className="font-bold">شرح اختيارك:</span>{" "}
+              {getSelectedExplanation(currentQuestion, selectedKey)}
             </div>
-            <div className="mt-2">
-              <span className="font-bold">تفسير الإجابة الصحيحة:</span>{" "}
-              {getCorrectExplanation(currentQuestion)}
-            </div>
+            {!isCorrect ? (
+              <div className="mt-2">
+                <span className="font-bold">تفسير الإجابة الصحيحة:</span>{" "}
+                {getCorrectExplanation(currentQuestion)}
+              </div>
+            ) : null}
           </>
         ) : null}
 
@@ -1160,16 +1170,23 @@ export function VerbalPassageViewer({
 
               <button
                 type="button"
-                onClick={() =>
-                  document
-                    .getElementById(explanationId)
-                    ?.scrollIntoView({ behavior: "smooth", block: "center" })
-                }
-                disabled={!submitted && !currentQuestion.explanation}
+                onClick={() => {
+                  const nextValue = !showExplanation;
+                  setShowExplanation(nextValue);
+
+                  if (nextValue) {
+                    window.requestAnimationFrame(() => {
+                      document
+                        .getElementById(explanationId)
+                        ?.scrollIntoView({ behavior: "smooth", block: "center" });
+                    });
+                  }
+                }}
+                disabled={mode === "student" ? !submitted : !currentQuestion.explanation}
                 className="inline-flex h-12 items-center justify-center gap-2 rounded-[1rem] border border-slate-200 bg-white px-4 text-sm font-bold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-55"
               >
                 <ScrollText className="h-4 w-4" />
-                حل الشرح
+                {showExplanation ? "إخفاء الشرح" : "حل الشرح"}
               </button>
 
               <button

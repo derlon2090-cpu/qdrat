@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { RotateCcw, Sparkles } from "lucide-react";
+import { RotateCcw, ScrollText, Sparkles } from "lucide-react";
 
 import { useAuthSession } from "@/hooks/use-auth-session";
 import {
@@ -68,6 +68,7 @@ export function VerbalReadingFromDocument({
   const [savedAnswers, setSavedAnswers] = useState<SavedAnswerMap>({});
   const [showAuthPrompt, setShowAuthPrompt] = useState(false);
   const [progressFeedback, setProgressFeedback] = useState<ProgressFeedback>(null);
+  const [showExplanation, setShowExplanation] = useState(false);
   const { status: authStatus } = useAuthSession();
 
   useEffect(() => {
@@ -111,6 +112,7 @@ export function VerbalReadingFromDocument({
     setSubmitted(Boolean(oldAnswer));
     setShowAuthPrompt(false);
     setProgressFeedback(null);
+    setShowExplanation(false);
   }, [questionKey, savedAnswers]);
 
   const result = useMemo(() => {
@@ -129,11 +131,13 @@ export function VerbalReadingFromDocument({
       correctExplanation,
     };
   }, [currentQuestion, selectedAnswer, submitted]);
+  const explanationId = `${questionKey}-explanation`;
 
   const confirmAnswer = async () => {
     if (!selectedAnswer) return;
 
     setSubmitted(true);
+    setShowExplanation(false);
     setSavedAnswers((previous) => {
       const next = {
         ...previous,
@@ -215,10 +219,12 @@ export function VerbalReadingFromDocument({
     setSubmitted(false);
     setShowAuthPrompt(false);
     setProgressFeedback(null);
+    setShowExplanation(false);
   };
 
   const goToQuestion = (newIndex: number) => {
     setQuestionIndex(newIndex);
+    setShowExplanation(false);
   };
 
   const goToPassage = (index: number) => {
@@ -331,6 +337,7 @@ export function VerbalReadingFromDocument({
                           setSelectedAnswer(option);
                           setSubmitted(false);
                           setShowAuthPrompt(false);
+                          setShowExplanation(false);
                         }}
                         className={`rounded-2xl border px-5 py-5 text-right text-2xl transition ${classes}`}
                       >
@@ -373,10 +380,31 @@ export function VerbalReadingFromDocument({
                   >
                     السؤال التالي / قطعة أخرى
                   </button>
+
+                  <button
+                    onClick={() => {
+                      const nextValue = !showExplanation;
+                      setShowExplanation(nextValue);
+
+                      if (nextValue) {
+                        window.requestAnimationFrame(() => {
+                          document
+                            .getElementById(explanationId)
+                            ?.scrollIntoView({ behavior: "smooth", block: "center" });
+                        });
+                      }
+                    }}
+                    disabled={!submitted}
+                    className="flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-6 py-4 text-lg font-semibold text-slate-700 disabled:cursor-not-allowed disabled:opacity-40"
+                  >
+                    <ScrollText className="h-5 w-5" />
+                    {showExplanation ? "إخفاء الشرح" : "حل الشرح"}
+                  </button>
                 </div>
 
                 {submitted && result ? (
                   <div
+                    id={explanationId}
                     className={`mt-6 rounded-2xl border px-5 py-5 text-lg leading-9 ${
                       result.isCorrect
                         ? "border-emerald-200 bg-emerald-50 text-emerald-900"
@@ -386,17 +414,21 @@ export function VerbalReadingFromDocument({
                     <div className="text-2xl font-bold">
                       {result.isCorrect ? "✅ إجابة صحيحة" : "❌ إجابة خاطئة"}
                     </div>
-                    <div className="mt-2">
-                      <span className="font-bold">شرح اختيارك:</span> {result.selectedExplanation}
-                    </div>
                     {!result.isCorrect ? (
+                      <div className="mt-2">
+                        <span className="font-bold">الإجابة الصحيحة:</span> {result.correctAnswer}
+                      </div>
+                    ) : null}
+                    {showExplanation ? (
                       <>
                         <div className="mt-2">
-                          <span className="font-bold">الإجابة الصحيحة:</span> {result.correctAnswer}
+                          <span className="font-bold">شرح اختيارك:</span> {result.selectedExplanation}
                         </div>
-                        <div className="mt-2">
-                          <span className="font-bold">شرح الإجابة الصحيحة:</span> {result.correctExplanation}
-                        </div>
+                        {!result.isCorrect ? (
+                          <div className="mt-2">
+                            <span className="font-bold">شرح الإجابة الصحيحة:</span> {result.correctExplanation}
+                          </div>
+                        ) : null}
                       </>
                     ) : null}
 

@@ -156,6 +156,7 @@ export function VerbalPracticeBank({
   const [questionFlags, setQuestionFlags] = useState(readClientQuestionFlags);
   const [showAllQuestionPills, setShowAllQuestionPills] = useState(false);
   const [questionElapsedSeconds, setQuestionElapsedSeconds] = useState(45);
+  const [showExplanation, setShowExplanation] = useState(false);
 
   useEffect(() => {
     setSavedAnswers(readSavedAnswers());
@@ -187,6 +188,7 @@ export function VerbalPracticeBank({
     setSubmitted(Boolean(oldAnswer));
     setShowAuthPrompt(false);
     setProgressFeedback(null);
+    setShowExplanation(false);
   }, [currentKey, currentQuestion, savedAnswers]);
 
   useEffect(() => {
@@ -377,6 +379,7 @@ export function VerbalPracticeBank({
     setShowAuthPrompt(false);
     setProgressFeedback(null);
     setSavedCompletionChoice(false);
+    setShowExplanation(false);
 
     const firstQuestion = questions[0];
     if (firstQuestion) {
@@ -388,6 +391,7 @@ export function VerbalPracticeBank({
     if (!selectedAnswer || !currentQuestion) return;
 
     setSubmitted(true);
+    setShowExplanation(false);
     setSavedAnswers((previous) => {
       const next = {
         ...previous,
@@ -470,6 +474,7 @@ export function VerbalPracticeBank({
     setShowAuthPrompt(false);
     setProgressFeedback(null);
     setSavedCompletionChoice(false);
+    setShowExplanation(false);
   }
 
   function toggleQuestionFlag(flag: "saved" | "pinned") {
@@ -538,9 +543,11 @@ export function VerbalPracticeBank({
             <span className="font-bold">الإجابة الصحيحة:</span> {result.correctAnswer}
           </div>
         ) : null}
-        <div className="mt-2">
-          <span className="font-bold">الشرح:</span> {result.explanation}
-        </div>
+        {showExplanation ? (
+          <div className="mt-2">
+            <span className="font-bold">الشرح:</span> {result.explanation}
+          </div>
+        ) : null}
 
         {progressFeedback ? (
           <div className="mt-3 rounded-[1rem] border border-white/70 bg-white/70 px-4 py-3 text-xs leading-7 text-slate-700">
@@ -679,6 +686,7 @@ export function VerbalPracticeBank({
                 setSubmitted(false);
                 setShowAuthPrompt(false);
                 setSavedCompletionChoice(false);
+                setShowExplanation(false);
               }}
               className={`rounded-[1.25rem] border px-5 py-4 text-right transition ${classes}`}
             >
@@ -720,12 +728,20 @@ export function VerbalPracticeBank({
           },
           {
             key: "explanation",
-            label: "حل الشرح",
+            label: showExplanation ? "إخفاء الشرح" : "حل الشرح",
             icon: ScrollText,
-            onClick: () =>
-              document
-                .getElementById(explanationId)
-                ?.scrollIntoView({ behavior: "smooth", block: "center" }),
+            onClick: () => {
+              const nextValue = !showExplanation;
+              setShowExplanation(nextValue);
+
+              if (nextValue) {
+                window.requestAnimationFrame(() => {
+                  document
+                    .getElementById(explanationId)
+                    ?.scrollIntoView({ behavior: "smooth", block: "center" });
+                });
+              }
+            },
             disabled: !submitted,
           },
           {
