@@ -195,17 +195,17 @@ export default async function HomePage() {
             </div>
 
             <div className="w-full">
-              <div className="max-w-[620px] text-right [direction:rtl] lg:mr-auto">
-                <h1 className="display-font text-[clamp(3.15rem,6.1vw,6.55rem)] font-black leading-[0.9] tracking-[-0.055em] text-[#123B7A]">
-                  <span className="block">معيار</span>
-                  <span className="block bg-[linear-gradient(180deg,#2f6df2_0%,#2563eb_100%)] bg-clip-text text-transparent">
+              <div className="max-w-[610px] text-right [direction:rtl] lg:mr-auto">
+                <h1 className="display-font text-[clamp(2.7rem,5.1vw,5.4rem)] font-black leading-[0.96] tracking-[-0.045em] text-[#123B7A]">
+                  <span className="block whitespace-nowrap">معيار</span>
+                  <span className="block whitespace-nowrap bg-[linear-gradient(180deg,#2f6df2_0%,#2563eb_100%)] bg-clip-text text-transparent">
                     طريقك
                   </span>
-                  <span className="block">الذكي نحو</span>
-                  <span className="block">أعلى الدرجات</span>
+                  <span className="block whitespace-nowrap">الذكي نحو</span>
+                  <span className="block whitespace-nowrap">أعلى الدرجات</span>
                 </h1>
-                <div className="mt-4 mr-auto h-1.5 w-20 rounded-full bg-[linear-gradient(90deg,#2f6df2_0%,#69a2ff_100%)]" />
-                <p className="mt-7 max-w-[560px] text-[1.12rem] leading-[2.05] text-[#5f7398]">
+                <div className="mt-5 mr-auto h-1.5 w-20 rounded-full bg-[linear-gradient(90deg,#2f6df2_0%,#69a2ff_100%)]" />
+                <p className="mt-7 max-w-[540px] text-[1.08rem] leading-[2] text-[#5f7398]">
                   منصة تعليمية متكاملة تساعدك على الاستعداد
                   لاختبار القدرات بأحدث الطرق وأعلى كفاءة.
                 </p>
