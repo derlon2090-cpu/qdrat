@@ -170,42 +170,43 @@ export default async function HomePage() {
       <SiteHeader variant="public" links={navLinks} />
 
       <main>
-        <section className="overflow-hidden border-b border-[#edf2fb] bg-[radial-gradient(circle_at_top_left,rgba(37,99,235,0.08),transparent_28%),linear-gradient(180deg,#ffffff_0%,#fbfdff_100%)]">
-          <div className="mx-auto grid w-[min(calc(100%-1.5rem),1280px)] gap-10 px-1 py-10 sm:w-[min(calc(100%-2rem),1280px)] lg:[direction:ltr] lg:grid-cols-[1.02fr,0.98fr] lg:items-center lg:gap-12 lg:py-12">
-            <div className="order-1 lg:order-none">
-              <div className="max-w-[520px] text-right [direction:rtl]">
-                <h1 className="display-font text-[clamp(3.1rem,6vw,5.75rem)] font-black leading-[0.96] tracking-[-0.04em] text-[#123B7A]">
-                  <span className="block">معيار.. طريقك</span>
+        <section className="overflow-hidden border-b border-[#edf2fb] bg-[radial-gradient(circle_at_18%_20%,rgba(37,99,235,0.11),transparent_30%),linear-gradient(180deg,#ffffff_0%,#fbfdff_100%)]">
+          <div className="mx-auto flex w-[min(calc(100%-1.5rem),1320px)] flex-col gap-10 px-1 py-10 sm:w-[min(calc(100%-2rem),1320px)] lg:flex-row-reverse lg:items-center lg:justify-between lg:gap-16 lg:py-12">
+            <div className="w-full lg:max-w-[48%]">
+              <div className="relative mr-auto w-full max-w-[760px] lg:mr-0 lg:ml-auto">
+                <div className="absolute inset-x-[10%] bottom-4 h-16 rounded-full bg-[radial-gradient(circle,rgba(128,155,255,0.22),rgba(128,155,255,0.07)_62%,transparent_80%)] blur-md" />
+                <PublicLaptopIllustration className="h-[320px] rounded-[0.45rem] border border-[#dde8f8] bg-[linear-gradient(180deg,#f7faff_0%,#eff4ff_100%)] shadow-[0_18px_40px_rgba(15,23,42,0.05)] sm:h-[390px] lg:h-[500px]" />
+              </div>
+            </div>
+
+            <div className="w-full lg:max-w-[52%]">
+              <div className="max-w-[640px] text-right [direction:rtl] lg:pr-2">
+                <h1 className="display-font text-[clamp(4.25rem,8vw,8.2rem)] font-black leading-[0.84] tracking-[-0.065em] text-[#123B7A]">
+                  <span className="block">معيار..</span>
+                  <span className="block">طريقك</span>
                   <span className="block">الذكي</span>
                   <span className="block">نحو أعلى</span>
                   <span className="block">الدرجات</span>
                 </h1>
-                <p className="mt-7 max-w-[520px] text-[1.12rem] leading-[2.2] text-[#64748b]">
-                  منصة تعليمية متكاملة تساعدك على الاستعداد لاختبار القدرات
-                  بأحدث الأساليب وأفضل المحتويات.
+                <p className="mt-8 max-w-[620px] text-[1.24rem] leading-[2.2] text-[#62779d]">
+                  منصة تعليمية متكاملة تساعدك على الاستعداد لاختبار القدرات بأحدث
+                  الأساليب وأفضل المحتويات.
                 </p>
 
-                <div className="mt-9 flex flex-wrap gap-4">
+                <div className="mt-10 flex flex-wrap gap-4">
                   <Link
                     href="/diagnostic"
-                    className="inline-flex h-[58px] min-w-[228px] items-center justify-center rounded-[1.05rem] bg-[#2563eb] px-8 text-[1.08rem] font-bold text-white shadow-[0_16px_30px_rgba(37,99,235,0.2)] transition hover:bg-[#1d4ed8]"
+                    className="inline-flex h-[60px] min-w-[230px] items-center justify-center rounded-[1.05rem] bg-[#2563eb] px-8 text-[1.08rem] font-bold text-white shadow-[0_16px_30px_rgba(37,99,235,0.2)] transition hover:bg-[#1d4ed8]"
                   >
                     ابدأ الآن مجانًا
                   </Link>
                   <Link
                     href="/question-bank"
-                    className="inline-flex h-[58px] min-w-[248px] items-center justify-center rounded-[1.05rem] border border-[#cfe0ff] bg-white px-8 text-[1.08rem] font-bold text-[#2563eb] shadow-[0_10px_24px_rgba(15,23,42,0.04)] transition hover:bg-[#f8fbff]"
+                    className="inline-flex h-[60px] min-w-[252px] items-center justify-center rounded-[1.05rem] border border-[#cfe0ff] bg-white px-8 text-[1.08rem] font-bold text-[#2563eb] shadow-[0_10px_24px_rgba(15,23,42,0.04)] transition hover:bg-[#f8fbff]"
                   >
                     استكشف بنك الأسئلة
                   </Link>
                 </div>
-              </div>
-            </div>
-
-            <div className="order-2 lg:order-none">
-              <div className="relative mr-auto w-full max-w-[760px]">
-                <div className="absolute inset-x-[12%] bottom-5 h-16 rounded-full bg-[radial-gradient(circle,rgba(128,155,255,0.24),rgba(128,155,255,0.08)_62%,transparent_80%)] blur-md" />
-                <PublicLaptopIllustration className="h-[320px] rounded-[0.35rem] border border-[#e9effa] bg-[linear-gradient(180deg,#f8fbff_0%,#eff4ff_100%)] shadow-[0_20px_44px_rgba(15,23,42,0.05)] sm:h-[380px] lg:h-[430px]" />
               </div>
             </div>
           </div>
