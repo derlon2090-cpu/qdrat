@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ChevronDown, Loader2, LogOut, UserRound } from "lucide-react";
+import { ArrowLeft, ChevronDown, Loader2, LogOut, Plus, UserRound } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { useAuthSession } from "@/hooks/use-auth-session";
@@ -91,22 +91,24 @@ export function HeaderAuthControls({
   }
 
   return (
-    <div className="hidden items-center gap-2 lg:flex">
+    <div className="hidden items-center gap-3 lg:flex" dir="ltr">
       <Link
         href="/login"
-        className="rounded-[1.15rem] border border-[#e6edf9] bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:border-[#123B7A]/20 hover:text-[#123B7A]"
+        className="inline-flex h-12 items-center justify-center gap-2 rounded-[1rem] bg-[#2563eb] px-5 text-sm font-bold text-white shadow-[0_14px_26px_rgba(37,99,235,0.22)] transition hover:bg-[#1d4ed8]"
       >
+        <ArrowLeft className="h-4 w-4" />
         {LOGIN_LABEL}
       </Link>
       <Link
         href="/register"
-        className="rounded-[1.15rem] border border-[#e6edf9] bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:border-[#123B7A]/20 hover:text-[#123B7A]"
+        className="inline-flex h-12 items-center justify-center gap-2 rounded-[1rem] border border-[#cfe0ff] bg-white px-5 text-sm font-bold text-[#2563eb] transition hover:bg-[#f8fbff]"
       >
+        <Plus className="h-4 w-4" />
         {REGISTER_LABEL}
       </Link>
       {ctaHref && ctaLabel ? (
         <Link href={ctaHref}>
-          <Button>{ctaLabel}</Button>
+          <Button className="h-12 rounded-[1rem] px-5 shadow-[0_14px_26px_rgba(37,99,235,0.22)]">{ctaLabel}</Button>
         </Link>
       ) : null}
     </div>

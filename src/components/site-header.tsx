@@ -91,8 +91,8 @@ function HeaderUtilityButton({
 }
 
 export function SiteHeader({
-  ctaHref = "/diagnostic",
-  ctaLabel = "ابدأ الآن",
+  ctaHref,
+  ctaLabel,
   links,
   variant = "public",
 }: {

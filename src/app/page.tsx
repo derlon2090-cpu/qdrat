@@ -167,51 +167,59 @@ export default function HomePage() {
       <SiteHeader variant="public" links={navLinks} />
 
       <main>
-        <section className="overflow-hidden border-b border-[#edf2fb] bg-[radial-gradient(circle_at_top_left,rgba(37,99,235,0.08),transparent_26%),linear-gradient(180deg,#ffffff_0%,#fbfdff_100%)]">
-          <div className="mx-auto grid w-[min(calc(100%-1.5rem),1280px)] gap-10 px-1 py-12 sm:w-[min(calc(100%-2rem),1280px)] lg:grid-cols-[1.02fr,0.98fr] lg:items-center lg:py-16">
+        <section className="overflow-hidden border-b border-[#edf2fb] bg-[radial-gradient(circle_at_top_left,rgba(37,99,235,0.08),transparent_28%),linear-gradient(180deg,#ffffff_0%,#fbfdff_100%)]">
+          <div className="mx-auto grid w-[min(calc(100%-1.5rem),1280px)] gap-10 px-1 py-10 sm:w-[min(calc(100%-2rem),1280px)] lg:grid-cols-[1.05fr,0.95fr] lg:items-center lg:py-14">
             <div className="order-2 lg:order-1">
-              <PublicLaptopIllustration />
+              <div className="relative mx-auto w-full max-w-[640px]">
+                <div className="absolute inset-x-[8%] bottom-3 h-16 rounded-full bg-[radial-gradient(circle,rgba(102,137,255,0.22),rgba(102,137,255,0.08)_60%,transparent_80%)] blur-sm" />
+                <PublicLaptopIllustration className="h-[360px] rounded-none bg-transparent sm:h-[410px]" />
+              </div>
             </div>
 
             <div className="order-1 lg:order-2">
               <div className="text-right">
-                <div className="text-[1.7rem] font-bold text-slate-800">
+                <h1 className="display-font text-[clamp(2.45rem,5vw,4.8rem)] font-black leading-[1.18] tracking-tight text-[#0f2f69]">
                   معيار.. طريقك الذكي
-                </div>
-                <h1 className="mt-3 display-font text-[clamp(2.7rem,5vw,4.9rem)] font-black leading-[1.18] text-[#0f2f69]">
+                  <br />
                   نحو أعلى الدرجات
                 </h1>
-                <p className="mt-5 max-w-2xl text-[1.08rem] leading-9 text-slate-500">
-                  منصة تعليمية متكاملة تساعدك على الاستعداد لاختبار القدرات بأحدث
-                  الأساليب وأفضل المحتويات.
+                <p className="mt-5 max-w-[540px] text-[1.05rem] leading-9 text-slate-500">
+                  منصة تعليمية متكاملة تساعدك على الاستعداد لاختبار القدرات
+                  بأحدث الأساليب وأفضل المحتويات.
                 </p>
 
                 <div className="mt-8 flex flex-wrap gap-4">
                   <Link
                     href="/diagnostic"
-                    className="inline-flex h-[58px] min-w-[178px] items-center justify-center rounded-[1rem] bg-[#2563eb] px-7 text-[1rem] font-bold text-white shadow-[0_14px_26px_rgba(37,99,235,0.22)] transition hover:bg-[#1d4ed8]"
+                    className="inline-flex h-[56px] min-w-[180px] items-center justify-center rounded-[1rem] bg-[#2563eb] px-7 text-[1rem] font-bold text-white shadow-[0_14px_26px_rgba(37,99,235,0.22)] transition hover:bg-[#1d4ed8]"
                   >
                     ابدأ الآن مجانًا
                   </Link>
                   <Link
                     href="/question-bank"
-                    className="inline-flex h-[58px] min-w-[178px] items-center justify-center rounded-[1rem] border border-[#cfe0ff] bg-white px-7 text-[1rem] font-bold text-[#2563eb] transition hover:bg-[#f8fbff]"
+                    className="inline-flex h-[56px] min-w-[180px] items-center justify-center rounded-[1rem] border border-[#cfe0ff] bg-white px-7 text-[1rem] font-bold text-[#2563eb] shadow-[0_8px_18px_rgba(15,23,42,0.03)] transition hover:bg-[#f8fbff]"
                   >
                     استكشف بنك الأسئلة
                   </Link>
                 </div>
 
-                <div className="mt-8 flex flex-wrap gap-7 text-sm font-medium text-slate-500">
+                <div className="mt-7 flex flex-wrap items-center gap-6 text-sm font-medium text-slate-500">
                   <div className="inline-flex items-center gap-2">
-                    <Sparkles className="h-4 w-4 text-[#2563eb]" />
+                    <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[#eef4ff] text-[#2563eb]">
+                      <Sparkles className="h-4 w-4" />
+                    </span>
                     آلاف الأسئلة المحلولة
                   </div>
                   <div className="inline-flex items-center gap-2">
-                    <BadgeCheck className="h-4 w-4 text-[#2563eb]" />
+                    <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[#eef4ff] text-[#2563eb]">
+                      <BadgeCheck className="h-4 w-4" />
+                    </span>
                     شرح مبسط واحترافي
                   </div>
                   <div className="inline-flex items-center gap-2">
-                    <CalendarDays className="h-4 w-4 text-[#2563eb]" />
+                    <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[#eef4ff] text-[#2563eb]">
+                      <CalendarDays className="h-4 w-4" />
+                    </span>
                     تحديثات مستمرة
                   </div>
                 </div>
