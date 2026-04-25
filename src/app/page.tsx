@@ -170,33 +170,50 @@ export default async function HomePage() {
       <SiteHeader variant="public" links={navLinks} />
 
       <main>
-        <section className="overflow-hidden border-b border-[#edf2fb] bg-[radial-gradient(circle_at_18%_20%,rgba(37,99,235,0.11),transparent_30%),linear-gradient(180deg,#ffffff_0%,#fbfdff_100%)]">
-          <div className="mx-auto flex w-[min(calc(100%-1.5rem),1320px)] flex-col gap-10 px-1 py-10 sm:w-[min(calc(100%-2rem),1320px)] lg:flex-row-reverse lg:items-center lg:justify-between lg:gap-16 lg:py-12">
-            <div className="w-full lg:max-w-[48%]">
-              <div className="relative mr-auto w-full max-w-[760px] lg:mr-0 lg:ml-auto">
-                <div className="absolute inset-x-[10%] bottom-4 h-16 rounded-full bg-[radial-gradient(circle,rgba(128,155,255,0.22),rgba(128,155,255,0.07)_62%,transparent_80%)] blur-md" />
-                <PublicLaptopIllustration className="h-[320px] rounded-[0.45rem] border border-[#dde8f8] bg-[linear-gradient(180deg,#f7faff_0%,#eff4ff_100%)] shadow-[0_18px_40px_rgba(15,23,42,0.05)] sm:h-[390px] lg:h-[500px]" />
+        <section className="relative overflow-hidden border-b border-[#edf2fb] bg-[radial-gradient(circle_at_20%_18%,rgba(37,99,235,0.1),transparent_28%),linear-gradient(180deg,#ffffff_0%,#fbfdff_100%)]">
+          <div className="pointer-events-none absolute -left-20 top-[-72px] h-56 w-56 rounded-full bg-[radial-gradient(circle,rgba(150,180,255,0.26),rgba(150,180,255,0.08)_60%,transparent_75%)]" />
+          <div className="pointer-events-none absolute left-[90px] top-[86px] grid grid-cols-6 gap-5 opacity-70">
+            {Array.from({ length: 18 }).map((_, index) => (
+              <span key={index} className="h-2.5 w-2.5 rounded-full bg-[#83a8ff]" />
+            ))}
+          </div>
+          <div className="pointer-events-none absolute bottom-[78px] left-[43%] grid grid-cols-5 gap-5 opacity-60">
+            {Array.from({ length: 10 }).map((_, index) => (
+              <span key={index} className="h-2.5 w-2.5 rounded-full bg-[#87adff]" />
+            ))}
+          </div>
+          <div className="pointer-events-none absolute bottom-[-56px] left-[45%] h-44 w-44 rounded-full bg-[radial-gradient(circle,rgba(150,180,255,0.22),rgba(150,180,255,0.08)_62%,transparent_75%)]" />
+
+          <div className="mx-auto flex w-[min(calc(100%-1.5rem),1360px)] flex-col gap-10 px-1 py-12 sm:w-[min(calc(100%-2rem),1360px)] lg:flex-row lg:items-center lg:justify-between lg:gap-20 lg:py-16">
+            <div className="order-2 w-full lg:order-1 lg:max-w-[47%]">
+              <div className="relative mr-auto w-full max-w-[760px] lg:mr-0">
+                <div className="absolute inset-x-[8%] bottom-2 h-20 rounded-full bg-[radial-gradient(circle,rgba(132,164,255,0.28),rgba(132,164,255,0.08)_62%,transparent_82%)] blur-lg" />
+                <div className="rounded-[2.1rem] border border-[#dfe8fb] bg-[linear-gradient(180deg,#f8fbff_0%,#eff4ff_100%)] p-6 shadow-[0_28px_64px_rgba(15,23,42,0.06)] sm:p-8">
+                  <PublicLaptopIllustration className="h-[320px] rounded-[1.6rem] bg-transparent shadow-none sm:h-[390px] lg:h-[450px]" />
+                </div>
               </div>
             </div>
 
-            <div className="w-full lg:max-w-[52%]">
-              <div className="max-w-[640px] text-right [direction:rtl] lg:pr-2">
-                <h1 className="display-font text-[clamp(4.25rem,8vw,8.2rem)] font-black leading-[0.84] tracking-[-0.065em] text-[#123B7A]">
-                  <span className="block">معيار..</span>
-                  <span className="block">طريقك</span>
-                  <span className="block">الذكي</span>
-                  <span className="block">نحو أعلى</span>
-                  <span className="block">الدرجات</span>
+            <div className="order-1 w-full lg:order-2 lg:max-w-[46%]">
+              <div className="max-w-[670px] text-right [direction:rtl] lg:mr-auto">
+                <h1 className="display-font text-[clamp(4.3rem,8.1vw,8.5rem)] font-black leading-[0.83] tracking-[-0.07em] text-[#123B7A]">
+                  <span className="block">معيار</span>
+                  <span className="block bg-[linear-gradient(180deg,#2f6df2_0%,#2563eb_100%)] bg-clip-text text-transparent">
+                    طريقك
+                  </span>
+                  <span className="block">الذكي نحو</span>
+                  <span className="block">أعلى الدرجات</span>
                 </h1>
-                <p className="mt-8 max-w-[620px] text-[1.24rem] leading-[2.2] text-[#62779d]">
-                  منصة تعليمية متكاملة تساعدك على الاستعداد لاختبار القدرات بأحدث
-                  الأساليب وأفضل المحتويات.
+                <div className="mt-5 mr-auto h-1.5 w-24 rounded-full bg-[linear-gradient(90deg,#2f6df2_0%,#69a2ff_100%)]" />
+                <p className="mt-8 max-w-[640px] text-[1.22rem] leading-[2.15] text-[#5f7398]">
+                  منصة تعليمية متكاملة تساعدك على الاستعداد
+                  لاختبار القدرات بأحدث الطرق وأعلى كفاءة.
                 </p>
 
                 <div className="mt-10 flex flex-wrap gap-4">
                   <Link
                     href="/diagnostic"
-                    className="inline-flex h-[60px] min-w-[230px] items-center justify-center rounded-[1.05rem] bg-[#2563eb] px-8 text-[1.08rem] font-bold text-white shadow-[0_16px_30px_rgba(37,99,235,0.2)] transition hover:bg-[#1d4ed8]"
+                    className="inline-flex h-[60px] min-w-[228px] items-center justify-center rounded-[1.05rem] bg-[#2563eb] px-8 text-[1.08rem] font-bold text-white shadow-[0_16px_30px_rgba(37,99,235,0.2)] transition hover:bg-[#1d4ed8]"
                   >
                     ابدأ الآن مجانًا
                   </Link>
