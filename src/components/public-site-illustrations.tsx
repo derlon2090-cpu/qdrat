@@ -264,3 +264,94 @@ export function PublicPaperModelsIllustration({
     </div>
   );
 }
+
+export function PublicStatisticsIllustration({
+  className,
+}: {
+  className?: string;
+}) {
+  return (
+    <div
+      className={cn(
+        "relative h-[320px] w-full overflow-hidden rounded-[2rem] bg-[radial-gradient(circle_at_24%_16%,rgba(255,255,255,0.96),transparent_28%),linear-gradient(180deg,#f7faff_0%,#eef4ff_100%)]",
+        className,
+      )}
+    >
+      <div className="absolute inset-x-[14%] bottom-5 h-20 rounded-full bg-[radial-gradient(circle,rgba(111,145,255,0.24),rgba(111,145,255,0.08)_60%,transparent_80%)] blur-sm" />
+      <svg viewBox="0 0 720 420" className="absolute inset-0 h-full w-full" aria-hidden="true">
+        <defs>
+          <linearGradient id="statsScreen" x1="0%" x2="0%" y1="0%" y2="100%">
+            <stop offset="0%" stopColor="#ffffff" />
+            <stop offset="100%" stopColor="#eef4ff" />
+          </linearGradient>
+          <linearGradient id="statsBody" x1="0%" x2="0%" y1="0%" y2="100%">
+            <stop offset="0%" stopColor="#d8e3fb" />
+            <stop offset="100%" stopColor="#a3b4d8" />
+          </linearGradient>
+          <linearGradient id="statsBar" x1="0%" x2="0%" y1="0%" y2="100%">
+            <stop offset="0%" stopColor="#8cb4ff" />
+            <stop offset="100%" stopColor="#2f6df2" />
+          </linearGradient>
+        </defs>
+
+        <ellipse cx="272" cy="334" rx="224" ry="44" fill="#dce8ff" />
+
+        <g transform="translate(128 72)">
+          <rect x="0" y="0" width="290" height="192" rx="20" fill="#dae5ff" stroke="#4f74d5" strokeWidth="8" />
+          <rect x="18" y="18" width="254" height="156" rx="14" fill="url(#statsScreen)" />
+          <rect x="116" y="188" width="56" height="7" rx="3.5" fill="#7381a3" />
+          <path d="M-26 192H316L278 240H12z" fill="url(#statsBody)" />
+          <path d="M12 240H278L254 258H34z" fill="#b9c8e7" />
+
+          <g transform="translate(34 22)">
+            <circle cx="36" cy="44" r="32" fill="#eef4ff" stroke="#3b82f6" strokeWidth="5" />
+            <path d="M36 44V16A28 28 0 0 1 62 30Z" fill="#22c55e" />
+
+            <polyline
+              points="78,86 122,62 154,76 202,34 242,56"
+              fill="none"
+              stroke="#5c85ee"
+              strokeWidth="5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+            {[78, 122, 154, 202, 242].map((x, index) => (
+              <circle
+                key={x}
+                cx={x}
+                cy={[86, 62, 76, 34, 56][index]}
+                r="5"
+                fill="#3b82f6"
+              />
+            ))}
+
+            {[0, 1, 2, 3, 4].map((index) => (
+              <rect
+                key={index}
+                x={92 + index * 28}
+                y={136 - index * 18}
+                width="18"
+                height={42 + index * 18}
+                rx="5"
+                fill="url(#statsBar)"
+              />
+            ))}
+          </g>
+        </g>
+
+        <g transform="translate(68 258)">
+          <ellipse cx="30" cy="74" rx="40" ry="8" fill="#d6e2ff" />
+          <path d="M14 14C8 -4 22 -20 42 -18C48 -30 70 -30 78 -12C96 -10 104 8 94 24C88 34 78 40 64 40H36C26 40 18 34 14 14Z" fill="#64b99a" />
+          <rect x="26" y="36" width="16" height="36" rx="8" fill="#7ac3a6" />
+        </g>
+
+        <g transform="translate(492 112)">
+          <rect x="0" y="110" width="34" height="132" rx="8" fill="url(#statsBar)" />
+          <rect x="52" y="78" width="34" height="164" rx="8" fill="url(#statsBar)" />
+          <rect x="104" y="48" width="34" height="194" rx="8" fill="url(#statsBar)" />
+          <ellipse cx="70" cy="254" rx="98" ry="16" fill="#d8e3ff" />
+        </g>
+      </svg>
+    </div>
+  );
+}

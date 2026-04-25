@@ -216,6 +216,16 @@ export function SiteHeader({
               <Menu className="h-5 w-5" />
             </button>
 
+            {isAuthenticated ? (
+              <HeaderUtilityButton
+                href="/dashboard#notifications"
+                icon={Bell}
+                badge={3}
+                label="الإشعارات"
+                className="hidden lg:flex"
+              />
+            ) : null}
+
             <HeaderAuthControls
               variant="public"
               ctaHref={isAuthenticated ? undefined : ctaHref}

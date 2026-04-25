@@ -84,23 +84,6 @@ export function HeaderAuthControls({
   }
 
   if (isAuthenticated && effectiveUser) {
-    if (variant === "public") {
-      return (
-        <div className={containerClass} dir="ltr">
-          <button
-            type="button"
-            onClick={handleLogout}
-            className="rounded-[1.15rem] border border-[#e6edf9] bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:border-rose-200 hover:text-rose-600"
-          >
-            {LOGOUT_LABEL}
-          </button>
-          <Link href="/dashboard">
-            <Button>لوحة الطالب</Button>
-          </Link>
-        </div>
-      );
-    }
-
     return (
       <div className={containerClass} dir="ltr">
         <div className="relative" ref={menuRef}>
@@ -115,7 +98,9 @@ export function HeaderAuthControls({
               className={`h-4 w-4 text-slate-400 transition-transform ${menuOpen ? "rotate-180" : ""}`}
             />
             <div className="max-w-[116px] text-right leading-tight xl:max-w-[148px]" dir="rtl">
-              <div className="truncate text-[0.95rem] font-extrabold text-slate-900 xl:text-[1rem]">{effectiveUser.fullName}</div>
+              <div className="truncate text-[0.95rem] font-extrabold text-slate-900 xl:text-[1rem]">
+                {effectiveUser.fullName}
+              </div>
               <div className="mt-1 text-sm font-medium text-slate-400">مستوى متقدم</div>
             </div>
             <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#eef4ff] text-[#2563eb]">
@@ -138,6 +123,17 @@ export function HeaderAuthControls({
                 <span>إعدادات الحساب</span>
                 <Settings className="h-4 w-4 text-slate-400" />
               </Link>
+              {variant === "public" ? (
+                <Link
+                  href="/dashboard"
+                  role="menuitem"
+                  onClick={() => setMenuOpen(false)}
+                  className="mt-1 flex items-center justify-between rounded-[0.9rem] px-3 py-3 text-sm font-bold text-slate-700 transition hover:bg-[#f8fbff] hover:text-[#123B7A]"
+                >
+                  <span>لوحة الطالب</span>
+                  <ArrowLeft className="h-4 w-4 text-slate-400" />
+                </Link>
+              ) : null}
               <button
                 type="button"
                 role="menuitem"
