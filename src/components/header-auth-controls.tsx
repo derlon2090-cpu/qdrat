@@ -94,14 +94,14 @@ export function HeaderAuthControls({
     <div className="hidden items-center gap-3 lg:flex" dir="ltr">
       <Link
         href="/login"
-        className="inline-flex h-12 items-center justify-center gap-2 rounded-[1rem] bg-[#2563eb] px-5 text-sm font-bold text-white shadow-[0_14px_26px_rgba(37,99,235,0.22)] transition hover:bg-[#1d4ed8]"
+        className="inline-flex h-[46px] items-center justify-center gap-2 rounded-[0.95rem] bg-[#2563eb] px-[18px] text-sm font-bold text-white shadow-[0_12px_22px_rgba(37,99,235,0.18)] transition hover:bg-[#1d4ed8]"
       >
         <ArrowLeft className="h-4 w-4" />
         {LOGIN_LABEL}
       </Link>
       <Link
         href="/register"
-        className="inline-flex h-12 items-center justify-center gap-2 rounded-[1rem] border border-[#cfe0ff] bg-white px-5 text-sm font-bold text-[#2563eb] transition hover:bg-[#f8fbff]"
+        className="inline-flex h-[46px] items-center justify-center gap-2 rounded-[0.95rem] border border-[#cfe0ff] bg-white px-[18px] text-sm font-bold text-[#2563eb] shadow-[0_8px_18px_rgba(15,23,42,0.03)] transition hover:bg-[#f8fbff]"
       >
         <Plus className="h-4 w-4" />
         {REGISTER_LABEL}
