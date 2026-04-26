@@ -12,11 +12,11 @@ export default async function SummaryDetailPage({
   const { summaryId } = await params;
 
   return (
-    <div className="min-h-screen">
+    <div className="flex min-h-screen flex-col">
       <div className="relative z-[9999]">
         <SiteHeader variant="student" />
       </div>
-      <main className="relative z-[1] section-shell pt-8 md:pt-10">
+      <main className="relative z-[1] section-shell flex-1 pt-8 md:pt-10">
         <div className="mx-auto w-[min(calc(100%-2rem),1180px)] space-y-6">
           <section className="overflow-hidden rounded-[2.3rem] border border-white/80 bg-white/95 shadow-soft">
             <div className="flex flex-col gap-6 p-8 md:flex-row md:items-center md:justify-between md:p-10">
@@ -37,7 +37,7 @@ export default async function SummaryDetailPage({
           <SummaryWorkspace summaryId={summaryId} />
         </div>
       </main>
-      <SiteFooter />
+      <SiteFooter variant="student" />
     </div>
   );
 }

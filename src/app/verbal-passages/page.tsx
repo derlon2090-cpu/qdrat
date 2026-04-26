@@ -10,7 +10,7 @@ export default async function VerbalPassagesPage() {
   const initialAuthUser = await getInitialAuthUser();
 
   return (
-    <div className="min-h-screen bg-[#f8fafc] text-slate-950">
+    <div className="flex min-h-screen flex-col bg-[#f8fafc] text-slate-950">
       <DashboardRuntimeGuard resetKey="verbal-passages-header">
         <SiteHeader
           variant={initialAuthUser ? "student" : "public"}
@@ -20,7 +20,7 @@ export default async function VerbalPassagesPage() {
         />
       </DashboardRuntimeGuard>
 
-      <main className="mx-auto w-full max-w-[1600px] px-4 pb-16 pt-6 sm:px-6 xl:px-8">
+      <main className="mx-auto w-full max-w-[1600px] flex-1 px-4 pb-16 pt-6 sm:px-6 xl:px-8">
         <section className="space-y-5">
           <DashboardRuntimeGuard resetKey="verbal-passages-main">
             <div className="rounded-[1.8rem] border border-slate-200 bg-white px-5 py-5 shadow-[0_18px_38px_rgba(15,23,42,0.05)] sm:px-6">
@@ -56,7 +56,7 @@ export default async function VerbalPassagesPage() {
       </main>
 
       <DashboardRuntimeGuard resetKey="verbal-passages-footer">
-        <SiteFooter />
+        <SiteFooter variant={initialAuthUser ? "student" : "public"} />
       </DashboardRuntimeGuard>
     </div>
   );

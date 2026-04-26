@@ -2,13 +2,12 @@
 
 import Link from "next/link";
 import {
-  ChevronUp,
-  CircleHelp,
+  Bot,
   Download,
   FileText,
   Headphones,
-  LayoutPanelTop,
-  MessageCircleMore,
+  Lightbulb,
+  RefreshCw,
   ShieldCheck,
   Smartphone,
   TriangleAlert,
@@ -22,43 +21,11 @@ type SiteFooterProps = {
   variant?: "auto" | "public" | "student";
 };
 
-const studentFooterLinks = [
-  { href: "/dashboard", label: "لوحتي" },
-  { href: "/my-plan", label: "الخطة اليومية" },
-  { href: "/question-bank", label: "بنك الأسئلة" },
-  { href: "/question-bank?track=mistakes", label: "الأخطاء" },
-  { href: "/statistics", label: "المراجعة" },
-  { href: "/challenge", label: "تحدي الشهر" },
-  { href: "/summaries", label: "الملخصات" },
-  { href: "/paper-models", label: "النماذج" },
-  { href: "/account", label: "الإعدادات" },
-  { href: "/contact?topic=support", label: "الدعم" },
-  { href: "#top", label: "العودة للأعلى", icon: ChevronUp },
-];
-
-const studentFooterCards = [
-  {
-    title: "تواصل سريع",
-    text: "إذا كان عندك سؤال عن الاشتراك أو نقطة البداية أو الدعم، ستجد كل ما تحتاجه في صفحات واضحة ومباشرة.",
-    icon: MessageCircleMore,
-  },
-  {
-    title: "واجهتان أوضح",
-    text: "الزائر يرى منصة تعريفية مرنة، والطالب يرى لوحة عملية تبدأ بخطة اليوم ثم تعيده لما كان يعمل عليه.",
-    icon: LayoutPanelTop,
-  },
-  {
-    title: "ثقة وتنظيم",
-    text: "كل قسم صار في مكانه الصحيح مع انتقالات أوضح وأزرار أسهل سواء كنت زائرًا أو طالبًا داخل المنصة.",
-    icon: ShieldCheck,
-  },
-];
-
 const studentSupportLinks = [
   { href: "/privacy", label: "سياسة الخصوصية", icon: ShieldCheck },
   { href: "/terms", label: "الشروط", icon: FileText },
   { href: "/contact?topic=bug", label: "الإبلاغ عن خطأ", icon: TriangleAlert },
-  { href: "/contact?topic=feature", label: "اقتراح ميزة", icon: CircleHelp },
+  { href: "/contact?topic=feature", label: "اقتراح ميزة", icon: Lightbulb },
   { href: "/contact?topic=support", label: "دعم فني", icon: Headphones },
 ];
 
@@ -117,61 +84,29 @@ function PublicFooter() {
 
 function StudentFooter() {
   return (
-    <footer className="mt-auto bg-[#173f78] text-white">
-      <div className="mx-auto w-[min(calc(100%-1rem),1480px)] px-5 py-10 sm:w-[min(calc(100%-2rem),1480px)] sm:px-8 lg:px-12">
-        <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
-          <FooterPills />
-          <MiyaarLogo href="/dashboard" className="justify-start [&_strong]:text-white" />
-        </div>
+    <footer className="mt-auto bg-[#f8fbff] pt-10 text-[#102247]">
+      <div
+        dir="ltr"
+        className="w-full border-t border-[#e7edf8] bg-white px-5 py-5 shadow-[0_-18px_55px_rgba(15,34,71,0.08)] sm:px-8 lg:px-12"
+      >
+        <div className="mx-auto grid w-full max-w-[1840px] items-center gap-5 lg:grid-cols-[300px_minmax(0,1fr)_330px]">
+          <div className="flex items-center justify-center gap-4 lg:justify-start">
+            <MiyaarLogo href="/dashboard" className="shrink-0" />
+            <div className="h-14 w-px bg-[#e2e8f4]" />
+            <div dir="rtl" className="text-right text-sm leading-7 text-[#6d7b92]">
+              <div className="font-semibold text-[#34445d]">© 2026 معيار</div>
+              <div>جميع الحقوق محفوظة</div>
+            </div>
+          </div>
 
-        <div className="mt-7 h-px bg-white/12" />
-
-        <div className="mt-7 flex flex-wrap items-center justify-center gap-x-8 gap-y-4 text-[1.08rem] font-extrabold text-white">
-          {studentFooterLinks.map((item) => {
-            const Icon = item.icon;
-
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className="inline-flex items-center gap-2 text-white transition hover:text-white/90"
-              >
-                {item.label}
-                {Icon ? <Icon className="h-5 w-5" /> : null}
-              </Link>
-            );
-          })}
-        </div>
-
-        <div className="mt-7 rounded-[2rem] border border-white/18 bg-white/[0.05] px-8 py-10 text-center text-[1.75rem] font-black leading-[3.45rem] text-white sm:text-[2.1rem] sm:leading-[4rem]">
-          معيار منصة سعودية للتحضير للقدرات الكمي واللفظي بخطة يومية واضحة، وبنك أسئلة وملخصات ومراجعة مركزة.
-        </div>
-
-        <div className="mt-8 grid gap-5 lg:grid-cols-3">
-          {studentFooterCards.map((item) => {
-            const Icon = item.icon;
-
-            return (
-              <div
-                key={item.title}
-                className="rounded-[2rem] border border-white/22 bg-white/[0.08] px-7 py-8 text-right"
-              >
-                <div className="mb-5 flex items-center justify-between">
-                  <Icon className="h-6 w-6 text-[#ffcf73]" />
-                  <h3 className="text-[1.95rem] font-black text-[#ffcf73]">{item.title}</h3>
-                </div>
-                <p className="text-[1.18rem] leading-[2.55rem] text-white/92">{item.text}</p>
-              </div>
-            );
-          })}
-        </div>
-
-        <div className="mt-8 h-px bg-white/12" />
-
-        <div className="mt-6 flex flex-col gap-4 text-center text-[1.03rem] text-white/82 xl:flex-row xl:items-center xl:justify-between">
-          <p>مبني لطلاب القدرات الكمي واللفظي بواجهة أوضح ومسار يومي أذكى.</p>
-
-          <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-3 text-[1rem] font-semibold text-white/82">
+          <div
+            dir="rtl"
+            className="flex flex-wrap items-center justify-center gap-x-5 gap-y-3 text-sm font-semibold text-[#64748b] xl:gap-x-7"
+          >
+            <div className="inline-flex items-center gap-2 border-x border-[#e2e8f4] px-5 text-[#34445d]">
+              <RefreshCw className="h-5 w-5 text-[#2563eb]" />
+              <span>آخر تحديث اليوم، 10:30 م</span>
+            </div>
             {studentSupportLinks.map((item) => {
               const Icon = item.icon;
 
@@ -179,16 +114,31 @@ function StudentFooter() {
                 <Link
                   key={item.href}
                   href={item.href}
-                  className="inline-flex items-center gap-2 transition hover:text-white"
+                  className="inline-flex items-center gap-2 transition hover:text-[#2563eb]"
                 >
-                  <Icon className="h-4.5 w-4.5" />
+                  <Icon className="h-5 w-5 text-[#2563eb]" />
                   {item.label}
                 </Link>
               );
             })}
           </div>
 
-          <p>© 2026 معيار. جميع الحقوق محفوظة.</p>
+          <Link
+            href="/contact?topic=support"
+            dir="rtl"
+            className="group flex items-center justify-center gap-4 rounded-full bg-white px-4 py-3 shadow-[0_16px_40px_rgba(37,99,235,0.12)] ring-1 ring-[#e8eefb] transition hover:-translate-y-0.5 hover:shadow-[0_20px_46px_rgba(37,99,235,0.16)] lg:justify-start"
+          >
+            <span className="flex h-20 w-20 shrink-0 items-center justify-center rounded-full bg-[#2563eb] text-white shadow-[0_16px_32px_rgba(37,99,235,0.35)]">
+              <Bot className="h-10 w-10" />
+            </span>
+            <span className="text-right">
+              <span className="block text-base font-black text-[#102247]">مساعدك الذكي</span>
+              <span className="mt-1 flex items-center gap-2 text-sm text-[#6d7b92]">
+                <span className="h-2 w-2 rounded-full bg-emerald-500" />
+                نحن هنا لمساعدتك
+              </span>
+            </span>
+          </Link>
         </div>
       </div>
     </footer>
@@ -197,6 +147,10 @@ function StudentFooter() {
 
 export function SiteFooter({ variant = "auto" }: SiteFooterProps) {
   const { status } = useAuthSession();
+  if (variant === "auto" && status === "loading") {
+    return null;
+  }
+
   const isStudent =
     variant === "student" || (variant === "auto" && status === "authenticated");
 
