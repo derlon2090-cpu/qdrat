@@ -39,6 +39,7 @@ import {
   Trophy,
   User,
   Wallet,
+  X,
   type LucideIcon,
 } from "lucide-react";
 
@@ -337,6 +338,7 @@ export function AccountPortal({ initialAuthUser }: AccountPortalProps) {
 
   const [achievementFilter, setAchievementFilter] = useState<"all" | "done" | "progress">("all");
   const [favoritesFilter, setFavoritesFilter] = useState<"all" | "tests" | "lessons">("all");
+  const [billingModal, setBillingModal] = useState<null | "manage" | "cancel">(null);
 
   useEffect(() => {
     setFullName(effectiveUser.fullName);
@@ -1000,72 +1002,216 @@ export function AccountPortal({ initialAuthUser }: AccountPortalProps) {
     ];
 
     return (
-      <Card className="mx-auto max-w-[760px] rounded-[2rem] border border-[#e7edf8] bg-white shadow-[0_24px_60px_rgba(37,99,235,0.08)]">
-        <CardContent className="space-y-6 p-6 md:p-8">
-          <div className="flex items-center justify-between text-xs font-semibold text-slate-400">
-            <div className="flex items-center gap-1">
-              <ChevronLeft className="h-3.5 w-3.5" />
-              <span>الاشتراكات والفواتير</span>
-            </div>
-            <span>الإعدادات</span>
-          </div>
-
-          <div className="grid items-start gap-6 md:grid-cols-[minmax(0,1fr)_140px] md:[direction:ltr]">
-            <div className="space-y-4 text-right md:[direction:rtl]">
-              <h3 className="text-[2rem] font-black text-[#123B7A]">الاشتراكات والفواتير</h3>
-              <p className="text-sm leading-7 text-slate-500">
-                متابعة اشتراكك الحالي والاطلاع على حالة الباقة والفواتير المرتبطة بحسابك.
-              </p>
-            </div>
-            <div className="flex justify-center md:[direction:rtl]">
-              <div className="flex h-24 w-24 items-center justify-center rounded-[1.7rem] bg-[linear-gradient(180deg,#f4f8ff_0%,#dfe9ff_100%)] shadow-[0_16px_32px_rgba(59,130,246,0.12)]">
-                <CreditCard className="h-10 w-10 text-[#5b7cff]" />
+      <>
+        <Card className="mx-auto max-w-[760px] rounded-[2rem] border border-[#e7edf8] bg-white shadow-[0_24px_60px_rgba(37,99,235,0.08)]">
+          <CardContent className="space-y-6 p-6 md:p-8">
+            <div className="flex items-center justify-between text-xs font-semibold text-slate-400">
+              <div className="flex items-center gap-1">
+                <ChevronLeft className="h-3.5 w-3.5" />
+                <span>الاشتراكات والفواتير</span>
               </div>
+              <span>الإعدادات</span>
             </div>
-          </div>
 
-          <div className="rounded-[1.35rem] border border-[#dce6ff] bg-[linear-gradient(135deg,#0f2f61_0%,#123b7a_55%,#1f4eea_100%)] p-5 text-white shadow-[0_18px_38px_rgba(18,59,122,0.22)]">
-            <div className="flex items-start justify-between gap-4">
-              <div className="flex h-12 w-12 items-center justify-center rounded-[1rem] bg-white/10 text-white">
-                <Crown className="h-6 w-6" />
+            <div className="grid items-start gap-6 md:grid-cols-[minmax(0,1fr)_140px] md:[direction:ltr]">
+              <div className="space-y-4 text-right md:[direction:rtl]">
+                <h3 className="text-[2rem] font-black text-[#123B7A]">الاشتراكات والفواتير</h3>
+                <p className="text-sm leading-7 text-slate-500">
+                  متابعة اشتراكك الحالي والاطلاع على حالة الباقة والفواتير المرتبطة بحسابك.
+                </p>
               </div>
-              <div className="space-y-2 text-right">
-                <div className="inline-flex items-center rounded-full bg-[#1f8f55] px-2.5 py-1 text-[11px] font-bold">نشطة</div>
-                <div className="text-xl font-black">الباقة المميزة</div>
-                <p className="text-sm text-white/80">الوصول الكامل لجميع البنوك والاختبارات حتى 15 مايو 2024</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="grid gap-3 sm:grid-cols-4">
-            {billingFeatures.map(({ label, icon: Icon }) => (
-              <div key={label} className="rounded-[1.1rem] border border-[#edf2fb] bg-[#fbfdff] p-4 text-center">
-                <Icon className="mx-auto h-5 w-5 text-[#2563eb]" />
-                <div className="mt-3 text-sm font-semibold text-slate-700">{label}</div>
-              </div>
-            ))}
-          </div>
-
-          <div className="space-y-4 rounded-[1.2rem] border border-[#edf2fb] bg-white p-5">
-            <div className="flex items-center justify-between">
-              <div className="rounded-full border border-[#d7e3ff] px-3 py-1 text-xs font-bold text-[#2563eb]">فيزا</div>
-              <div className="text-right">
-                <div className="text-lg font-bold text-slate-800">طريقة الدفع</div>
-                <div className="text-sm text-slate-500">**** **** **** 4242</div>
+              <div className="flex justify-center md:[direction:rtl]">
+                <div className="flex h-24 w-24 items-center justify-center rounded-[1.7rem] bg-[linear-gradient(180deg,#f4f8ff_0%,#dfe9ff_100%)] shadow-[0_16px_32px_rgba(59,130,246,0.12)]">
+                  <CreditCard className="h-10 w-10 text-[#5b7cff]" />
+                </div>
               </div>
             </div>
 
-            <div className="flex flex-wrap gap-3">
-              <Button type="button" variant="outline" className="h-11 rounded-[0.95rem] border-[#d7e3ff] px-5 text-[#2563eb] shadow-none">
-                إدارة الاشتراك
-              </Button>
-              <Button type="button" variant="ghost" className="h-11 rounded-[0.95rem] px-4 text-rose-500 hover:bg-rose-50 hover:text-rose-600">
-                إلغاء الاشتراك
-              </Button>
+            <div className="rounded-[1.35rem] border border-[#dce6ff] bg-[linear-gradient(135deg,#0f2f61_0%,#123b7a_55%,#1f4eea_100%)] p-5 text-white shadow-[0_18px_38px_rgba(18,59,122,0.22)]">
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex h-12 w-12 items-center justify-center rounded-[1rem] bg-white/10 text-white">
+                  <Crown className="h-6 w-6" />
+                </div>
+                <div className="space-y-2 text-right">
+                  <div className="inline-flex items-center rounded-full bg-[#1f8f55] px-2.5 py-1 text-[11px] font-bold">نشطة</div>
+                  <div className="text-xl font-black">الباقة المميزة</div>
+                  <p className="text-sm text-white/80">الوصول الكامل لجميع البنوك والاختبارات حتى 15 مايو 2024</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="grid gap-3 sm:grid-cols-4">
+              {billingFeatures.map(({ label, icon: Icon }) => (
+                <div key={label} className="rounded-[1.1rem] border border-[#edf2fb] bg-[#fbfdff] p-4 text-center">
+                  <Icon className="mx-auto h-5 w-5 text-[#2563eb]" />
+                  <div className="mt-3 text-sm font-semibold text-slate-700">{label}</div>
+                </div>
+              ))}
+            </div>
+
+            <div className="space-y-4 rounded-[1.2rem] border border-[#edf2fb] bg-white p-5">
+              <div className="flex items-center justify-between">
+                <div className="rounded-full border border-[#d7e3ff] px-3 py-1 text-xs font-bold text-[#2563eb]">فيزا</div>
+                <div className="text-right">
+                  <div className="text-lg font-bold text-slate-800">طريقة الدفع</div>
+                  <div className="text-sm text-slate-500">**** **** **** 4242</div>
+                </div>
+              </div>
+
+              <div className="flex flex-wrap items-center justify-end gap-4">
+                <button
+                  type="button"
+                  onClick={() => setBillingModal("manage")}
+                  className="flex h-14 min-w-[190px] items-center justify-center rounded-[1.25rem] border border-[#cfe0ff] bg-white px-7 text-[1.05rem] font-bold text-[#2563eb] shadow-[0_10px_20px_rgba(37,99,235,0.06)] transition hover:bg-[#f8fbff]"
+                >
+                  إدارة الاشتراك
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setBillingModal("cancel")}
+                  className="text-[1.02rem] font-bold text-[#ff4c57] transition hover:text-[#e53945]"
+                >
+                  إلغاء الاشتراك
+                </button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {billingModal === "manage" ? (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-[rgba(15,23,42,0.34)] p-4 backdrop-blur-sm">
+            <div className="w-full max-w-[640px] rounded-[2rem] border border-[#e6edfb] bg-white p-6 shadow-[0_35px_90px_rgba(15,23,42,0.18)] md:p-8">
+              <div className="mb-8 flex items-start justify-between">
+                <button type="button" onClick={() => setBillingModal(null)} className="text-slate-400 transition hover:text-slate-600">
+                  <X className="h-7 w-7" />
+                </button>
+                <div className="space-y-4 text-center">
+                  <div className="relative mx-auto flex h-28 w-28 items-center justify-center rounded-full bg-[linear-gradient(180deg,#f7faff_0%,#edf3ff_100%)]">
+                    <CreditCard className="h-12 w-12 text-[#2563eb]" />
+                    <div className="absolute -right-1 top-1 flex h-9 w-9 items-center justify-center rounded-full bg-[#2563eb] text-white shadow-[0_10px_20px_rgba(37,99,235,0.25)]">
+                      <ShieldCheck className="h-4 w-4" />
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <h3 className="text-[2.1rem] font-black text-[#123B7A]">إدارة الاشتراك</h3>
+                    <p className="text-base leading-8 text-slate-500">تحكم في اشتراكك وبيانات الدفع الخاصة بك</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-5 rounded-[1.55rem] border border-[#edf2fb] bg-white p-5 shadow-[0_12px_30px_rgba(15,23,42,0.04)]">
+                <div className="text-right text-xl font-black text-[#2563eb]">تفاصيل الاشتراك</div>
+                <div className="grid gap-4 text-right text-lg text-slate-700 sm:grid-cols-2">
+                  <div className="space-y-2">
+                    <div className="text-slate-500">الخطة الحالية</div>
+                    <div className="font-bold">الخطة المميزة</div>
+                  </div>
+                  <div className="space-y-2">
+                    <div className="text-slate-500">تاريخ التجديد</div>
+                    <div className="font-bold">15 مايو 2024</div>
+                  </div>
+                  <div className="space-y-2">
+                    <div className="text-slate-500">طريقة الدفع</div>
+                    <div className="font-bold">Visa **** **** **** 4242</div>
+                  </div>
+                  <div className="space-y-2">
+                    <div className="text-slate-500">السعر</div>
+                    <div className="font-bold">99 ريال / شهر</div>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between rounded-[1.15rem] border border-[#d9e6ff] bg-[#f5f9ff] px-4 py-4">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-full border border-[#bcd1ff] text-[#2563eb]">
+                    <Crown className="h-6 w-6" />
+                  </div>
+                  <div className="text-right">
+                    <div className="text-lg font-bold text-[#2563eb]">استمتع بجميع المميزات المميزة</div>
+                    <div className="text-sm text-slate-500">لديك وصول كامل لجميع الميزات والاختبارات</div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-6 space-y-4">
+                <Button type="button" className="h-14 w-full rounded-[1.1rem] bg-[#2563eb] text-lg font-bold hover:bg-[#1d4ed8]">
+                  تغيير خطة الاشتراك
+                </Button>
+                <Button type="button" variant="outline" className="h-14 w-full rounded-[1.1rem] border-[#d7e3ff] text-lg font-bold text-[#2563eb] shadow-none">
+                  تحديث طريقة الدفع
+                </Button>
+                <button
+                  type="button"
+                  onClick={() => setBillingModal("cancel")}
+                  className="block w-full text-center text-[1.08rem] font-bold text-[#ff4c57] transition hover:text-[#e53945]"
+                >
+                  إلغاء الاشتراك
+                </button>
+              </div>
             </div>
           </div>
-        </CardContent>
-      </Card>
+        ) : null}
+
+        {billingModal === "cancel" ? (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-[rgba(15,23,42,0.34)] p-4 backdrop-blur-sm">
+            <div className="w-full max-w-[620px] rounded-[2rem] border border-[#f8d8dd] bg-white p-6 shadow-[0_35px_90px_rgba(15,23,42,0.18)] md:p-8">
+              <div className="mb-8 flex items-start justify-between">
+                <button type="button" onClick={() => setBillingModal(null)} className="text-slate-400 transition hover:text-slate-600">
+                  <X className="h-7 w-7" />
+                </button>
+                <div className="space-y-4 text-center">
+                  <div className="relative mx-auto flex h-28 w-28 items-center justify-center rounded-full bg-[linear-gradient(180deg,#fff7f7_0%,#fff0f1_100%)]">
+                    <Receipt className="h-12 w-12 text-[#ff5a67]" />
+                    <div className="absolute -right-1 top-1 flex h-9 w-9 items-center justify-center rounded-full bg-[#ff4c57] text-white shadow-[0_10px_20px_rgba(255,76,87,0.24)]">
+                      <X className="h-4 w-4" />
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <h3 className="text-[2.1rem] font-black text-[#123B7A]">إلغاء الاشتراك</h3>
+                    <p className="text-base leading-8 text-slate-500">هل أنت متأكد أنك تريد إلغاء اشتراكك؟</p>
+                    <p className="text-[1.02rem] text-slate-500">سيتم إلغاء اشتراكك بنهاية الفترة الحالية في 15 مايو 2024.</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="rounded-[1.25rem] border border-[#ffd8dd] bg-[#fffafb] px-5 py-5">
+                <div className="mb-5 text-center text-xl font-black text-[#ff4c57]">عند إلغاء الاشتراك ستفقد:</div>
+                <div className="space-y-4 text-right text-base text-slate-700">
+                  <div className="flex items-center justify-between gap-3">
+                    <Star className="h-5 w-5 text-[#ff5a67]" />
+                    <span>الوصول إلى جميع المميزات والاختبارات</span>
+                  </div>
+                  <div className="flex items-center justify-between gap-3">
+                    <Medal className="h-5 w-5 text-[#ff5a67]" />
+                    <span>تقارير الأداء والتحليلات المتقدمة</span>
+                  </div>
+                  <div className="flex items-center justify-between gap-3">
+                    <Bell className="h-5 w-5 text-[#ff5a67]" />
+                    <span>الدعم الفني والأولوية</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-5 flex items-center justify-between rounded-[1rem] border border-[#dbe5ff] bg-[#f8fbff] px-4 py-3 text-sm text-slate-500">
+                <Info className="h-4 w-4 text-[#2563eb]" />
+                <span>يمكنك العودة في أي وقت وإعادة تفعيل اشتراكك.</span>
+              </div>
+
+              <div className="mt-6 space-y-4">
+                <Button type="button" className="h-14 w-full rounded-[1.1rem] bg-[#ff4c57] text-lg font-bold hover:bg-[#ef3f4b]">
+                  نعم، إلغاء الاشتراك
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setBillingModal(null)}
+                  className="h-14 w-full rounded-[1.1rem] border-[#d7e3ff] text-lg font-bold text-slate-700 shadow-none"
+                >
+                  لا، احتفظ بالاشتراك
+                </Button>
+              </div>
+            </div>
+          </div>
+        ) : null}
+      </>
     );
   }
 
