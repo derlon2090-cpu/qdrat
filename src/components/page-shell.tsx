@@ -36,14 +36,14 @@ export function PageShell({
   children: React.ReactNode;
 }) {
   return (
-    <div className="min-h-screen">
+    <div className="flex min-h-screen flex-col">
       <SiteHeader
         variant={headerVariant}
         ctaHref={headerVariant === "public" ? undefined : ctaHref}
         ctaLabel={headerVariant === "public" ? undefined : ctaLabel}
         initialUser={initialAuthUser}
       />
-      <main className="section-shell pt-10 md:pt-14">
+      <main className="section-shell flex-1 pt-10 md:pt-14">
         <div className="mx-auto w-[min(calc(100%-1rem),1480px)] space-y-10 sm:w-[min(calc(100%-2rem),1480px)]">
           <Reveal>
             <Card className="page-shell-card overflow-hidden rounded-[2.3rem] border-white/80 bg-white/95 shadow-soft">
@@ -75,7 +75,7 @@ export function PageShell({
           {children}
         </div>
       </main>
-      <SiteFooter />
+      <SiteFooter variant={headerVariant === "public" ? "public" : headerVariant} />
     </div>
   );
 }

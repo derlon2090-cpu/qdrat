@@ -10,7 +10,7 @@ export default async function QuestionBankPage() {
   const initialAuthUser = await getInitialAuthUser();
 
   return (
-    <div className="min-h-screen">
+    <div className="flex min-h-screen flex-col">
       <DashboardRuntimeGuard resetKey="question-bank-header">
         <SiteHeader
           variant={initialAuthUser ? "student" : "public"}
@@ -20,7 +20,7 @@ export default async function QuestionBankPage() {
         />
       </DashboardRuntimeGuard>
 
-      <main className="section-shell pb-8 pt-6 md:pb-12 md:pt-8">
+      <main className="section-shell flex-1 pb-8 pt-6 md:pb-12 md:pt-8">
         <div className="mx-auto w-[min(calc(100%-1rem),1480px)] sm:w-[min(calc(100%-2rem),1480px)]">
           <DashboardRuntimeGuard resetKey="question-bank-main">
             <Suspense

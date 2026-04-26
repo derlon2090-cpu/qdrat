@@ -592,10 +592,10 @@ export function ChallengePortal({
   }, [data?.endsAt]);
 
   return (
-    <div className="min-h-screen bg-[linear-gradient(180deg,#f8fbff_0%,#f3f7ff_100%)]" dir="rtl">
+    <div className="flex min-h-screen flex-col bg-[linear-gradient(180deg,#f8fbff_0%,#f3f7ff_100%)]" dir="rtl">
       <SiteHeader variant="student" initialUser={initialAuthUser} />
 
-      <main className="mx-auto w-[min(calc(100%-1.6rem),1500px)] py-6 sm:w-[min(calc(100%-2rem),1500px)]">
+      <main className="mx-auto flex-1 w-[min(calc(100%-1.6rem),1500px)] py-6 sm:w-[min(calc(100%-2rem),1500px)]">
         {status === "loading" ? (
           <Card className="rounded-[2rem] border border-[#e8eefb] bg-white shadow-[0_20px_50px_rgba(15,23,42,0.05)]">
             <CardContent className="flex min-h-[420px] items-center justify-center gap-3 text-lg font-bold text-slate-500">

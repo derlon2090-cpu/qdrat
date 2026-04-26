@@ -2,12 +2,13 @@
 
 import Link from "next/link";
 import {
-  Bot,
+  ChevronUp,
   CircleHelp,
   Download,
   FileText,
   Headphones,
-  RefreshCcw,
+  LayoutPanelTop,
+  MessageCircleMore,
   ShieldCheck,
   Smartphone,
   TriangleAlert,
@@ -21,7 +22,39 @@ type SiteFooterProps = {
   variant?: "auto" | "public" | "student";
 };
 
-const studentActionLinks = [
+const studentFooterLinks = [
+  { href: "/dashboard", label: "لوحتي" },
+  { href: "/my-plan", label: "الخطة اليومية" },
+  { href: "/question-bank", label: "بنك الأسئلة" },
+  { href: "/question-bank?track=mistakes", label: "الأخطاء" },
+  { href: "/statistics", label: "المراجعة" },
+  { href: "/challenge", label: "تحدي الشهر" },
+  { href: "/summaries", label: "الملخصات" },
+  { href: "/paper-models", label: "النماذج" },
+  { href: "/account", label: "الإعدادات" },
+  { href: "/contact?topic=support", label: "الدعم" },
+  { href: "#top", label: "العودة للأعلى", icon: ChevronUp },
+];
+
+const studentFooterCards = [
+  {
+    title: "تواصل سريع",
+    text: "إذا كان عندك سؤال عن الاشتراك أو نقطة البداية أو الدعم، ستجد كل ما تحتاجه في صفحات واضحة ومباشرة.",
+    icon: MessageCircleMore,
+  },
+  {
+    title: "واجهتان أوضح",
+    text: "الزائر يرى منصة تعريفية مرنة، والطالب يرى لوحة عملية تبدأ بخطة اليوم ثم تعيده لما كان يعمل عليه.",
+    icon: LayoutPanelTop,
+  },
+  {
+    title: "ثقة وتنظيم",
+    text: "كل قسم صار في مكانه الصحيح مع انتقالات أوضح وأزرار أسهل سواء كنت زائرًا أو طالبًا داخل المنصة.",
+    icon: ShieldCheck,
+  },
+];
+
+const studentSupportLinks = [
   { href: "/privacy", label: "سياسة الخصوصية", icon: ShieldCheck },
   { href: "/terms", label: "الشروط", icon: FileText },
   { href: "/contact?topic=bug", label: "الإبلاغ عن خطأ", icon: TriangleAlert },
@@ -84,68 +117,78 @@ function PublicFooter() {
 
 function StudentFooter() {
   return (
-    <footer className="bg-[radial-gradient(circle_at_top,#eef5ff_0%,#f8fbff_38%,#ffffff_100%)]">
-      <div className="mx-auto w-[min(calc(100%-1rem),1480px)] py-10 sm:w-[min(calc(100%-2rem),1480px)] sm:py-12">
-        <div className="rounded-[2.25rem] border border-[#e6eefc] bg-white px-6 py-7 shadow-[0_26px_80px_rgba(15,23,42,0.08)] sm:px-8 lg:px-12">
-          <div className="flex flex-col gap-6 xl:flex-row xl:items-center xl:justify-between">
-            <div className="order-3 flex flex-col items-center gap-3 text-center xl:order-1 xl:min-w-[260px] xl:items-start xl:text-right">
-              <MiyaarLogo href="/dashboard" className="justify-center xl:justify-start" />
-              <p className="text-[1.03rem] font-medium text-[#74839d]">
-                جميع الحقوق محفوظة © 2024
-              </p>
-            </div>
+    <footer className="mt-auto bg-[#173f78] text-white">
+      <div className="mx-auto w-[min(calc(100%-1rem),1480px)] px-5 py-10 sm:w-[min(calc(100%-2rem),1480px)] sm:px-8 lg:px-12">
+        <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+          <FooterPills />
+          <MiyaarLogo href="/dashboard" className="justify-start [&_strong]:text-white" />
+        </div>
 
-            <div className="order-2 flex flex-1 flex-col items-center gap-5 xl:px-6">
-              <div className="flex flex-wrap items-center justify-center gap-4 text-center text-[#50607c] lg:gap-6">
-                <div className="flex items-center gap-3 rounded-full px-1 py-1">
-                  <RefreshCcw className="h-6 w-6 text-[#2f6df2]" />
-                  <div className="text-right leading-7">
-                    <div className="text-base font-semibold">آخر تحديث</div>
-                    <div className="text-[1.15rem] font-bold text-[#123b7a]">اليوم، 10:30 م</div>
-                  </div>
+        <div className="mt-7 h-px bg-white/12" />
+
+        <div className="mt-7 flex flex-wrap items-center justify-center gap-x-8 gap-y-4 text-[1.08rem] font-extrabold text-white">
+          {studentFooterLinks.map((item) => {
+            const Icon = item.icon;
+
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className="inline-flex items-center gap-2 text-white transition hover:text-white/90"
+              >
+                {item.label}
+                {Icon ? <Icon className="h-5 w-5" /> : null}
+              </Link>
+            );
+          })}
+        </div>
+
+        <div className="mt-7 rounded-[2rem] border border-white/18 bg-white/[0.05] px-8 py-10 text-center text-[1.75rem] font-black leading-[3.45rem] text-white sm:text-[2.1rem] sm:leading-[4rem]">
+          معيار منصة سعودية للتحضير للقدرات الكمي واللفظي بخطة يومية واضحة، وبنك أسئلة وملخصات ومراجعة مركزة.
+        </div>
+
+        <div className="mt-8 grid gap-5 lg:grid-cols-3">
+          {studentFooterCards.map((item) => {
+            const Icon = item.icon;
+
+            return (
+              <div
+                key={item.title}
+                className="rounded-[2rem] border border-white/22 bg-white/[0.08] px-7 py-8 text-right"
+              >
+                <div className="mb-5 flex items-center justify-between">
+                  <Icon className="h-6 w-6 text-[#ffcf73]" />
+                  <h3 className="text-[1.95rem] font-black text-[#ffcf73]">{item.title}</h3>
                 </div>
-
-                <div className="hidden h-10 w-px bg-[#e8eef8] lg:block" />
-
-                <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-3 text-[1.06rem] font-semibold text-[#5e6f8a]">
-                  {studentActionLinks.map((item, index) => {
-                    const Icon = item.icon;
-
-                    return (
-                      <div key={item.href} className="flex items-center">
-                        <Link
-                          href={item.href}
-                          className="inline-flex items-center gap-2 transition hover:text-[#2563eb]"
-                        >
-                          <Icon className="h-5 w-5 text-[#2f6df2]" />
-                          {item.label}
-                        </Link>
-                        {index !== studentActionLinks.length - 1 ? (
-                          <span className="mx-4 hidden h-8 w-px bg-[#e8eef8] md:block" />
-                        ) : null}
-                      </div>
-                    );
-                  })}
-                </div>
+                <p className="text-[1.18rem] leading-[2.55rem] text-white/92">{item.text}</p>
               </div>
-            </div>
+            );
+          })}
+        </div>
 
-            <div className="order-1 flex justify-center xl:order-3 xl:min-w-[300px] xl:justify-end">
-              <div className="flex items-center gap-4 rounded-full border border-[#ebf2ff] bg-[#fbfdff] px-5 py-4 shadow-[0_16px_40px_rgba(15,23,42,0.06)]">
-                <div className="space-y-1 text-right">
-                  <div className="text-[1.55rem] font-black text-[#123b7a]">مساعدك الذكي</div>
-                  <div className="inline-flex items-center gap-2 text-[1.02rem] font-medium text-[#64748b]">
-                    <span className="h-2.5 w-2.5 rounded-full bg-[#22c55e]" />
-                    نحن هنا لمساعدتك
-                  </div>
-                </div>
+        <div className="mt-8 h-px bg-white/12" />
 
-                <div className="flex h-20 w-20 items-center justify-center rounded-full bg-[radial-gradient(circle_at_35%_35%,#56a1ff_0%,#2f6df2_55%,#123b7a_100%)] text-white shadow-[0_18px_38px_rgba(37,99,235,0.25)]">
-                  <Bot className="h-10 w-10" />
-                </div>
-              </div>
-            </div>
+        <div className="mt-6 flex flex-col gap-4 text-center text-[1.03rem] text-white/82 xl:flex-row xl:items-center xl:justify-between">
+          <p>مبني لطلاب القدرات الكمي واللفظي بواجهة أوضح ومسار يومي أذكى.</p>
+
+          <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-3 text-[1rem] font-semibold text-white/82">
+            {studentSupportLinks.map((item) => {
+              const Icon = item.icon;
+
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className="inline-flex items-center gap-2 transition hover:text-white"
+                >
+                  <Icon className="h-4.5 w-4.5" />
+                  {item.label}
+                </Link>
+              );
+            })}
           </div>
+
+          <p>© 2026 معيار. جميع الحقوق محفوظة.</p>
         </div>
       </div>
     </footer>

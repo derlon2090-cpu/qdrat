@@ -1440,10 +1440,10 @@ export function AccountPortal({ initialAuthUser }: AccountPortalProps) {
   }
 
   return (
-    <div dir="rtl" className="min-h-screen bg-[radial-gradient(circle_at_top,#eef5ff_0%,#f8fbff_32%,#ffffff_70%)] text-slate-900">
+    <div dir="rtl" className="flex min-h-screen flex-col bg-[radial-gradient(circle_at_top,#eef5ff_0%,#f8fbff_32%,#ffffff_70%)] text-slate-900">
       <SiteHeader variant="student" links={studentTopNavItems} initialUser={initialAuthUser} />
 
-      <main className="mx-auto w-[min(calc(100%-1rem),1480px)] pb-8 pt-5 sm:w-[min(calc(100%-2rem),1480px)] md:pb-12 md:pt-7">
+      <main className="mx-auto flex-1 w-[min(calc(100%-1rem),1480px)] pb-8 pt-5 sm:w-[min(calc(100%-2rem),1480px)] md:pb-12 md:pt-7">
         <div className="grid gap-6 xl:[direction:ltr] xl:grid-cols-[minmax(0,1fr)_290px]">
           <section className="space-y-6 xl:[direction:rtl]">{renderMainSection()}</section>
 

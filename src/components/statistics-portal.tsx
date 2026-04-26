@@ -697,14 +697,14 @@ export function StatisticsPortal({
   }, [data]);
 
   return (
-    <div dir="rtl" className="min-h-screen bg-[#f7fbff] text-slate-900">
+    <div dir="rtl" className="flex min-h-screen flex-col bg-[#f7fbff] text-slate-900">
       <SiteHeader
         variant={isAuthenticated ? "student" : "public"}
         links={isAuthenticated ? studentLinks : undefined}
         initialUser={initialAuthUser}
       />
 
-      <main className="pb-16 pt-8 md:pt-10">
+      <main className="flex-1 pb-16 pt-8 md:pt-10">
         <div className="mx-auto w-[min(calc(100%-1rem),1280px)] space-y-8 sm:w-[min(calc(100%-2rem),1280px)]">
           {!isAuthenticated ? (
             <StatisticsAccessCard />

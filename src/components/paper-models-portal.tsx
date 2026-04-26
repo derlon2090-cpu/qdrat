@@ -277,14 +277,14 @@ export function PaperModelsPortal({
   const pagedModels = visibleModels.slice(0, 8);
 
   return (
-    <div dir="rtl" className="min-h-screen bg-[#f7fbff] text-slate-900">
+    <div dir="rtl" className="flex min-h-screen flex-col bg-[#f7fbff] text-slate-900">
       <SiteHeader
         variant={isAuthenticated ? "student" : "public"}
         links={isAuthenticated ? studentModelLinks : undefined}
         initialUser={initialAuthUser}
       />
 
-      <main className="pb-16 pt-8 md:pt-10">
+      <main className="flex-1 pb-16 pt-8 md:pt-10">
         <div className="mx-auto w-[min(calc(100%-1rem),1280px)] space-y-8 sm:w-[min(calc(100%-2rem),1280px)]">
           <Card className="overflow-hidden rounded-[2rem] border border-[#e8eefb] bg-[linear-gradient(180deg,#ffffff_0%,#fbfdff_100%)] shadow-[0_20px_50px_rgba(15,23,42,0.05)]">
             <CardContent className="p-6 md:p-8">
