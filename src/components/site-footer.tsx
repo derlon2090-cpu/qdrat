@@ -2,20 +2,18 @@
 
 import Link from "next/link";
 import {
-  Download,
   FileText,
   Headphones,
   Lightbulb,
+  Play,
   RefreshCw,
   ShieldCheck,
-  Smartphone,
   TriangleAlert,
 } from "lucide-react";
 
 import { MiyaarLogo } from "@/components/miyaar-logo";
 import { StudentSupportAssistant } from "@/components/student-support-assistant";
 import { useAuthSession } from "@/hooks/use-auth-session";
-import { publicFooterLinks } from "@/lib/site-nav";
 
 type SiteFooterProps = {
   variant?: "auto" | "public" | "student";
@@ -29,54 +27,107 @@ const studentSupportLinks = [
   { href: "/contact?topic=support", label: "دعم فني", icon: Headphones },
 ];
 
-function FooterPills() {
+const publicQuickLinks = [
+  { href: "/", label: "الرئيسية" },
+  { href: "/question-bank", label: "بنك الأسئلة" },
+  { href: "/plans", label: "الخطط الدراسية" },
+  { href: "/summaries", label: "الملخصات" },
+  { href: "/pricing", label: "الأسعار" },
+];
+
+const publicInfoLinks = [
+  { href: "/about", label: "عن معيار" },
+  { href: "/faq", label: "الأسئلة الشائعة" },
+  { href: "/privacy", label: "سياسة الخصوصية" },
+  { href: "/terms", label: "شروط الاستخدام" },
+  { href: "/contact", label: "اتصل بنا" },
+];
+
+const socialLinks = [
+  { href: "https://www.linkedin.com", label: "in" },
+  { href: "https://www.youtube.com", label: "play", icon: Play },
+  { href: "https://www.instagram.com", label: "◎" },
+  { href: "https://x.com", label: "𝕏" },
+];
+
+function StoreButton({ children }: { children: string }) {
   return (
-    <div className="flex flex-wrap items-center gap-3">
-      <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/6 px-5 py-3 text-sm font-bold text-white">
-        <Download className="h-4 w-4" />
-        حمل التطبيق قريبًا
-      </span>
-      <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/6 px-5 py-3 text-sm font-bold text-white/95">
-        <Smartphone className="h-4 w-4" />
-        iOS / Android
-      </span>
-    </div>
+    <span className="inline-flex h-14 w-72 max-w-full items-center justify-center rounded-[1.05rem] bg-black px-5 text-center text-base font-black tracking-tight text-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
+      {children}
+    </span>
   );
 }
 
 function PublicFooter() {
   return (
-    <footer className="bg-[linear-gradient(180deg,#16386e_0%,#133463_100%)] text-white">
-      <div className="mx-auto w-[min(calc(100%-1rem),1480px)] px-5 py-10 sm:w-[min(calc(100%-2rem),1480px)] sm:px-8 lg:px-12">
-        <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
-          <FooterPills />
-          <MiyaarLogo href="/" className="justify-start [&_strong]:text-white" />
+    <footer className="bg-white text-[#0f3670]">
+      <div className="mx-auto w-[min(calc(100%-2rem),1480px)] px-4 pb-9 pt-16 sm:w-[min(calc(100%-4rem),1480px)] lg:px-0">
+        <div
+          dir="rtl"
+          className="grid gap-12 text-center md:grid-cols-2 md:text-right xl:grid-cols-[1.35fr_1fr_1fr_1.15fr]"
+        >
+          <div className="flex flex-col items-center md:items-start">
+            <MiyaarLogo href="/" className="justify-center md:justify-start" />
+            <p className="mt-8 max-w-sm text-xl font-medium leading-[2.1] text-[#536985]">
+              منصة تعليمية مبتكرة تساعد على الاستعداد لاختبار القدرات بكفاءة وثقة.
+            </p>
+            <div className="mt-8 flex items-center justify-center gap-4 md:justify-start">
+              {socialLinks.map((item) => {
+                const Icon = item.icon;
+
+                return (
+                  <Link
+                    key={item.label}
+                    href={item.href}
+                    className="flex h-12 w-12 items-center justify-center rounded-full bg-[#f0f5ff] text-sm font-bold text-[#2563eb] transition hover:-translate-y-0.5 hover:bg-[#2563eb] hover:text-white"
+                    aria-label={item.label}
+                  >
+                    {Icon ? <Icon className="h-5 w-5 fill-current" /> : item.label}
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+
+          <div>
+            <h3 className="text-2xl font-black text-[#0f3670]">روابط سريعة</h3>
+            <div className="mt-8 flex flex-col gap-5 text-xl font-medium text-[#536985]">
+              {publicQuickLinks.map((link) => (
+                <Link key={link.href} href={link.href} className="transition hover:text-[#2563eb]">
+                  {link.label}
+                </Link>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <h3 className="text-2xl font-black text-[#0f3670]">معلومات</h3>
+            <div className="mt-8 flex flex-col gap-5 text-xl font-medium text-[#536985]">
+              {publicInfoLinks.map((link) => (
+                <Link key={link.href} href={link.href} className="transition hover:text-[#2563eb]">
+                  {link.label}
+                </Link>
+              ))}
+            </div>
+          </div>
+
+          <div className="flex flex-col items-center md:items-start">
+            <h3 className="text-2xl font-black text-[#0f3670]">حمّل تطبيقنا</h3>
+            <p className="mt-8 text-xl font-medium leading-9 text-[#536985]">
+              تجربة أفضل على التطبيق
+            </p>
+            <div className="mt-8 flex w-full flex-col items-center gap-4 md:items-start">
+              <StoreButton>Download on the App Store</StoreButton>
+              <StoreButton>GET IT ON Google Play</StoreButton>
+            </div>
+          </div>
         </div>
 
-        <div className="mt-7 h-px bg-white/12" />
+        <div className="mt-16 h-px bg-[#e4ebf5]" />
 
-        <div className="mt-7 flex flex-wrap items-center justify-center gap-x-8 gap-y-4 text-[1.08rem] font-bold">
-          {publicFooterLinks.map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              className="text-white/95 transition hover:text-white"
-            >
-              {link.label}
-            </Link>
-          ))}
-        </div>
-
-        <div className="mt-7 rounded-[1.7rem] border border-white/30 bg-white/[0.03] px-6 py-6 text-center text-[1.45rem] font-extrabold leading-9 text-white sm:text-[1.75rem] sm:leading-[3rem]">
-          معيار منصة سعودية للتحضير للقدرات الكمي واللفظي بخطة يومية واضحة، وبنك أسئلة وملخصات ومراجعة مركزة.
-        </div>
-
-        <div className="mt-8 h-px bg-white/12" />
-
-        <div className="mt-7 flex flex-col gap-4 text-center text-[1.03rem] text-white/80 lg:flex-row lg:items-center lg:justify-between">
-          <p>© 2026 معيار. جميع الحقوق محفوظة.</p>
-          <p>واجهة تعريفية واضحة للزائر مع وصول أسرع لبنك الأسئلة والخطط والملخصات.</p>
-        </div>
+        <p className="mt-9 text-center text-base font-medium text-[#8aa0bd]">
+          جميع الحقوق محفوظة © 2024 معيار
+        </p>
       </div>
     </footer>
   );
