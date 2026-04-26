@@ -2,8 +2,8 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Bell, Cog, Menu, X, type LucideIcon } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { Bell, BookOpen, ClipboardList, Cog, Menu, Tag, Trophy, X, type LucideIcon } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import type { AuthSessionUser } from "@/lib/auth-shared";
 import { HeaderAuthControls } from "@/components/header-auth-controls";
@@ -91,6 +91,149 @@ function HeaderUtilityButton({
         </span>
       ) : null}
     </Link>
+  );
+}
+
+const headerNotifications = [
+  {
+    title: "إنجاز جديد",
+    description: "مبروك! لقد حققت إنجاز التميز",
+    time: "منذ 5 دقائق",
+    icon: Trophy,
+    tone: "bg-[#fff4df] text-[#f5a623]",
+  },
+  {
+    title: "تذكير يومي",
+    description: "لا تنس حل أسئلتك اليومية",
+    time: "منذ 1 ساعة",
+    icon: ClipboardList,
+    tone: "bg-[#eef4ff] text-[#2563eb]",
+  },
+  {
+    title: "محتوى جديد",
+    description: "تم إضافة 10 أسئلة جديدة في قسم القدرات",
+    time: "منذ 3 ساعات",
+    icon: BookOpen,
+    tone: "bg-[#eafaf1] text-[#16a34a]",
+  },
+  {
+    title: "عرض خاص",
+    description: "احصل على خصم 20% على الاشتراك السنوي",
+    time: "منذ يوم واحد",
+    icon: Tag,
+    tone: "bg-[#f4ecff] text-[#8b5cf6]",
+  },
+];
+
+function HeaderNotificationsButton({
+  className,
+}: {
+  className?: string;
+}) {
+  const [open, setOpen] = useState(false);
+  const panelRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (!open) return;
+
+    function handlePointerDown(event: MouseEvent) {
+      if (!panelRef.current?.contains(event.target as Node)) {
+        setOpen(false);
+      }
+    }
+
+    function handleEscape(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        setOpen(false);
+      }
+    }
+
+    document.addEventListener("mousedown", handlePointerDown);
+    document.addEventListener("keydown", handleEscape);
+
+    return () => {
+      document.removeEventListener("mousedown", handlePointerDown);
+      document.removeEventListener("keydown", handleEscape);
+    };
+  }, [open]);
+
+  return (
+    <div className={cn("relative", className)} ref={panelRef}>
+      <button
+        type="button"
+        aria-label="الإشعارات"
+        aria-expanded={open}
+        aria-haspopup="dialog"
+        onClick={() => setOpen((current) => !current)}
+        className="relative flex h-[52px] w-[52px] items-center justify-center rounded-[1.05rem] border border-[#e6edf9] bg-white text-[#123B7A] shadow-[0_10px_22px_rgba(15,23,42,0.045)] transition hover:border-[#cdddff] hover:bg-[#f8fbff]"
+      >
+        <Bell className="h-5 w-5" />
+        <span className="absolute left-1 top-1 flex h-6 min-w-6 items-center justify-center rounded-full bg-[#ef4444] px-1 text-[11px] font-extrabold text-white">
+          3
+        </span>
+      </button>
+
+      {open ? (
+        <div
+          dir="rtl"
+          className="absolute left-0 top-[calc(100%+0.8rem)] z-[10020] w-[340px] rounded-[1.5rem] border border-[#e7edf8] bg-white p-4 shadow-[0_30px_65px_rgba(15,23,42,0.14)]"
+        >
+          <div className="mb-4 flex items-center justify-between">
+            <Link
+              href="/dashboard"
+              onClick={() => setOpen(false)}
+              className="text-sm font-semibold text-[#2563eb] transition hover:text-[#1d4ed8]"
+            >
+              عرض الكل
+            </Link>
+            <h3 className="text-[1.75rem] font-black text-[#123B7A]">الإشعارات</h3>
+          </div>
+
+          <div className="space-y-3">
+            {headerNotifications.map((item) => {
+              const Icon = item.icon;
+
+              return (
+                <div
+                  key={item.title}
+                  className="relative rounded-[1.15rem] border border-[#f1f5fd] bg-[linear-gradient(180deg,#ffffff_0%,#fbfdff_100%)] px-4 py-4 shadow-[0_8px_20px_rgba(15,23,42,0.025)]"
+                >
+                  <span className="absolute right-3 top-3 h-2.5 w-2.5 rounded-full bg-[#ff3b3b]" />
+                  <div className="flex items-center justify-between gap-4">
+                    <div className={cn("flex h-14 w-14 items-center justify-center rounded-full", item.tone)}>
+                      <Icon className="h-6 w-6" />
+                    </div>
+                    <div className="flex-1 space-y-1 text-right">
+                      <div className="text-[1.05rem] font-extrabold text-slate-800">{item.title}</div>
+                      <div className="text-sm leading-6 text-slate-500">{item.description}</div>
+                      <div className="text-xs font-medium text-slate-400">{item.time}</div>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          <div className="mt-4 flex items-center justify-between px-1">
+            <Link
+              href="/account"
+              onClick={() => setOpen(false)}
+              className="inline-flex items-center gap-1 text-sm font-semibold text-slate-500 transition hover:text-[#123B7A]"
+            >
+              <Cog className="h-4 w-4" />
+              إعدادات الإشعارات
+            </Link>
+            <Link
+              href="/dashboard"
+              onClick={() => setOpen(false)}
+              className="text-sm font-semibold text-[#2563eb] transition hover:text-[#1d4ed8]"
+            >
+              عرض الكل
+            </Link>
+          </div>
+        </div>
+      ) : null}
+    </div>
   );
 }
 
@@ -216,15 +359,7 @@ export function SiteHeader({
               <Menu className="h-5 w-5" />
             </button>
 
-            {isAuthenticated ? (
-              <HeaderUtilityButton
-                href="/dashboard#notifications"
-                icon={Bell}
-                badge={3}
-                label="الإشعارات"
-                className="hidden lg:flex"
-              />
-            ) : null}
+            {isAuthenticated ? <HeaderNotificationsButton className="hidden lg:block" /> : null}
 
             <HeaderAuthControls
               variant="public"
@@ -350,7 +485,7 @@ export function SiteHeader({
           <div className="flex items-center gap-2.5" dir="ltr">
             {isStudentArea && isAuthenticated ? (
               <>
-                <HeaderUtilityButton href="/dashboard#notifications" icon={Bell} badge={3} label="الإشعارات" className="hidden xl:flex" />
+                <HeaderNotificationsButton className="hidden xl:block" />
                 <HeaderUtilityButton href="/account" icon={Cog} label="الإعدادات" className="hidden xl:flex" />
               </>
             ) : null}
