@@ -86,7 +86,7 @@ const socialLinks = [
 
 function StoreButton({ children }: { children: string }) {
   return (
-    <span className="inline-flex h-14 w-72 max-w-full items-center justify-center rounded-[1.05rem] bg-black px-5 text-center text-base font-black tracking-tight text-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
+    <span className="inline-flex min-h-[3.4rem] w-[19.5rem] max-w-full items-center justify-center rounded-[1rem] bg-black px-4 py-3 text-center text-sm font-bold text-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
       {children}
     </span>
   );
@@ -95,17 +95,17 @@ function StoreButton({ children }: { children: string }) {
 function PublicFooter() {
   return (
     <footer className="bg-white text-[#0f3670]">
-      <div className="mx-auto w-[min(calc(100%-2rem),1480px)] px-4 pb-9 pt-16 sm:w-[min(calc(100%-4rem),1480px)] lg:px-0">
+      <div className="mx-auto w-[min(calc(100%-2.5rem),1480px)] px-0 pb-10 pt-16 sm:w-[min(calc(100%-4rem),1480px)]">
         <div
           dir="rtl"
-          className="grid gap-12 text-center md:grid-cols-2 md:text-right xl:grid-cols-[1.35fr_1fr_1fr_1.15fr]"
+          className="grid gap-10 text-center md:grid-cols-2 md:text-right xl:grid-cols-[1.25fr_1fr_1fr_1fr]"
         >
           <div className="flex flex-col items-center md:items-start">
             <MiyaarLogo href="/" className="justify-center md:justify-start" />
-            <p className="mt-8 max-w-sm text-xl font-medium leading-[2.1] text-[#536985]">
+            <p className="mt-5 max-w-sm text-[0.98rem] leading-8 text-slate-500">
               منصة تعليمية مبتكرة تساعد على الاستعداد لاختبار القدرات بكفاءة وثقة.
             </p>
-            <div className="mt-8 flex items-center justify-center gap-4 md:justify-start">
+            <div className="mt-5 flex items-center justify-center gap-3 text-[#2563eb] md:justify-start">
               {socialLinks.map((item) => {
                 const Icon = item.icon;
 
@@ -113,10 +113,10 @@ function PublicFooter() {
                   <Link
                     key={item.label}
                     href={item.href}
-                    className="flex h-12 w-12 items-center justify-center rounded-full bg-[#f0f5ff] text-sm font-bold text-[#2563eb] transition hover:-translate-y-0.5 hover:bg-[#2563eb] hover:text-white"
+                    className="flex h-9 w-9 items-center justify-center rounded-full bg-[#eef4ff] text-sm font-bold text-[#2563eb] transition hover:-translate-y-0.5 hover:bg-[#2563eb] hover:text-white"
                     aria-label={item.label}
                   >
-                    {Icon ? <Icon className="h-5 w-5 fill-current" /> : item.label}
+                    {Icon ? <Icon className="h-4 w-4 fill-current" /> : item.label}
                   </Link>
                 );
               })}
@@ -124,8 +124,8 @@ function PublicFooter() {
           </div>
 
           <div>
-            <h3 className="text-2xl font-black text-[#0f3670]">روابط سريعة</h3>
-            <div className="mt-8 flex flex-col gap-5 text-xl font-medium text-[#536985]">
+            <h3 className="display-font text-[1.25rem] font-bold text-[#0f2f69]">روابط سريعة</h3>
+            <div className="mt-5 flex flex-col gap-3 text-[0.98rem] text-slate-500">
               {publicQuickLinks.map((link) => (
                 <Link key={link.href} href={link.href} className="transition hover:text-[#2563eb]">
                   {link.label}
@@ -135,8 +135,8 @@ function PublicFooter() {
           </div>
 
           <div>
-            <h3 className="text-2xl font-black text-[#0f3670]">معلومات</h3>
-            <div className="mt-8 flex flex-col gap-5 text-xl font-medium text-[#536985]">
+            <h3 className="display-font text-[1.25rem] font-bold text-[#0f2f69]">معلومات</h3>
+            <div className="mt-5 flex flex-col gap-3 text-[0.98rem] text-slate-500">
               {publicInfoLinks.map((link) => (
                 <Link key={link.href} href={link.href} className="transition hover:text-[#2563eb]">
                   {link.label}
@@ -146,20 +146,20 @@ function PublicFooter() {
           </div>
 
           <div className="flex flex-col items-center md:items-start">
-            <h3 className="text-2xl font-black text-[#0f3670]">حمّل تطبيقنا</h3>
-            <p className="mt-8 text-xl font-medium leading-9 text-[#536985]">
+            <h3 className="display-font text-[1.25rem] font-bold text-[#0f2f69]">حمّل تطبيقنا</h3>
+            <p className="mt-5 text-[0.98rem] leading-8 text-slate-500">
               تجربة أفضل على التطبيق
             </p>
-            <div className="mt-8 flex w-full flex-col items-center gap-4 md:items-start">
+            <div className="mt-5 flex w-full flex-col items-center gap-3 md:items-start">
               <StoreButton>Download on the App Store</StoreButton>
               <StoreButton>GET IT ON Google Play</StoreButton>
             </div>
           </div>
         </div>
 
-        <div className="mt-16 h-px bg-[#e4ebf5]" />
+        <div className="mt-12 h-px bg-[#edf2fb]" />
 
-        <p className="mt-9 text-center text-base font-medium text-[#8aa0bd]">
+        <p className="mt-6 text-center text-sm text-slate-400">
           جميع الحقوق محفوظة © 2024 معيار
         </p>
       </div>
