@@ -160,19 +160,77 @@ export function AccountPortal({ initialAuthUser }: AccountPortalProps) {
     }
   }
 
+  async function persistProfile(nextAvatarData: string | null = avatarData, successMessage = "تم حفظ التعديلات بنجاح.") {
+    const response = await fetch("/api/student/profile", {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        fullName,
+        email,
+        phone,
+        gender,
+        avatarData: nextAvatarData,
+      }),
+    });
+
+    const payload = (await response.json()) as {
+      ok?: boolean;
+      message?: string;
+      user?: AuthSessionUser | null;
+    };
+
+    if (!response.ok || !payload.ok) {
+      throw new Error(payload.message ?? "تعذر حفظ تحديثات الحساب.");
+    }
+
+    const updatedUser = payload.user ?? null;
+    if (updatedUser) {
+      setFullName(updatedUser.fullName);
+      setEmail(updatedUser.email ?? "");
+      setPhone(updatedUser.phone ?? "");
+      setGender(updatedUser.gender === "female" ? "female" : "male");
+      setAvatarData(updatedUser.avatarData ?? nextAvatarData ?? null);
+    }
+
+    setSaveMessage(successMessage);
+    window.dispatchEvent(
+      new CustomEvent("miyaar:session-updated", {
+        detail: {
+          authenticated: true,
+          user: updatedUser ?? {
+            ...effectiveUser,
+            fullName,
+            email,
+            phone,
+            gender,
+            avatarData: nextAvatarData,
+          },
+        },
+      }),
+    );
+    await refreshSession();
+    await refresh();
+    router.refresh();
+  }
+
   async function handleFileChange(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
     if (!file) return;
 
     setSaveError(null);
     setSaveMessage(null);
+    setSaving(true);
 
     try {
       const optimized = await optimizeAvatar(file);
       setAvatarData(optimized);
+      await persistProfile(optimized, "تم تحديث الصورة الشخصية بنجاح.");
     } catch (error) {
       setSaveError(error instanceof Error ? error.message : "تعذر تجهيز الصورة.");
     } finally {
+      setSaving(false);
       event.target.value = "";
     }
   }
@@ -183,30 +241,7 @@ export function AccountPortal({ initialAuthUser }: AccountPortalProps) {
     setSaveMessage(null);
 
     try {
-      const response = await fetch("/api/student/profile", {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          fullName,
-          email,
-          phone,
-          gender,
-          avatarData,
-        }),
-      });
-
-      const payload = (await response.json()) as { ok?: boolean; message?: string };
-
-      if (!response.ok || !payload.ok) {
-        throw new Error(payload.message ?? "تعذر حفظ تحديثات الحساب.");
-      }
-
-      setSaveMessage("تم حفظ التعديلات بنجاح.");
-      await refreshSession();
-      await refresh();
-      router.refresh();
+      await persistProfile();
     } catch (error) {
       setSaveError(error instanceof Error ? error.message : "تعذر حفظ التعديلات.");
     } finally {
