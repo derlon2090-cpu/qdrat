@@ -820,45 +820,85 @@ export function AccountPortal({ initialAuthUser }: AccountPortalProps) {
     ];
 
     return (
-      <SectionFrame
-        eyebrow="الإعدادات / الأمان وكلمة المرور"
-        title="الأمان وكلمة المرور"
-        description="غيّر كلمة المرور وأدر طبقات الحماية الأساسية للحفاظ على أمان حسابك."
-        icon={LockKeyhole}
-      >
-        <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_250px]">
-          <Card className="rounded-[1.8rem] border border-[#e7edf8] bg-white shadow-[0_14px_34px_rgba(15,23,42,0.04)]">
-            <CardContent className="space-y-5 p-6">
-              <label className="space-y-2">
-                <span className="text-sm font-semibold text-slate-500">كلمة المرور الحالية</span>
-                <div className="relative">
-                  <Input value={currentPassword} onChange={(event) => setCurrentPassword(event.target.value)} type="password" className="h-14 rounded-[1rem] pl-12 pr-4 text-base" />
-                  <LockKeyhole className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
-                </div>
-              </label>
+      <Card className="mx-auto max-w-[720px] rounded-[2rem] border border-[#e7edf8] bg-white shadow-[0_24px_60px_rgba(37,99,235,0.08)]">
+        <CardContent className="space-y-6 p-6 md:p-8">
+          <div className="flex items-center justify-between text-xs font-semibold text-slate-400">
+            <div className="flex items-center gap-1">
+              <ChevronLeft className="h-3.5 w-3.5" />
+              <span>الأمان وكلمة المرور</span>
+            </div>
+            <span>الإعدادات</span>
+          </div>
 
-              <label className="space-y-2">
-                <span className="text-sm font-semibold text-slate-500">كلمة المرور الجديدة</span>
-                <div className="relative">
-                  <Input value={newPassword} onChange={(event) => setNewPassword(event.target.value)} type="password" className="h-14 rounded-[1rem] pl-12 pr-4 text-base" />
-                  <Shield className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
+          <div className="grid items-start gap-6 md:grid-cols-[140px_minmax(0,1fr)] md:[direction:ltr]">
+            <div className="flex justify-center md:[direction:rtl]">
+              <div className="relative flex h-28 w-28 items-center justify-center">
+                <div className="absolute inset-0 rounded-full bg-[radial-gradient(circle_at_center,rgba(37,99,235,0.18),transparent_70%)] blur-2xl" />
+                <div className="absolute -left-1 top-7 h-2 w-2 rounded-full bg-[#90b4ff]" />
+                <div className="absolute -right-1 bottom-8 h-2 w-2 rounded-full bg-[#90b4ff]" />
+                <div className="relative flex h-24 w-24 items-center justify-center rounded-full bg-[linear-gradient(180deg,#eff5ff_0%,#e3ecff_100%)] shadow-[0_16px_34px_rgba(37,99,235,0.12)]">
+                  <div className="flex h-16 w-16 items-center justify-center rounded-[1.4rem] bg-[linear-gradient(180deg,#5f8cff_0%,#2563eb_100%)] text-white shadow-[0_20px_36px_rgba(37,99,235,0.24)]">
+                    <ShieldCheck className="h-8 w-8" />
+                  </div>
                 </div>
-              </label>
+              </div>
+            </div>
 
-              <label className="space-y-2">
-                <span className="text-sm font-semibold text-slate-500">تأكيد كلمة المرور الجديدة</span>
-                <div className="relative">
-                  <Input value={confirmPassword} onChange={(event) => setConfirmPassword(event.target.value)} type="password" className="h-14 rounded-[1rem] pl-12 pr-4 text-base" />
-                  <Eye className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
-                </div>
-              </label>
+            <div className="space-y-6 text-right md:[direction:rtl]">
+              <div className="space-y-2">
+                <h3 className="text-[2rem] font-black text-[#123B7A]">الأمان وكلمة المرور</h3>
+                <p className="text-sm leading-7 text-slate-500">
+                  قم بتحديث كلمة المرور الحالية لضمان بقاء حسابك محميًا بأفضل درجة أمان.
+                </p>
+              </div>
 
-              <div className="rounded-[1.25rem] border border-[#dbe5ff] bg-[#f8fbff] p-5 text-sm leading-8 text-slate-600">
-                <div className="mb-3 flex items-center justify-between">
-                  <span className="font-bold text-[#123B7A]">توصيات الأمان</span>
+              <div className="space-y-3">
+                <label className="space-y-2">
+                  <span className="text-sm font-semibold text-slate-500">كلمة المرور الحالية</span>
+                  <div className="relative">
+                    <Input
+                      value={currentPassword}
+                      onChange={(event) => setCurrentPassword(event.target.value)}
+                      type="password"
+                      className="h-12 rounded-[1rem] border-[#e7edf8] bg-white pl-11 pr-4 text-base shadow-none"
+                    />
+                    <LockKeyhole className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-300" />
+                  </div>
+                </label>
+
+                <label className="space-y-2">
+                  <span className="text-sm font-semibold text-slate-500">كلمة المرور الجديدة</span>
+                  <div className="relative">
+                    <Input
+                      value={newPassword}
+                      onChange={(event) => setNewPassword(event.target.value)}
+                      type="password"
+                      className="h-12 rounded-[1rem] border-[#e7edf8] bg-white pl-11 pr-4 text-base shadow-none"
+                    />
+                    <Shield className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-300" />
+                  </div>
+                </label>
+
+                <label className="space-y-2">
+                  <span className="text-sm font-semibold text-slate-500">تأكيد كلمة المرور الجديدة</span>
+                  <div className="relative">
+                    <Input
+                      value={confirmPassword}
+                      onChange={(event) => setConfirmPassword(event.target.value)}
+                      type="password"
+                      className="h-12 rounded-[1rem] border-[#e7edf8] bg-white pl-11 pr-4 text-base shadow-none"
+                    />
+                    <Eye className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-300" />
+                  </div>
+                </label>
+              </div>
+
+              <div className="rounded-[1rem] border border-[#d8e6ff] bg-[#f8fbff] px-4 py-4">
+                <div className="mb-2 flex items-center justify-between text-sm font-bold text-[#123B7A]">
                   <Info className="h-4 w-4 text-[#2563eb]" />
+                  <span>تلميحات الأمان</span>
                 </div>
-                <ul className="space-y-2">
+                <ul className="space-y-1.5 text-sm leading-7 text-slate-600">
                   {securityRules.map((rule) => (
                     <li key={rule} className="flex items-center gap-2">
                       <Check className="h-4 w-4 text-emerald-500" />
@@ -880,42 +920,51 @@ export function AccountPortal({ initialAuthUser }: AccountPortalProps) {
                 </div>
               ) : null}
 
-              <Button type="button" onClick={handleSecuritySave} className="h-14 w-full rounded-[1rem] bg-[#2563eb] text-base font-bold hover:bg-[#1d4ed8]">
+              <Button
+                type="button"
+                onClick={handleSecuritySave}
+                className="h-12 w-full rounded-[0.95rem] bg-[#2563eb] text-base font-bold shadow-[0_14px_28px_rgba(37,99,235,0.18)] hover:bg-[#1d4ed8]"
+              >
                 حفظ كلمة المرور
               </Button>
-            </CardContent>
-          </Card>
-
-          <Card className="rounded-[1.8rem] border border-[#e7edf8] bg-[linear-gradient(180deg,#ffffff_0%,#f8fbff_100%)] shadow-[0_14px_34px_rgba(15,23,42,0.04)]">
-            <CardContent className="flex h-full flex-col items-center justify-center gap-4 p-6 text-center">
-              <div className="flex h-24 w-24 items-center justify-center rounded-full bg-[#eef4ff] text-[#2563eb] shadow-[0_18px_32px_rgba(37,99,235,0.12)]">
-                <ShieldCheck className="h-12 w-12" />
-              </div>
-              <div className="space-y-2">
-                <h3 className="text-2xl font-black text-[#123B7A]">حسابك محمي</h3>
-                <p className="text-sm leading-7 text-slate-500">كلما كانت كلمة المرور أقوى كانت حماية حسابك أفضل داخل المنصة.</p>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </SectionFrame>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
     );
   }
 
   function renderNotificationsSection() {
     return (
-      <SectionFrame
-        eyebrow="الإعدادات / الإشعارات"
-        title="الإشعارات"
-        description="أدر التفضيلات الخاصة بالإشعارات حتى تصلك التنبيهات المناسبة في الوقت الصحيح."
-        icon={Bell}
-      >
-        <Card className="rounded-[1.8rem] border border-[#e7edf8] bg-white shadow-[0_14px_34px_rgba(15,23,42,0.04)]">
-          <CardContent className="space-y-4 p-6">
-            {notificationSettings.map((item) => (
+      <Card className="mx-auto max-w-[720px] rounded-[2rem] border border-[#e7edf8] bg-white shadow-[0_24px_60px_rgba(37,99,235,0.08)]">
+        <CardContent className="space-y-6 p-6 md:p-8">
+          <div className="flex items-center justify-between text-xs font-semibold text-slate-400">
+            <div className="flex items-center gap-1">
+              <ChevronLeft className="h-3.5 w-3.5" />
+              <span>الإشعارات</span>
+            </div>
+            <span>الإعدادات</span>
+          </div>
+
+          <div className="flex flex-col items-center gap-3 text-center">
+            <div className="relative flex h-24 w-24 items-center justify-center rounded-full bg-[radial-gradient(circle_at_30%_30%,#fff7cc_0%,#fff1ab_52%,#ffe489_100%)] shadow-[0_16px_32px_rgba(245,158,11,0.18)]">
+              <div className="absolute right-0 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-rose-500 text-[10px] font-bold text-white">1</div>
+              <Bell className="h-11 w-11 text-[#f5a623]" />
+            </div>
+            <div className="space-y-1 text-right">
+              <h3 className="text-[2rem] font-black text-[#123B7A]">الإشعارات</h3>
+              <p className="text-sm leading-7 text-slate-500">إدارة التفضيلات الخاصة بالإشعارات التي تصلك.</p>
+            </div>
+          </div>
+
+          <div className="overflow-hidden rounded-[1.2rem] border border-[#edf2fb] bg-white">
+            {notificationSettings.map((item, index) => (
               <div
                 key={item.id}
-                className="flex items-center justify-between rounded-[1.2rem] border border-[#edf2fb] bg-[#fbfdff] px-4 py-4"
+                className={cn(
+                  "flex items-center justify-between gap-4 px-4 py-4",
+                  index !== notificationSettings.length - 1 && "border-b border-[#edf2fb]",
+                )}
               >
                 <Toggle
                   checked={item.enabled}
@@ -931,13 +980,14 @@ export function AccountPortal({ initialAuthUser }: AccountPortalProps) {
                 </div>
               </div>
             ))}
+          </div>
 
-            <div className="rounded-[1.1rem] border border-[#dbe5ff] bg-[#f8fbff] px-4 py-3 text-sm font-semibold text-slate-500">
-              ستصلك الإشعارات على متصفحك وبريدك الإلكتروني عند تفعيل الخيارات المناسبة.
-            </div>
-          </CardContent>
-        </Card>
-      </SectionFrame>
+          <div className="flex items-center justify-between rounded-[1rem] border border-[#dbe5ff] bg-[#f8fbff] px-4 py-3 text-sm text-slate-500">
+            <Info className="h-4 w-4 text-[#2563eb]" />
+            <span>ستصلك الإشعارات على متصفحك وبريدك الإلكتروني حسب الخيارات التي فعلتها.</span>
+          </div>
+        </CardContent>
+      </Card>
     );
   }
 
@@ -950,240 +1000,274 @@ export function AccountPortal({ initialAuthUser }: AccountPortalProps) {
     ];
 
     return (
-      <SectionFrame
-        eyebrow="الإعدادات / الاشتراكات والفواتير"
-        title="الاشتراكات والفواتير"
-        description="تابع باقتك الحالية، وسجلات الدفع، وطريقة الدفع المرتبطة بحسابك."
-        icon={CreditCard}
-      >
-        <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_310px]">
-          <div className="space-y-6">
-            <Card className="rounded-[1.8rem] border border-[#d9e3ff] bg-[linear-gradient(135deg,#0f2f61_0%,#123b7a_55%,#1f4eea_100%)] text-white shadow-[0_18px_38px_rgba(18,59,122,0.22)]">
-              <CardContent className="space-y-5 p-6">
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex h-14 w-14 items-center justify-center rounded-[1.1rem] bg-white/10 text-white">
-                    <Crown className="h-7 w-7" />
-                  </div>
-                  <div className="space-y-2 text-right">
-                    <div className="inline-flex items-center gap-2 rounded-full bg-[#1b6f3f] px-3 py-1 text-xs font-bold">نشط</div>
-                    <h3 className="text-2xl font-black">الباقة المميزة</h3>
-                    <p className="text-sm text-white/80">الوصول الكامل لجميع البنوك والاختبارات حتى 15 مايو 2024</p>
-                  </div>
-                </div>
-
-                <div className="grid gap-4 sm:grid-cols-4">
-                  {billingFeatures.map(({ label, icon: Icon }) => (
-                    <div key={label} className="rounded-[1rem] border border-white/10 bg-white/5 p-4 text-center">
-                      <Icon className="mx-auto h-5 w-5 text-white/90" />
-                      <div className="mt-3 text-sm font-semibold">{label}</div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="rounded-[1.8rem] border border-[#e7edf8] bg-white shadow-[0_14px_34px_rgba(15,23,42,0.04)]">
-              <CardContent className="space-y-5 p-6">
-                <div className="flex items-center justify-between">
-                  <div className="rounded-full bg-[#eef4ff] px-3 py-1 text-xs font-bold text-[#2563eb]">فيزا</div>
-                  <div className="text-right">
-                    <div className="text-lg font-bold text-slate-800">طريقة الدفع</div>
-                    <div className="text-sm text-slate-500">**** **** **** 4242</div>
-                  </div>
-                </div>
-                <div className="flex flex-wrap gap-3">
-                  <Button type="button" variant="outline" className="h-12 rounded-[1rem] border-[#d7e3ff] px-6 text-[#2563eb] shadow-none">
-                    إدارة الاشتراك
-                  </Button>
-                  <Button type="button" variant="ghost" className="h-12 rounded-[1rem] px-4 text-rose-500 hover:bg-rose-50 hover:text-rose-600">
-                    إلغاء الاشتراك
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
+      <Card className="mx-auto max-w-[760px] rounded-[2rem] border border-[#e7edf8] bg-white shadow-[0_24px_60px_rgba(37,99,235,0.08)]">
+        <CardContent className="space-y-6 p-6 md:p-8">
+          <div className="flex items-center justify-between text-xs font-semibold text-slate-400">
+            <div className="flex items-center gap-1">
+              <ChevronLeft className="h-3.5 w-3.5" />
+              <span>الاشتراكات والفواتير</span>
+            </div>
+            <span>الإعدادات</span>
           </div>
 
-          <Card className="rounded-[1.8rem] border border-[#e7edf8] bg-[linear-gradient(180deg,#fbfdff_0%,#ffffff_100%)] shadow-[0_14px_34px_rgba(15,23,42,0.04)]">
-            <CardContent className="space-y-5 p-6">
+          <div className="grid items-start gap-6 md:grid-cols-[minmax(0,1fr)_140px] md:[direction:ltr]">
+            <div className="space-y-4 text-right md:[direction:rtl]">
+              <h3 className="text-[2rem] font-black text-[#123B7A]">الاشتراكات والفواتير</h3>
+              <p className="text-sm leading-7 text-slate-500">
+                متابعة اشتراكك الحالي والاطلاع على حالة الباقة والفواتير المرتبطة بحسابك.
+              </p>
+            </div>
+            <div className="flex justify-center md:[direction:rtl]">
+              <div className="flex h-24 w-24 items-center justify-center rounded-[1.7rem] bg-[linear-gradient(180deg,#f4f8ff_0%,#dfe9ff_100%)] shadow-[0_16px_32px_rgba(59,130,246,0.12)]">
+                <CreditCard className="h-10 w-10 text-[#5b7cff]" />
+              </div>
+            </div>
+          </div>
+
+          <div className="rounded-[1.35rem] border border-[#dce6ff] bg-[linear-gradient(135deg,#0f2f61_0%,#123b7a_55%,#1f4eea_100%)] p-5 text-white shadow-[0_18px_38px_rgba(18,59,122,0.22)]">
+            <div className="flex items-start justify-between gap-4">
+              <div className="flex h-12 w-12 items-center justify-center rounded-[1rem] bg-white/10 text-white">
+                <Crown className="h-6 w-6" />
+              </div>
+              <div className="space-y-2 text-right">
+                <div className="inline-flex items-center rounded-full bg-[#1f8f55] px-2.5 py-1 text-[11px] font-bold">نشطة</div>
+                <div className="text-xl font-black">الباقة المميزة</div>
+                <p className="text-sm text-white/80">الوصول الكامل لجميع البنوك والاختبارات حتى 15 مايو 2024</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="grid gap-3 sm:grid-cols-4">
+            {billingFeatures.map(({ label, icon: Icon }) => (
+              <div key={label} className="rounded-[1.1rem] border border-[#edf2fb] bg-[#fbfdff] p-4 text-center">
+                <Icon className="mx-auto h-5 w-5 text-[#2563eb]" />
+                <div className="mt-3 text-sm font-semibold text-slate-700">{label}</div>
+              </div>
+            ))}
+          </div>
+
+          <div className="space-y-4 rounded-[1.2rem] border border-[#edf2fb] bg-white p-5">
+            <div className="flex items-center justify-between">
+              <div className="rounded-full border border-[#d7e3ff] px-3 py-1 text-xs font-bold text-[#2563eb]">فيزا</div>
               <div className="text-right">
-                <h3 className="text-2xl font-black text-[#123B7A]">ملخص الفوترة</h3>
-                <p className="mt-2 text-sm leading-7 text-slate-500">آخر دفعة ناجحة كانت في 15 مايو 2024 وقيمة الفاتورة 149 ريال.</p>
+                <div className="text-lg font-bold text-slate-800">طريقة الدفع</div>
+                <div className="text-sm text-slate-500">**** **** **** 4242</div>
               </div>
-              <div className="space-y-3">
-                {[
-                  ["تجديد تلقائي", "مفعل"],
-                  ["تاريخ التجديد", "15 مايو 2024"],
-                  ["الحالة", "ممتازة"],
-                ].map(([label, value]) => (
-                  <div key={label} className="flex items-center justify-between rounded-[1rem] border border-[#edf2fb] px-4 py-3">
-                    <span className="font-bold text-slate-700">{value}</span>
-                    <span className="text-sm text-slate-500">{label}</span>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </SectionFrame>
+            </div>
+
+            <div className="flex flex-wrap gap-3">
+              <Button type="button" variant="outline" className="h-11 rounded-[0.95rem] border-[#d7e3ff] px-5 text-[#2563eb] shadow-none">
+                إدارة الاشتراك
+              </Button>
+              <Button type="button" variant="ghost" className="h-11 rounded-[0.95rem] px-4 text-rose-500 hover:bg-rose-50 hover:text-rose-600">
+                إلغاء الاشتراك
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
     );
   }
 
   function renderAchievementsSection() {
     return (
-      <SectionFrame
-        eyebrow="الإعدادات / الإنجازات"
-        title="الإنجازات"
-        description="تابع إنجازاتك التعليمية وشاهد الأهداف التي أنهيتها وما يزال ينتظرك."
-        icon={Trophy}
-      >
-        <div className="flex flex-wrap justify-end gap-2">
-          <TabButton active={achievementFilter === "all"} onClick={() => setAchievementFilter("all")}>
-            الكل
-          </TabButton>
-          <TabButton active={achievementFilter === "done"} onClick={() => setAchievementFilter("done")}>
-            تم تحقيقها
-          </TabButton>
-          <TabButton active={achievementFilter === "progress"} onClick={() => setAchievementFilter("progress")}>
-            قيد التقدم
-          </TabButton>
-        </div>
+      <Card className="mx-auto max-w-[760px] rounded-[2rem] border border-[#e7edf8] bg-white shadow-[0_24px_60px_rgba(37,99,235,0.08)]">
+        <CardContent className="space-y-6 p-6 md:p-8">
+          <div className="flex items-center justify-between text-xs font-semibold text-slate-400">
+            <div className="flex items-center gap-1">
+              <ChevronLeft className="h-3.5 w-3.5" />
+              <span>الإنجازات</span>
+            </div>
+            <span>الإعدادات</span>
+          </div>
 
-        <div className="space-y-4">
-          {filteredAchievements.map((achievement) => {
-            const Icon = achievement.icon;
-            return (
-              <Card key={achievement.title} className={cn("rounded-[1.8rem] border border-[#e7edf8] bg-white shadow-[0_14px_34px_rgba(15,23,42,0.04)]", achievement.progress === 100 && "bg-[linear-gradient(180deg,#ffffff_0%,#fbfefc_100%)]")}>
-                <CardContent className="flex items-center justify-between gap-5 p-6">
-                  <div className={cn("flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br", achievement.color)}>
-                    <Icon className={cn("h-7 w-7", achievement.iconTone)} />
-                  </div>
-                  <div className="min-w-0 flex-1 space-y-3 text-right">
-                    <div className="flex items-center justify-between gap-3">
-                      <div className="text-sm font-semibold text-slate-400">{achievement.detail}</div>
-                      <div>
-                        <div className="text-lg font-black text-slate-800">{achievement.title}</div>
-                        <div className="text-sm text-slate-500">{achievement.desc}</div>
-                      </div>
-                    </div>
-                    <div className="h-2 overflow-hidden rounded-full bg-[#edf2fb]">
-                      <div
-                        className={cn(
-                          "h-full rounded-full",
-                          achievement.progress === 100 ? "bg-[#22a457]" : "bg-[#2563eb]",
-                        )}
-                        style={{ width: `${achievement.progress}%` }}
-                      />
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
+          <div className="grid items-start gap-6 md:grid-cols-[minmax(0,1fr)_120px] md:[direction:ltr]">
+            <div className="space-y-4 text-right md:[direction:rtl]">
+              <h3 className="text-[2rem] font-black text-[#123B7A]">الإنجازات</h3>
+              <p className="text-sm leading-7 text-slate-500">تابع إنجازاتك وبياناتك التعليمية المصنفة.</p>
+            </div>
+            <div className="flex justify-center md:[direction:rtl]">
+              <div className="flex h-24 w-24 items-center justify-center rounded-full bg-[radial-gradient(circle_at_35%_35%,#fff4d8_0%,#ffe29b_55%,#ffd36b_100%)] shadow-[0_16px_32px_rgba(245,158,11,0.14)]">
+                <Trophy className="h-11 w-11 text-[#d58c00]" />
+              </div>
+            </div>
+          </div>
 
-        <Button type="button" variant="outline" className="h-12 rounded-[1rem] border-[#d7e3ff] px-6 text-[#2563eb] shadow-none">
-          عرض جميع الإنجازات
-        </Button>
-      </SectionFrame>
+          <div className="flex flex-wrap justify-end gap-2 rounded-[1rem] bg-[#f7fbff] p-1">
+            <TabButton active={achievementFilter === "all"} onClick={() => setAchievementFilter("all")}>
+              الكل
+            </TabButton>
+            <TabButton active={achievementFilter === "done"} onClick={() => setAchievementFilter("done")}>
+              تم تحقيقها
+            </TabButton>
+            <TabButton active={achievementFilter === "progress"} onClick={() => setAchievementFilter("progress")}>
+              قيد التقدم
+            </TabButton>
+          </div>
+
+          <div className="space-y-3">
+            {filteredAchievements.map((achievement) => {
+              const Icon = achievement.icon;
+              return (
+                <div key={achievement.title} className="rounded-[1rem] border border-[#edf2fb] bg-white px-4 py-4">
+                  <div className="mb-3 flex items-start justify-between gap-4">
+                    <div className={cn("flex h-11 w-11 items-center justify-center rounded-full bg-gradient-to-br", achievement.color)}>
+                      <Icon className={cn("h-5 w-5", achievement.iconTone)} />
+                    </div>
+                    <div className="flex-1 text-right">
+                      <div className="text-base font-bold text-slate-800">{achievement.title}</div>
+                      <div className="text-sm text-slate-500">{achievement.desc}</div>
+                    </div>
+                  </div>
+                  <div className="mb-2 flex items-center justify-between text-sm">
+                    <span className="font-semibold text-slate-700">{achievement.detail}</span>
+                    <span className="text-slate-400">{formatNumber(achievement.progress)}%</span>
+                  </div>
+                  <div className="h-2 overflow-hidden rounded-full bg-[#edf2fb]">
+                    <div
+                      className={cn("h-full rounded-full", achievement.progress === 100 ? "bg-[#22a457]" : "bg-[#2563eb]")}
+                      style={{ width: `${achievement.progress}%` }}
+                    />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          <Button type="button" variant="outline" className="h-11 w-full rounded-[0.95rem] border-[#d7e3ff] px-6 text-[#2563eb] shadow-none">
+            عرض جميع الإنجازات
+          </Button>
+        </CardContent>
+      </Card>
     );
   }
 
   function renderFavoritesSection() {
     return (
-      <SectionFrame
-        eyebrow="الإعدادات / المفضلة"
-        title="المفضلة"
-        description="الاختبارات والدروس والملخصات التي حفظتها لتعود إليها سريعًا."
-        icon={Heart}
-      >
-        <div className="flex flex-wrap justify-end gap-2">
-          <TabButton active={favoritesFilter === "all"} onClick={() => setFavoritesFilter("all")}>
-            الكل
-          </TabButton>
-          <TabButton active={favoritesFilter === "tests"} onClick={() => setFavoritesFilter("tests")}>
-            الاختبارات
-          </TabButton>
-          <TabButton active={favoritesFilter === "lessons"} onClick={() => setFavoritesFilter("lessons")}>
-            الدروس
-          </TabButton>
-        </div>
+      <Card className="mx-auto max-w-[760px] rounded-[2rem] border border-[#e7edf8] bg-white shadow-[0_24px_60px_rgba(37,99,235,0.08)]">
+        <CardContent className="space-y-6 p-6 md:p-8">
+          <div className="flex items-center justify-between text-xs font-semibold text-slate-400">
+            <div className="flex items-center gap-1">
+              <ChevronLeft className="h-3.5 w-3.5" />
+              <span>المفضلة</span>
+            </div>
+            <span>الإعدادات</span>
+          </div>
 
-        <div className="space-y-4">
-          {filteredFavorites.map((item) => (
-            <Card key={item.title} className="rounded-[1.8rem] border border-[#e7edf8] bg-white shadow-[0_14px_34px_rgba(15,23,42,0.04)]">
-              <CardContent className="flex items-center justify-between gap-4 p-5">
-                <button type="button" className="flex h-11 w-11 items-center justify-center rounded-full bg-[#fff7ed] text-[#f59e0b]">
-                  <Star className="h-5 w-5 fill-current" />
-                </button>
-                <div className="min-w-0 flex-1 text-right">
-                  <div className="text-lg font-bold text-slate-800">{item.title}</div>
-                  <div className="mt-1 text-sm text-slate-500">{item.meta}</div>
-                  <div className="mt-2 text-sm text-slate-400">{item.time}</div>
+          <div className="grid items-start gap-6 md:grid-cols-[minmax(0,1fr)_120px] md:[direction:ltr]">
+            <div className="space-y-4 text-right md:[direction:rtl]">
+              <h3 className="text-[2rem] font-black text-[#123B7A]">المفضلة</h3>
+              <p className="text-sm leading-7 text-slate-500">الاختبارات والدروس المحفوظة لديك للعودة إليها بسرعة.</p>
+            </div>
+            <div className="flex justify-center md:[direction:rtl]">
+              <div className="flex h-20 w-20 items-center justify-center rounded-[1.35rem] bg-[linear-gradient(180deg,#ffe7f4_0%,#ffd6ef_100%)] shadow-[0_14px_30px_rgba(236,72,153,0.12)]">
+                <Heart className="h-9 w-9 fill-current text-[#d946ef]" />
+              </div>
+            </div>
+          </div>
+
+          <div className="flex flex-wrap justify-end gap-2 rounded-[1rem] bg-[#f7fbff] p-1">
+            <TabButton active={favoritesFilter === "all"} onClick={() => setFavoritesFilter("all")}>
+              الكل
+            </TabButton>
+            <TabButton active={favoritesFilter === "tests"} onClick={() => setFavoritesFilter("tests")}>
+              الاختبارات
+            </TabButton>
+            <TabButton active={favoritesFilter === "lessons"} onClick={() => setFavoritesFilter("lessons")}>
+              الدروس
+            </TabButton>
+          </div>
+
+          <div className="space-y-3">
+            {filteredFavorites.map((item) => (
+              <div key={item.title} className="rounded-[1rem] border border-[#edf2fb] bg-white px-4 py-4">
+                <div className="flex items-center justify-between gap-4">
+                  <button type="button" className="flex h-9 w-9 items-center justify-center rounded-full text-slate-300 transition hover:bg-slate-50 hover:text-slate-500">
+                    <MoreVertical className="h-4 w-4" />
+                  </button>
+                  <div className="flex-1 text-right">
+                    <div className="text-base font-bold text-slate-800">{item.title}</div>
+                    <div className="mt-1 text-sm text-slate-500">{item.meta}</div>
+                    <div className="mt-1 text-xs text-slate-400">{item.time}</div>
+                  </div>
+                  <button type="button" className="flex h-10 w-10 items-center justify-center rounded-full bg-[#fff7ed] text-[#f59e0b]">
+                    <Star className="h-5 w-5 fill-current" />
+                  </button>
                 </div>
-                <button type="button" className="flex h-10 w-10 items-center justify-center rounded-full text-slate-400 transition hover:bg-slate-50 hover:text-slate-600">
-                  <MoreVertical className="h-4 w-4" />
-                </button>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+              </div>
+            ))}
+          </div>
 
-        <Button type="button" variant="outline" className="h-12 rounded-[1rem] border-[#d7e3ff] px-6 text-[#2563eb] shadow-none">
-          إدارة المفضلة
-        </Button>
-      </SectionFrame>
+          <Button type="button" variant="outline" className="h-11 w-full rounded-[0.95rem] border-[#d7e3ff] px-6 text-[#2563eb] shadow-none">
+            إدارة المفضلة
+          </Button>
+        </CardContent>
+      </Card>
     );
   }
 
   function renderSessionsSection() {
     return (
-      <SectionFrame
-        eyebrow="الإعدادات / الجلسات النشطة"
-        title="الجلسات النشطة"
-        description="الأجهزة التي تم تسجيل الدخول منها مؤخرًا، ويمكنك إنهاء الجلسات الأخرى متى رغبت."
-        icon={MonitorSmartphone}
-      >
-        <div className="space-y-4">
-          {activeSessions.map((session) => {
-            const Icon = session.icon;
-            return (
-              <Card
-                key={session.title}
-                className={cn(
-                  "rounded-[1.7rem] border shadow-[0_12px_28px_rgba(15,23,42,0.04)]",
-                  session.current ? "border-[#d6e3ff] bg-[#f8fbff]" : "border-[#e7edf8] bg-white",
-                )}
-              >
-                <CardContent className="flex items-center justify-between gap-4 p-5">
-                  <div className="flex items-center gap-3">
-                    <button type="button" className="rounded-[0.9rem] border border-[#d7e3ff] px-3 py-2 text-sm font-bold text-[#2563eb]">
-                      {session.current ? "هذا الجهاز" : "إدارة"}
-                    </button>
-                    <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#eef4ff] text-[#2563eb]">
-                      <Icon className="h-6 w-6" />
+      <Card className="mx-auto max-w-[760px] rounded-[2rem] border border-[#e7edf8] bg-white shadow-[0_24px_60px_rgba(37,99,235,0.08)]">
+        <CardContent className="space-y-6 p-6 md:p-8">
+          <div className="flex items-center justify-between text-xs font-semibold text-slate-400">
+            <div className="flex items-center gap-1">
+              <ChevronLeft className="h-3.5 w-3.5" />
+              <span>الجلسات النشطة</span>
+            </div>
+            <span>الإعدادات</span>
+          </div>
+
+          <div className="grid items-start gap-6 md:grid-cols-[minmax(0,1fr)_120px] md:[direction:ltr]">
+            <div className="space-y-4 text-right md:[direction:rtl]">
+              <h3 className="text-[2rem] font-black text-[#123B7A]">الجلسات النشطة</h3>
+              <p className="text-sm leading-7 text-slate-500">الأجهزة التي تم تسجيل الدخول منها داخل حسابك.</p>
+            </div>
+            <div className="flex justify-center md:[direction:rtl]">
+              <div className="flex h-20 w-20 items-center justify-center rounded-[1.35rem] bg-[linear-gradient(180deg,#eaf3ff_0%,#d8e8ff_100%)] shadow-[0_14px_30px_rgba(59,130,246,0.12)]">
+                <MonitorSmartphone className="h-10 w-10 text-[#6a9bff]" />
+              </div>
+            </div>
+          </div>
+
+          {activeSessions[0] ? (
+            <div className="rounded-[1.1rem] border border-[#dbe5ff] bg-[#f8fbff] px-4 py-4">
+              <div className="mb-2 flex items-center justify-between gap-4">
+                <div className="rounded-full border border-[#d7e3ff] px-3 py-1 text-xs font-bold text-[#2563eb]">هذا الجهاز</div>
+                <div className="text-right">
+                  <div className="text-base font-bold text-slate-800">{activeSessions[0].title}</div>
+                  <div className="text-sm text-slate-500">{activeSessions[0].device}</div>
+                  <div className="text-xs text-slate-400">{activeSessions[0].location}</div>
+                </div>
+              </div>
+            </div>
+          ) : null}
+
+          <div className="space-y-3">
+            {activeSessions.slice(1).map((session) => {
+              const Icon = session.icon;
+              return (
+                <div key={session.title} className="rounded-[1rem] border border-[#edf2fb] bg-white px-4 py-4">
+                  <div className="flex items-center justify-between gap-4">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#f7faff] text-[#7b8da7]">
+                      <Icon className="h-5 w-5" />
+                    </div>
+                    <div className="flex-1 text-right">
+                      <div className="text-base font-bold text-slate-800">{session.title}</div>
+                      <div className="text-sm text-slate-500">{session.device}</div>
+                      <div className="text-xs text-slate-400">{session.location}</div>
                     </div>
                   </div>
+                </div>
+              );
+            })}
+          </div>
 
-                  <div className="flex-1 text-right">
-                    <div className="flex items-center justify-between gap-3">
-                      <span className={cn("text-xs font-bold", session.current ? "text-emerald-600" : "text-slate-400")}>
-                        {session.status}
-                      </span>
-                      <div className="text-lg font-black text-slate-800">{session.title}</div>
-                    </div>
-                    <div className="mt-2 text-sm text-slate-500">{session.device}</div>
-                    <div className="mt-1 text-sm text-slate-400">{session.location}</div>
-                  </div>
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
-
-        <div className="rounded-[1rem] border border-rose-100 bg-rose-50 px-4 py-3 text-center text-sm font-semibold text-rose-500">
-          تسجيل الخروج من جميع الأجهزة الأخرى
-        </div>
-      </SectionFrame>
+          <div className="rounded-[0.95rem] border border-rose-100 bg-rose-50 px-4 py-3 text-center text-sm font-semibold text-rose-500">
+            تسجيل الخروج من جميع الأجهزة الأخرى
+          </div>
+        </CardContent>
+      </Card>
     );
   }
 
