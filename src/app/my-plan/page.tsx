@@ -19,7 +19,7 @@ export default function MyPlanPage() {
       </main>
 
       <DashboardRuntimeGuard resetKey="plan-footer">
-        <SiteFooter />
+        <SiteFooter variant="student" />
       </DashboardRuntimeGuard>
     </div>
   );

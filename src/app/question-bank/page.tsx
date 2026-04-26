@@ -37,7 +37,7 @@ export default async function QuestionBankPage() {
       </main>
 
       <DashboardRuntimeGuard resetKey="question-bank-footer">
-        <SiteFooter />
+        <SiteFooter variant={initialAuthUser ? "student" : "public"} />
       </DashboardRuntimeGuard>
     </div>
   );

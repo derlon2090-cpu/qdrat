@@ -860,7 +860,7 @@ export function StatisticsPortal({
         </div>
       </main>
 
-      <SiteFooter />
+      <SiteFooter variant="student" />
     </div>
   );
 }

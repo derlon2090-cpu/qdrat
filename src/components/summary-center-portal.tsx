@@ -781,7 +781,7 @@ export function SummaryCenterPortal({
         </div>
       </main>
 
-      <SiteFooter />
+      <SiteFooter variant="student" />
     </div>
   );
 }

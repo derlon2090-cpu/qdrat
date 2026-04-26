@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 
 import { SiteHeader } from "@/components/site-header";
+import { SiteFooter } from "@/components/site-footer";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import type { AuthSessionUser } from "@/lib/auth-shared";
@@ -671,6 +672,8 @@ export function ChallengePortal({
           </div>
         )}
       </main>
+
+      <SiteFooter variant="student" />
     </div>
   );
 }

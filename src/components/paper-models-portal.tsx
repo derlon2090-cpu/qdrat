@@ -606,7 +606,7 @@ export function PaperModelsPortal({
         </div>
       </main>
 
-      <SiteFooter />
+      <SiteFooter variant="student" />
     </div>
   );
 }

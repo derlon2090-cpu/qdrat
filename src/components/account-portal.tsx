@@ -44,6 +44,7 @@ import {
 } from "lucide-react";
 
 import { SiteHeader } from "@/components/site-header";
+import { SiteFooter } from "@/components/site-footer";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -1505,6 +1506,8 @@ export function AccountPortal({ initialAuthUser }: AccountPortalProps) {
           </aside>
         </div>
       </main>
+
+      <SiteFooter variant="student" />
     </div>
   );
 }

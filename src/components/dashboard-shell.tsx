@@ -1,6 +1,7 @@
 "use client";
 
 import { DashboardRuntimeGuard } from "@/components/dashboard-runtime-guard";
+import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { StudentDashboard } from "@/components/student-dashboard";
 import { studentTopNavItems } from "@/lib/site-nav";
@@ -18,13 +19,12 @@ export function DashboardShell() {
             <StudentDashboard />
           </DashboardRuntimeGuard>
 
-          <DashboardRuntimeGuard resetKey="dashboard-footer">
-            <footer className="pb-4 pt-8 text-center text-sm font-medium text-slate-400">
-              جميع الحقوق محفوظة - معيار 2024
-            </footer>
-          </DashboardRuntimeGuard>
         </div>
       </main>
+
+      <DashboardRuntimeGuard resetKey="dashboard-footer">
+        <SiteFooter variant="student" />
+      </DashboardRuntimeGuard>
     </div>
   );
 }
