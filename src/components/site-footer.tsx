@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import {
-  Bot,
   Download,
   FileText,
   Headphones,
@@ -14,6 +13,7 @@ import {
 } from "lucide-react";
 
 import { MiyaarLogo } from "@/components/miyaar-logo";
+import { StudentSupportAssistant } from "@/components/student-support-assistant";
 import { useAuthSession } from "@/hooks/use-auth-session";
 import { publicFooterLinks } from "@/lib/site-nav";
 
@@ -123,22 +123,7 @@ function StudentFooter() {
             })}
           </div>
 
-          <Link
-            href="/contact?topic=support"
-            dir="rtl"
-            className="group flex items-center justify-center gap-4 rounded-full bg-white px-4 py-3 shadow-[0_16px_40px_rgba(37,99,235,0.12)] ring-1 ring-[#e8eefb] transition hover:-translate-y-0.5 hover:shadow-[0_20px_46px_rgba(37,99,235,0.16)] lg:justify-start"
-          >
-            <span className="flex h-20 w-20 shrink-0 items-center justify-center rounded-full bg-[#2563eb] text-white shadow-[0_16px_32px_rgba(37,99,235,0.35)]">
-              <Bot className="h-10 w-10" />
-            </span>
-            <span className="text-right">
-              <span className="block text-base font-black text-[#102247]">مساعدك الذكي</span>
-              <span className="mt-1 flex items-center gap-2 text-sm text-[#6d7b92]">
-                <span className="h-2 w-2 rounded-full bg-emerald-500" />
-                نحن هنا لمساعدتك
-              </span>
-            </span>
-          </Link>
+          <StudentSupportAssistant />
         </div>
       </div>
     </footer>
