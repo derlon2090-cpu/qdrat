@@ -781,7 +781,7 @@ export function SummaryCenterPortal({
         </div>
       </main>
 
-      <SiteFooter variant="student" />
+      <SiteFooter variant={isAuthenticated ? "student" : "public"} />
     </div>
   );
 }
