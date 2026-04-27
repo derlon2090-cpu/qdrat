@@ -136,6 +136,19 @@ export function VerbalReadingFromDocument({
   const confirmAnswer = async () => {
     if (!selectedAnswer) return;
 
+    if (authStatus !== "authenticated") {
+      setSubmitted(false);
+      setProgressFeedback(null);
+      setShowExplanation(false);
+      setShowAuthPrompt(true);
+      window.requestAnimationFrame(() => {
+        document
+          .getElementById(`${questionKey}-auth-required`)
+          ?.scrollIntoView({ behavior: "smooth", block: "center" });
+      });
+      return;
+    }
+
     setSubmitted(true);
     setShowExplanation(false);
     setSavedAnswers((previous) => {
@@ -383,6 +396,19 @@ export function VerbalReadingFromDocument({
 
                   <button
                     onClick={() => {
+                      if (authStatus !== "authenticated") {
+                        setSubmitted(false);
+                        setProgressFeedback(null);
+                        setShowExplanation(false);
+                        setShowAuthPrompt(true);
+                        window.requestAnimationFrame(() => {
+                          document
+                            .getElementById(`${questionKey}-auth-required`)
+                            ?.scrollIntoView({ behavior: "smooth", block: "center" });
+                        });
+                        return;
+                      }
+
                       const nextValue = !showExplanation;
                       setShowExplanation(nextValue);
 
@@ -394,7 +420,7 @@ export function VerbalReadingFromDocument({
                         });
                       }
                     }}
-                    disabled={!submitted}
+                    disabled={authStatus === "authenticated" ? !submitted : !selectedAnswer}
                     className="flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-6 py-4 text-lg font-semibold text-slate-700 disabled:cursor-not-allowed disabled:opacity-40"
                   >
                     <ScrollText className="h-5 w-5" />
@@ -458,6 +484,35 @@ export function VerbalReadingFromDocument({
                 ) : null}
 
                 {showAuthPrompt ? (
+                  <div
+                    id={`${questionKey}-auth-required`}
+                    className="mt-6 rounded-[1.35rem] border border-[#d7e5ff] bg-[linear-gradient(180deg,#ffffff,#f7fbff)] px-5 py-4 text-sm leading-8 text-slate-700 shadow-[0_18px_38px_rgba(37,99,235,0.08)]"
+                  >
+                    <div className="text-base font-black text-slate-950">
+                      سجّل دخولك لكشف الإجابة والشرح
+                    </div>
+                    <p className="mt-1">
+                      تقدر تكمل حل الأسئلة وتتنقل بين السابق والتالي، لكن تأكيد
+                      الإجابة ومعرفة الحل الصحيح والشرح متاحة بعد تسجيل الدخول فقط.
+                    </p>
+                    <div className="mt-3 flex flex-wrap gap-3">
+                      <Link
+                        href={`/login?next=${encodeURIComponent(questionHref)}`}
+                        className="inline-flex h-11 items-center justify-center rounded-[1rem] bg-[#1f4b94] px-5 text-sm font-bold text-white transition hover:bg-[#163b77]"
+                      >
+                        تسجيل الدخول
+                      </Link>
+                      <Link
+                        href={`/register?next=${encodeURIComponent(questionHref)}`}
+                        className="inline-flex h-11 items-center justify-center rounded-[1rem] border border-slate-200 bg-white px-5 text-sm font-bold text-slate-700 transition hover:bg-slate-50"
+                      >
+                        إنشاء حساب
+                      </Link>
+                    </div>
+                  </div>
+                ) : null}
+
+                {false && showAuthPrompt ? (
                   <div className="mt-6 rounded-2xl border border-amber-200 bg-amber-50 px-5 py-5 text-sm leading-8 text-amber-800">
                     {result?.isCorrect
                       ? "سجّل دخولك حتى يتم حفظ هذا السؤال كسؤال محلول وإضافة XP إلى ملف الطالب."

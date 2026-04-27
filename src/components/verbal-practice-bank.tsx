@@ -425,6 +425,19 @@ export function VerbalPracticeBank({
   async function confirmAnswer() {
     if (!selectedAnswer || !currentQuestion) return;
 
+    if (authStatus !== "authenticated") {
+      setSubmitted(false);
+      setProgressFeedback(null);
+      setShowExplanation(false);
+      setShowAuthPrompt(true);
+      window.requestAnimationFrame(() => {
+        document
+          .getElementById(`${currentKey}-auth-required`)
+          ?.scrollIntoView({ behavior: "smooth", block: "center" });
+      });
+      return;
+    }
+
     setSubmitted(true);
     setShowExplanation(false);
     setSavedAnswers((previous) => {
@@ -612,6 +625,35 @@ export function VerbalPracticeBank({
       ) : null}
 
       {showAuthPrompt ? (
+        <div
+          id={`${currentKey}-auth-required`}
+          className="rounded-[1.35rem] border border-[#d7e5ff] bg-[linear-gradient(180deg,#ffffff,#f7fbff)] px-5 py-4 text-sm leading-8 text-slate-700 shadow-[0_18px_38px_rgba(37,99,235,0.08)]"
+        >
+          <div className="text-base font-black text-slate-950">
+            سجّل دخولك لكشف الإجابة والشرح
+          </div>
+          <p className="mt-1">
+            تقدر تكمل حل الأسئلة وتتنقل بين السابق والتالي، لكن تأكيد الإجابة
+            ومعرفة الحل الصحيح والشرح متاحة بعد تسجيل الدخول فقط.
+          </p>
+          <div className="mt-3 flex flex-wrap gap-3">
+            <Link
+              href={`/login?next=${encodeURIComponent(questionHref)}`}
+              className="inline-flex h-11 items-center justify-center rounded-[1rem] bg-[#1f4b94] px-5 text-sm font-bold text-white transition hover:bg-[#163b77]"
+            >
+              تسجيل الدخول
+            </Link>
+            <Link
+              href={`/register?next=${encodeURIComponent(questionHref)}`}
+              className="inline-flex h-11 items-center justify-center rounded-[1rem] border border-slate-200 bg-white px-5 text-sm font-bold text-slate-700 transition hover:bg-slate-50"
+            >
+              إنشاء حساب
+            </Link>
+          </div>
+        </div>
+      ) : null}
+
+      {false && showAuthPrompt ? (
         <div className="rounded-[1.2rem] border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-8 text-amber-800">
           {result?.isCorrect
             ? "سجّل دخولك حتى يتم حفظ هذا السؤال كسؤال محلول وإضافة XP إلى حسابك."
@@ -768,6 +810,19 @@ export function VerbalPracticeBank({
             label: showExplanation ? "إخفاء الشرح" : "حل الشرح",
             icon: ScrollText,
             onClick: () => {
+              if (authStatus !== "authenticated") {
+                setSubmitted(false);
+                setProgressFeedback(null);
+                setShowExplanation(false);
+                setShowAuthPrompt(true);
+                window.requestAnimationFrame(() => {
+                  document
+                    .getElementById(`${currentKey}-auth-required`)
+                    ?.scrollIntoView({ behavior: "smooth", block: "center" });
+                });
+                return;
+              }
+
               const nextValue = !showExplanation;
               setShowExplanation(nextValue);
 
@@ -779,7 +834,7 @@ export function VerbalPracticeBank({
                 });
               }
             },
-            disabled: !submitted,
+            disabled: authStatus === "authenticated" ? !submitted : !selectedAnswer,
           },
           {
             key: "pin",
